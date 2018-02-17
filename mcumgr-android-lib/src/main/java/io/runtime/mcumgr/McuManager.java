@@ -144,7 +144,7 @@ public abstract class McuManager {
      * sending it to the transporter.
      *
      * @param op          The operation ({@link McuMgrConstants#OP_READ},
-     *                      {@link McuMgrConstants#OP_WRITE})
+     *                    {@link McuMgrConstants#OP_WRITE})
      * @param flags       Additional flags
      * @param groupId     Group ID of the command
      * @param sequenceNum Sequence number

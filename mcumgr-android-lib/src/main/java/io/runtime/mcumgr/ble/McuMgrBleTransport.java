@@ -20,6 +20,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.ConditionVariable;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -48,6 +49,7 @@ public class McuMgrBleTransport extends McuMgrTransport implements McuMgrMtuProv
     private static final UUID SMP_SERVICE_UUID = UUID.fromString("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
     private static final UUID SMP_CHARAC_UUID = UUID.fromString("DA2E7828-FBCE-4E01-AE9E-261174997C48");
     private static final String TAG = McuMgrBleTransport.class.getSimpleName();
+    private static final int MAX_RETRY = 10;
     /**
      * The current context of the Application. This context must be valid during all the
      * FOTA operations.
@@ -135,6 +137,11 @@ public class McuMgrBleTransport extends McuMgrTransport implements McuMgrMtuProv
      * Byte output stream to reassemble notification fragments
      */
     private ByteArrayOutputStream mByteOutput;
+
+    /**
+     * Current number of connection retry
+     */
+    private int mConnectRetry = 0;
 
     /**
      * The constructor of this transport may throw RuntimeException depending of the permissions
@@ -234,15 +241,40 @@ public class McuMgrBleTransport extends McuMgrTransport implements McuMgrMtuProv
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             Log.d(TAG, "GATT connection state changed: status " + status + ", state " + newState);
 
+            if (status != 0) {
+                Log.e(TAG, "Error during gatt connection: " + status);
+            }
+            if (status == 0x85) {
+                /* Android is bad ... */
+                if (mConnectRetry < MAX_RETRY) {
+                    mConnectRetry++;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        mBluetoothGatt = mTarget.connectGatt(mContext, false, bleGattCallback, BluetoothDevice
+                                .TRANSPORT_LE);
+                    } else {
+                        mBluetoothGatt = mTarget.connectGatt(mContext, false, bleGattCallback);
+                    }
+                } else {
+                    mInitCb.onOpenError();
+                    if (!mWasAlreadyConnected) {
+                        mBluetoothGatt.disconnect();
+                        mBluetoothGatt.close();
+                    }
+                }
+            }
+
             if (newState == BluetoothGatt.STATE_DISCONNECTED ||
                     newState == BluetoothGatt.STATE_DISCONNECTING) {
+                mConnectRetry = 0;
                 return;
             }
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                mConnectRetry = 0;
                 Log.d(TAG, "Discovering services");
                 mBluetoothGatt.discoverServices();
             } else {
+                mConnectRetry = 0;
                 mInitCb.onOpenError();
                 if (!mWasAlreadyConnected) {
                     mBluetoothGatt.disconnect();
@@ -378,7 +410,11 @@ public class McuMgrBleTransport extends McuMgrTransport implements McuMgrMtuProv
         }
 
         Log.d(TAG, "Connecting to GATT server");
-        mBluetoothGatt = mTarget.connectGatt(mContext, true, bleGattCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mBluetoothGatt = mTarget.connectGatt(mContext, false, bleGattCallback, BluetoothDevice.TRANSPORT_LE);
+        } else {
+            mBluetoothGatt = mTarget.connectGatt(mContext, false, bleGattCallback);
+        }
     }
 
     private void initSmpServiceAndCharac() throws McuMgrException {

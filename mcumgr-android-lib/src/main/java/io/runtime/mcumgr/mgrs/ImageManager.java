@@ -21,9 +21,9 @@ import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.img.McuMgrImage;
+import io.runtime.mcumgr.resp.McuMgrSimpleResponse;
 import io.runtime.mcumgr.resp.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.resp.img.McuMgrImageUploadResponse;
-import io.runtime.mcumgr.resp.McuMgrSimpleResponse;
 import io.runtime.mcumgr.util.CBOR;
 
 import static io.runtime.mcumgr.McuMgrConstants.GROUP_IMAGE;
@@ -223,7 +223,7 @@ public class ImageManager extends McuManager {
      * @param offset   offset
      * @param callback the asynchronous callback
      */
-	/* TODO : create the correct response class */
+    /* TODO : create the correct response class */
     public void coreLoad(int offset, McuMgrCallback<McuMgrSimpleResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("off", offset);
