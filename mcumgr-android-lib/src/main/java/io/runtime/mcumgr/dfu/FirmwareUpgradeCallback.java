@@ -24,8 +24,9 @@ public interface FirmwareUpgradeCallback {
 
     /**
      * Called when the firmware upgrade changes state (see {@link FirmwareUpgradeManager.State}).
+     *
      * @param prevState previous state
-     * @param newState new state
+     * @param newState  new state
      */
     void onStateChanged(FirmwareUpgradeManager.State prevState,
                         FirmwareUpgradeManager.State newState);
@@ -37,6 +38,7 @@ public interface FirmwareUpgradeCallback {
 
     /**
      * Called when the firmware upgrade has failed.
+     *
      * @param state the state the upgrade failed in
      * @param error the error
      */
@@ -45,15 +47,17 @@ public interface FirmwareUpgradeCallback {
     /**
      * Called when the firmware upgrade has been canceled using the
      * {@link FirmwareUpgradeManager#cancel()} method.
+     *
      * @param state the state the upgrade was cancelled in
      */
     void onCancel(FirmwareUpgradeManager.State state);
 
     /**
      * Called when the {@link FirmwareUpgradeManager.State#UPLOAD} state progress has changed.
+     *
      * @param bytesSent the number of bytes sent so far
      * @param imageSize the total number of bytes to send
-     * @param ts the time that the successful response packet for the progress was received
+     * @param ts        the time that the successful response packet for the progress was received
      */
     void onUploadProgressChanged(int bytesSent, int imageSize, Date ts);
 }

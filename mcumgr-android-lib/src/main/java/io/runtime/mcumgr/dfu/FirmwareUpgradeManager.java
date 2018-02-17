@@ -8,6 +8,7 @@
 package io.runtime.mcumgr.dfu;
 
 import android.app.Activity;
+import android.os.Handler;
 import android.util.Log;
 
 import java.util.Date;
@@ -22,8 +23,8 @@ import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.mgrs.DefaultManager;
 import io.runtime.mcumgr.mgrs.ImageManager;
-import io.runtime.mcumgr.resp.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.resp.McuMgrVoidResponse;
+import io.runtime.mcumgr.resp.img.McuMgrImageStateResponse;
 
 // TODO Add retries for each step
 
@@ -336,31 +337,34 @@ public class FirmwareUpgradeManager
                     Log.d(TAG, "Checking if the transporter needs to be reinitialized");
                     if (mTransporter.initAfterReset()) {
                         mTransporter.close();
-                        mTransporter.open(new McuMgrOpenCallback() {
-                            @Override
-                            public void onOpen() {
-                                if (mTransporter instanceof McuMgrMtuProvider) {
-                                    ((McuMgrMtuProvider) mTransporter).getMtu(new McuMgrMtuCallback() {
-                                        @Override
-                                        public void onMtuFetched(int mtu) {
-                                            checkResetComplete();
-                                        }
+                        new Handler().postDelayed(() -> {
+                            mTransporter.open(new McuMgrOpenCallback() {
+                                @Override
+                                public void onOpen() {
+                                    if (mTransporter instanceof McuMgrMtuProvider) {
+                                        ((McuMgrMtuProvider) mTransporter).getMtu(new McuMgrMtuCallback() {
+                                            @Override
+                                            public void onMtuFetched(int mtu) {
+                                                checkResetComplete();
+                                            }
 
-                                        @Override
-                                        public void onMtuError() {
+                                            @Override
+                                            public void onMtuError() {
 
-                                        }
-                                    });
-                                } else {
-                                    checkResetComplete();
+                                            }
+                                        });
+                                    } else {
+                                        checkResetComplete();
+                                    }
                                 }
-                            }
 
-                            @Override
-                            public void onOpenError() {
+                                @Override
+                                public void onOpenError() {
 
-                            }
-                        });
+                                }
+                            });
+                        }, 500);
+
                     } else {
                         checkResetComplete();
                     }

@@ -12,8 +12,8 @@ import io.runtime.mcumgr.util.ByteUtil;
 public class McuMgrImageHeader {
     private static final String TAG = McuMgrImageHeader.class.getSimpleName();
 
-    public static int IMG_HEADER_MAGIC      = 0x96f3b83d;
-    public static int IMG_HEADER_MAGIC_V1   = 0x96f3b83c;
+    public static int IMG_HEADER_MAGIC = 0x96f3b83d;
+    public static int IMG_HEADER_MAGIC_V1 = 0x96f3b83c;
 
     private static final int HEADER_LENGTH = 4 + 4 + 2 + 2 + 4 + 4 + 4;
     private int mMagic;
@@ -25,7 +25,8 @@ public class McuMgrImageHeader {
     private McuMgrImageVersion mVersion;
     private int __mPad2;
 
-    private McuMgrImageHeader() {}
+    private McuMgrImageHeader() {
+    }
 
     public static McuMgrImageHeader fromBytes(byte[] b) throws McuMgrException {
         return fromBytes(b, 0);
