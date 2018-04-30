@@ -9,18 +9,17 @@ import android.content.Context;
 import android.os.ConditionVariable;
 import android.util.Log;
 
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.ble.manager.BleManager;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
+import no.nordicsemi.android.ble.BleManager;
+import no.nordicsemi.android.ble.Request;
 
 /**
  * The McuMgrBleTransport is an implementation for the {@link McuMgrScheme#BLE} transport scheme.
@@ -65,11 +64,6 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
      * notification is received (onCharacteristicNotified) or an error occurs (onError).
      */
     private ConditionVariable mSendLock = new ConditionVariable(false);
-
-    /**
-     * The MTU being used by this device.
-     */
-    private int mMtu = 23;
 
     /**
      * The current request being sent. Used to finish or fail the request from an asynchronous
@@ -151,7 +145,7 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
                     // Take a request for the queue, blocking until available.
                     mRequest = mSendQueue.take();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Waiting for request interrupted", e);
                     continue;
                 }
 
@@ -180,8 +174,8 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
                 }
 
                 // Ensure the mtu is sufficient
-                if (mMtu < mRequest.getBytes().length) {
-                    mRequest.fail(new InsufficientMtuException(mMtu));
+                if (getMtu() < mRequest.getBytes().length) {
+                    mRequest.fail(new InsufficientMtuException(getMtu()));
                     continue;
                 }
 
@@ -191,14 +185,7 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
                 // Write the characteristic
                 mSmpCharacteristic.setValue(mRequest.getBytes());
                 Log.d(TAG, "Writing characteristic (" + mRequest.getBytes().length + " bytes)");
-                boolean enqueued = writeCharacteristic(mSmpCharacteristic);
-
-                // If the request did not get enqueued, error the request
-                if (!enqueued) {
-                    mRequest.fail(new McuMgrException(
-                            "Write characteristic request could not be enqueued."));
-                    continue;
-                }
+                writeCharacteristic(mSmpCharacteristic);
 
                 // Block until the response is received
                 if (!mSendLock.block(10 * 1000)) {
@@ -246,11 +233,9 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
         // commands and receiving responses. Once these actions have completed onDeviceReady is
         // called
         @Override
-        protected Deque<Request> initGatt(BluetoothGatt gatt) {
-            final LinkedList<Request> requests = new LinkedList<>();
-            requests.push(Request.newEnableNotificationsRequest(mSmpCharacteristic));
-            requests.push(Request.newMtuRequest(512));
-            return requests;
+        protected void initialize() {
+            enableNotifications(mSmpCharacteristic);
+            requestMtu(512);
         }
 
         // Called once the device is ready. This method opens the lock waiting for the device to
@@ -269,15 +254,6 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
             mSmpCharacteristic = null;
             mReadyLock.open();
             mSendLock.open();
-        }
-
-        // Keeps track of the MTU being used to send insufficient MTU exceptions
-        @Override
-        protected void onMtuChanged(int mtu) {
-            mMtu = mtu;
-
-            // Call external callback
-            mCallbacks.onMtuChanged(mtu);
         }
 
         // Called when a characteristic gets notified. Check that the characteristic is the SMP
@@ -418,9 +394,9 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
             }
         }
         @Override
-        public void onLinklossOccur(BluetoothDevice device) {
+        public void onLinklossOccurred(BluetoothDevice device) {
             if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onLinklossOccur(device);
+                mExternalManagerCallbacks.onLinklossOccurred(device);
             }
         }
         @Override

@@ -25,6 +25,9 @@ android {
 }
 
 dependencies {
+    // Import the BLE Library
+    api project(':ble')
+
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
     testImplementation 'junit:junit:4.12'
@@ -33,5 +36,4 @@ dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.3'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.9.3'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
-    implementation 'no.nordicsemi.android:log:2.1.1'
 }

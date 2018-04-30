@@ -10,7 +10,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 
-import io.runtime.mcumgr.ble.manager.BleManagerCallbacks;
+import no.nordicsemi.android.ble.BleManagerCallbacks;
 
 /**
  * <b>DO NOT PERFORM ANY BLOCKING OPERATIONS INSIDE THESE CALLBACKS!</b>
@@ -58,7 +58,7 @@ public class McuMgrBleCallbacks implements BleManagerCallbacks {
     }
 
     @Override
-    public void onLinklossOccur(BluetoothDevice device) {
+    public void onLinklossOccurred(BluetoothDevice device) {
     }
 
     @Override
@@ -80,6 +80,10 @@ public class McuMgrBleCallbacks implements BleManagerCallbacks {
 
     @Override
     public void onBondingRequired(BluetoothDevice device) {
+    }
+
+    @Override
+    public void onBondingFailed(BluetoothDevice device) {
     }
 
     @Override
