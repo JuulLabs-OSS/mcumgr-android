@@ -35,7 +35,7 @@ import io.runtime.mcumgr.response.McuMgrResponse;
  * @param <T> The response type
  */
 // TODO make an abstract class and two subclasses for async and sync operations
-public class McuMgrRequest<T extends McuMgrResponse> {
+class McuMgrRequest<T extends McuMgrResponse> {
 
     private final static String TAG = "McuMgrRequest";
 
@@ -70,23 +70,14 @@ public class McuMgrRequest<T extends McuMgrResponse> {
     private McuMgrException mException;
 
     /**
-     * The expected length for defragmentation
-     */
-    private int mExpectedLength;
-
-    /**
-     * Data for defragmentation
-     */
-    private ByteBuffer mDefragData;
-
-    /**
      * Construct a McuMgrRequest
      *
      * @param requestData  this request's data
      * @param responseType this request's response type
      */
-    public McuMgrRequest(byte[] requestData, Class<T> responseType) {
-        this(requestData, responseType, null);
+    McuMgrRequest(byte[] requestData, Class<T> responseType) {
+        this.mBytes = requestData;
+        this.mResponseType = responseType;
     }
 
     /**
@@ -96,12 +87,14 @@ public class McuMgrRequest<T extends McuMgrResponse> {
      * @param responseType this request's response type
      * @param callback     callback for async operations
      */
-    public McuMgrRequest(byte[] requestData, Class<T> responseType,
-                         @Nullable McuMgrCallback<T> callback) {
+    McuMgrRequest(byte[] requestData, Class<T> responseType,
+                  @Nullable McuMgrCallback<T> callback) {
         this.mBytes = requestData;
         this.mResponseType = responseType;
         this.mCallback = callback;
-        this.mSyncLock = new ConditionVariable(false);
+        if (callback != null) {
+            this.mSyncLock = new ConditionVariable(false);
+        }
     }
 
     public byte[] getBytes() {
@@ -137,7 +130,7 @@ public class McuMgrRequest<T extends McuMgrResponse> {
     }
 
     /**
-     * Fail a request with an mException
+     * Fail a request with an mException.
      *
      * @param e the mException to throw or pass into the error mCallback.
      */
@@ -151,37 +144,12 @@ public class McuMgrRequest<T extends McuMgrResponse> {
     }
 
     /**
-     * Receive a response. If the mBytes passed in make up the entire packet this method will
-     * finish the request and return true. If length of the packet data is less than the
-     * expected length (i.e. we require additional fragments) this method will store the mBytes
-     * and return false.
+     * Receive a response.
      *
-     * @param bytes the response mBytes
-     * @return true if the entire response has been received and the operations is complete, false
-     * if additional fragments are required.
+     * @param bytes the response bytes
      */
-    public boolean receive(byte[] bytes) {
+    public void receive(byte[] bytes) {
         try {
-            // Check if we need to defragment multiple notifications
-            if (McuMgrResponse.requiresDefragmentation(McuMgrScheme.BLE, bytes)) {
-                // If this is the first packet of many, get the expected length and allocate a
-                // buffer.
-                if (mDefragData == null) {
-                    mExpectedLength = McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, bytes);
-                    mDefragData = ByteBuffer.allocate(mExpectedLength);
-                }
-                // Put mBytes into buffer
-                mDefragData.put(bytes);
-
-                // Set the mBytes to the new appended-array
-                bytes = mDefragData.array();
-
-                // If the current length is still to short, return false
-                if (mDefragData.position() < mExpectedLength) {
-                    return false;
-                }
-            }
-
             // Build a mResponse of the required type
             mResponse = McuMgrResponse.buildResponse(McuMgrScheme.BLE, bytes, mResponseType);
 
@@ -194,6 +162,5 @@ public class McuMgrRequest<T extends McuMgrResponse> {
         } catch (IOException e) {
             fail(new McuMgrException("Error building McuMgrResponse from response data", e));
         }
-        return true;
     }
 }

@@ -199,7 +199,7 @@ public class McuMgrResponse {
         }
 
         byte[] payload = Arrays.copyOfRange(bytes, McuMgrHeader.NMGR_HEADER_LEN, bytes.length);
-        McuMgrHeader header = McuMgrHeader.fromBytes(Arrays.copyOf(bytes, McuMgrHeader.NMGR_HEADER_LEN));
+        McuMgrHeader header = McuMgrHeader.fromBytes(bytes);
 
         // Initialize response and set fields
         T response = CBOR.toObject(payload, type);
@@ -257,8 +257,7 @@ public class McuMgrResponse {
         if (scheme.isCoap()) {
             throw new RuntimeException("Method not implemented for coap");
         } else {
-            byte[] headerBytes = Arrays.copyOf(bytes, McuMgrHeader.NMGR_HEADER_LEN);
-            McuMgrHeader header = McuMgrHeader.fromBytes(headerBytes);
+            McuMgrHeader header = McuMgrHeader.fromBytes(bytes);
             if (header == null) {
                 throw new IOException("Invalid McuMgrHeader");
             }

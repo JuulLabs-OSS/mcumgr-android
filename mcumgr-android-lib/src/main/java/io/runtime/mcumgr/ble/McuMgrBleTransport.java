@@ -3,10 +3,10 @@ package io.runtime.mcumgr.ble;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.os.ConditionVariable;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.UUID;
@@ -20,22 +20,25 @@ import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.Request;
+import no.nordicsemi.android.ble.callback.DataReceivedCallback;
+import no.nordicsemi.android.ble.callback.FailCallback;
+import no.nordicsemi.android.ble.data.Data;
+import no.nordicsemi.android.ble.error.GattError;
 
 /**
  * The McuMgrBleTransport is an implementation for the {@link McuMgrScheme#BLE} transport scheme.
  * This class extends {@link BleManager}, which handles the BLE state machine and owns the
  * {@link BluetoothGatt} object that executes BLE actions. If you wish to integrate McuManager an
  * existing BLE implementation, you may simply implement {@link McuMgrTransport} or use this class
- * to perform your BLE actions by calling {@link BleManager#enqueue(Request)} and setting callbacks
- * using {@link McuMgrBleTransport#setGattCallbacks(McuMgrBleCallbacks)}.
+ * to perform your BLE actions by calling {@link BleManager#enqueue(Request)}.
  */
 public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implements McuMgrTransport {
 
     private final static String TAG = "McuMgrBleTransport";
 
-    private static final UUID SMP_SERVICE_UUID =
+    private final static UUID SMP_SERVICE_UUID =
             UUID.fromString("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
-    private static final UUID SMP_CHAR_UUID =
+    private final static UUID SMP_CHAR_UUID =
             UUID.fromString("DA2E7828-FBCE-4E01-AE9E-261174997C48");
 
     /**
@@ -77,11 +80,6 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
     private BluetoothDevice mDevice;
 
     /**
-     * Optional external callbacks
-     */
-    private McuMgrBleCallbacks mExternalManagerCallbacks;
-
-    /**
      * Construct a McuMgrBleTransport object.
      *
      * @param context The context used to connect to the device
@@ -90,13 +88,7 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
     public McuMgrBleTransport(Context context, BluetoothDevice device) {
         super(context);
         mDevice = device;
-        super.setGattCallbacks(new CallbackForwarder());
         new SendThread().start();
-    }
-
-    @Override
-    public void setGattCallbacks(McuMgrBleCallbacks callbacks) {
-        mExternalManagerCallbacks = callbacks;
     }
 
     @Override
@@ -116,7 +108,6 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
     @Override
     public <T extends McuMgrResponse> T send(byte[] payload, Class<T> responseType)
             throws McuMgrException {
-
         return new McuMgrRequest<>(payload, responseType, null).synchronous(mSendQueue);
     }
 
@@ -234,7 +225,22 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
         // called
         @Override
         protected void initialize() {
-            enableNotifications(mSmpCharacteristic);
+            enableNotifications(mSmpCharacteristic)
+                    .merge(new McuMgrRequestMerger())
+                    .with(new DataReceivedCallback() {
+                        @Override
+                        public void onDataReceived(@NonNull BluetoothDevice device, @NonNull Data data) {
+                            mRequest.receive(data.getValue());
+                            mSendLock.open();
+                        }
+                    })
+                    .fail(new FailCallback() {
+                        @Override
+                        public void onRequestFailed(@NonNull BluetoothDevice device, int status) {
+                            mSendLock.open();
+                            mRequest.fail(new McuMgrException(GattError.parse(status)));
+                        }
+                    });
             requestMtu(512);
         }
 
@@ -255,189 +261,5 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
             mReadyLock.open();
             mSendLock.open();
         }
-
-        // Called when a characteristic gets notified. Check that the characteristic is the SMP
-        // Characteristic and finish the request
-        @Override
-        protected void onCharacteristicNotified(BluetoothGatt gatt,
-                                                BluetoothGattCharacteristic characteristic) {
-            if (characteristic.getUuid().equals(mSmpCharacteristic.getUuid())) {
-                if (mRequest != null) {
-                    boolean isFinished = mRequest.receive(characteristic.getValue());
-                    if (!isFinished) {
-                        // Forward callback
-                        mCallbacks.onCharacteristicNotified(gatt.getDevice(), characteristic);
-                        return;
-                    }
-                }
-                mSendLock.open();
-            }
-
-            // Forward callback
-            mCallbacks.onCharacteristicNotified(gatt.getDevice(), characteristic);
-        }
-
-        // Forwarded callbacks. The following callbacks are only used to forward callbacks
-        @Override
-        protected void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicRead(gatt, characteristic);
-            mCallbacks.onCharacteristicRead(gatt.getDevice(), characteristic);
-        }
-
-        @Override
-        protected void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicWrite(gatt, characteristic);
-            mCallbacks.onCharacteristicWrite(gatt.getDevice(), characteristic);
-        }
-
-        @Override
-        protected void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor) {
-            super.onDescriptorRead(gatt, descriptor);
-            mCallbacks.onDescriptorRead(gatt.getDevice(), descriptor);
-        }
-
-        @Override
-        protected void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor) {
-            super.onDescriptorWrite(gatt, descriptor);
-            mCallbacks.onDescriptorWrite(gatt.getDevice(), descriptor);
-        }
-
-        @Override
-        protected void onCharacteristicIndicated(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicIndicated(gatt, characteristic);
-            mCallbacks.onCharacteristicIndicated(gatt.getDevice(), characteristic);
-        }
     };
-
-    private class CallbackForwarder extends McuMgrBleCallbacks {
-
-        // This method will error the current request.
-        // TODO if user queues an independent request, the request may cause an error and fail the current McuMgr request.
-        @Override
-        public void onError(BluetoothDevice device, String message, int errorCode) {
-            if (mRequest != null) {
-                mSendLock.open();
-                mRequest.fail(new McuMgrException(message));
-            }
-
-            // Forward callback
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onError(device, message, errorCode);
-            }
-        }
-
-        // Forwarded callbacks
-        @Override
-        public void onCharacteristicNotified(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onCharacteristicNotified(device, characteristic);
-            }
-        }
-        @Override
-        public void onCharacteristicIndicated(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onCharacteristicIndicated(device, characteristic);
-            }
-        }
-        @Override
-        public void onCharacteristicRead(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onCharacteristicRead(device, characteristic);
-            }
-        }
-        @Override
-        public void onCharacteristicWrite(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onCharacteristicWrite(device, characteristic);
-            }
-        }
-        @Override
-        public void onDescriptorRead(BluetoothDevice device, BluetoothGattDescriptor descriptor) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDescriptorRead(device, descriptor);
-            }
-        }
-        @Override
-        public void onDescriptorWrite(BluetoothDevice device, BluetoothGattDescriptor descriptor) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDescriptorWrite(device, descriptor);
-            }
-        }
-        @Override
-        public void onMtuChanged(int mtu) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onMtuChanged(mtu);
-            }
-        }
-        @Override
-        public void onDeviceConnecting(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDeviceConnecting(device);
-            }
-        }
-        @Override
-        public void onDeviceConnected(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDeviceConnected(device);
-            }
-        }
-        @Override
-        public void onDeviceDisconnecting(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDeviceDisconnecting(device);
-            }
-        }
-        @Override
-        public void onDeviceDisconnected(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDeviceDisconnected(device);
-            }
-        }
-        @Override
-        public void onLinklossOccurred(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onLinklossOccurred(device);
-            }
-        }
-        @Override
-        public void onServicesDiscovered(BluetoothDevice device, boolean optionalServicesFound) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onServicesDiscovered(device, optionalServicesFound);
-            }
-        }
-        @Override
-        public void onDeviceReady(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDeviceReady(device);
-            }
-        }
-        @Override
-        public boolean shouldEnableBatteryLevelNotifications(BluetoothDevice device) {
-            return false;
-        }
-        @Override
-        public void onBatteryValueReceived(BluetoothDevice device, int value) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onBatteryValueReceived(device, value);
-            }
-        }
-        @Override
-        public void onBondingRequired(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onBondingRequired(device);
-            }
-        }
-        @Override
-        public void onBonded(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onBonded(device);
-            }
-        }
-        @Override
-        public void onDeviceNotSupported(BluetoothDevice device) {
-            if (mExternalManagerCallbacks != null) {
-                mExternalManagerCallbacks.onDeviceNotSupported(device);
-            }
-        }
-    }
 }
