@@ -17,14 +17,15 @@ import io.runtime.mcumgr.image.tlv.McuMgrImageTlv;
  * For more info about McuBoot and image format see:
  * <a href="https://runtimeco.github.io/mcuboot/design.html">https://runtimeco.github.io/mcuboot/design.html</a>
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class McuMgrImage {
 
     public final static int IMG_HASH_LEN = 32;
 
-    private McuMgrImageHeader mHeader;
-    private McuMgrImageTlv mTlv;
-    private byte[] mData;
-    private byte[] mHash;
+    private final McuMgrImageHeader mHeader;
+    private final McuMgrImageTlv mTlv;
+    private final byte[] mData;
+    private final byte[] mHash;
 
     public McuMgrImage(byte[] data) throws McuMgrException {
         mData = data;
@@ -34,6 +35,10 @@ public class McuMgrImage {
         if (mHash == null) {
             throw new McuMgrException("Image TLV trailer does not contain an image hash!");
         }
+    }
+
+    public byte[] getData() {
+        return mData;
     }
 
     public McuMgrImageHeader getHeader() {

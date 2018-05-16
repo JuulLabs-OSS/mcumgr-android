@@ -19,11 +19,12 @@ import io.runtime.mcumgr.image.McuMgrImageHeader;
  * For more info about McuBoot and image format see:
  * <a href="https://runtimeco.github.io/mcuboot/design.html">https://runtimeco.github.io/mcuboot/design.html</a>
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrImageTlv {
 
-    public final static int IMG_TLV_SHA256 = 0x10;
-    public final static int IMG_TLV_SHA256_V1 = 0x01;
-    public final static int IMG_TLV_INFO_MAGIC = 0x6907;
+    private final static int IMG_TLV_SHA256 = 0x10;
+    private final static int IMG_TLV_SHA256_V1 = 0x01;
+    private final static int IMG_TLV_INFO_MAGIC = 0x6907;
 
     private byte[] mData;
     private McuMgrImageHeader mHeader;

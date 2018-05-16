@@ -43,22 +43,23 @@ import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
  * and can be paused, resumed, and canceled using {@link FirmwareUpgradeManager#pause},
  * {@link FirmwareUpgradeManager#resume}, and {@link FirmwareUpgradeManager#cancel}.
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class FirmwareUpgradeManager {
 
     private final static String TAG = "FirmwareUpgradeManager";
 
     /**
-     * Transporter used to initialize managers
+     * Transporter used to initialize managers.
      */
     private final McuMgrTransport mTransporter;
 
     /**
-     * Performs the image upload, test, and confirmation steps
+     * Performs the image upload, test, and confirmation steps.
      */
     private ImageManager mImageManager;
 
     /**
-     * Performs the reset command
+     * Performs the reset command.
      */
     private DefaultManager mDefaultManager;
 
@@ -68,42 +69,40 @@ public class FirmwareUpgradeManager {
     private FirmwareUpgradeCallback mCallback;
 
     /**
-     * Image data to upload
+     * Image data to upload.
      */
     private byte[] mImageData;
 
     /**
-     * Hash of the image data
+     * Hash of the image data.
      */
     private byte[] mHash;
 
     /**
-     * State of the firmware upgrade
+     * State of the firmware upgrade.
      */
     private State mState;
 
     /**
-     * Paused flag
+     * Paused flag.
      */
     private boolean mPaused = false;
 
     /**
-     * Flag for setting callbacks to run on the main UI thread
+     * Flag for setting callbacks to run on the main UI thread.
      */
     private boolean mUiThreadCallbacks = true;
 
     /**
      * Construct a firmware upgrade manager. If using this constructor, image data must be set
      * using {@link FirmwareUpgradeManager#setImageData} before calling
-     * {@link FirmwareUpgradeManager#start}
+     * {@link FirmwareUpgradeManager#start}.
      *
-     * @param transport the transporter to use
-     * @param callback  the callback
-     * @throws McuMgrException Thrown if the image data is invalid
+     * @param transport the transporter to use.
+     * @param callback  the callback.
      */
     public FirmwareUpgradeManager(@NonNull McuMgrTransport transport,
-                                  @NonNull FirmwareUpgradeCallback callback)
-            throws McuMgrException {
+                                  @NonNull FirmwareUpgradeCallback callback) {
         mCallback = callback;
         mState = State.NONE;
         mTransporter = transport;
@@ -114,10 +113,10 @@ public class FirmwareUpgradeManager {
     /**
      * Construct a firmware upgrade manager.
      *
-     * @param transport the transporter to use
-     * @param imageData the data of the image to send
-     * @param callback  the callback
-     * @throws McuMgrException Thrown if the image data is invalid
+     * @param transport the transporter to use.
+     * @param imageData the data of the image to send.
+     * @param callback  the callback.
+     * @throws McuMgrException Thrown if the image data is invalid.
      */
     public FirmwareUpgradeManager(@NonNull McuMgrTransport transport, byte[] imageData,
                                   @NonNull FirmwareUpgradeCallback callback) throws McuMgrException {
@@ -134,7 +133,8 @@ public class FirmwareUpgradeManager {
 
     /**
      * If true, run all callbacks on the UI thread (default).
-     * @param uiThreadCallbacks true if all callbacks should run on the UI thread
+     *
+     * @param uiThreadCallbacks true if all callbacks should run on the UI thread.
      */
     public void setCallbackOnUiThread(boolean uiThreadCallbacks) {
         mUiThreadCallbacks = uiThreadCallbacks;
@@ -143,7 +143,7 @@ public class FirmwareUpgradeManager {
     /**
      * Set the image data of the upgrade. This must be called prior to starting the upgrade.
      *
-     * @param imageData the image data to set
+     * @param imageData the image data to set.
      * @throws McuMgrException if the format of the image data is not valid.
      */
     public void setImageData(byte[] imageData) throws McuMgrException {
@@ -156,9 +156,9 @@ public class FirmwareUpgradeManager {
     }
 
     /**
-     * Set the MTU of the image upload
+     * Set the MTU of the image upload.
      *
-     * @param mtu the mtu
+     * @param mtu the mtu.
      */
     public void setUploadMtu(int mtu) {
         mImageManager.setUploadMtu(mtu);
@@ -231,7 +231,7 @@ public class FirmwareUpgradeManager {
     /**
      * Determine whether the firmware upgrade is in progress.
      *
-     * @return true if the firmware upgrade is in progress
+     * @return True if the firmware upgrade is in progress, false otherwise.
      */
     public boolean isInProgress() {
         return mState.isInProgress() && !isPaused();
@@ -240,23 +240,23 @@ public class FirmwareUpgradeManager {
     /**
      * Determine whether the firmware upgrade is paused.
      *
-     * @return true if the firmware upgrade is paused, false otherwise
+     * @return True if the firmware upgrade is paused, false otherwise.
      */
     public boolean isPaused() {
         return mPaused;
     }
 
     /**
-     * Get the current {@link State} of the firmware upgrade
+     * Get the current {@link State} of the firmware upgrade.
      *
-     * @return the current state
+     * @return The current state.
      */
     public State getState() {
         return mState;
     }
 
     /**
-     * Called by {@link FirmwareUpgradeManager#resume} to run the current state
+     * Called by {@link FirmwareUpgradeManager#resume} to run the current state.
      */
     private synchronized void currentState() {
         if (mPaused) {
@@ -281,7 +281,7 @@ public class FirmwareUpgradeManager {
     }
 
     /**
-     * Called when a state has completed. Sets and executes the next state
+     * Called when a state has completed. Sets and executes the next state.
      */
     private synchronized void nextState() {
         if (mPaused) {
@@ -321,8 +321,8 @@ public class FirmwareUpgradeManager {
     //******************************************************************
 
     /**
-     * State: TEST
-     * Callback for the test command
+     * State: TEST.
+     * Callback for the test command.
      */
     private McuMgrCallback<McuMgrImageStateResponse> mTestCallback = new McuMgrCallback<McuMgrImageStateResponse>() {
         @Override
@@ -353,8 +353,8 @@ public class FirmwareUpgradeManager {
     };
 
     /**
-     * State: RESET
-     * Callback for the reset command
+     * State: RESET.
+     * Callback for the reset command.
      */
     private McuMgrCallback<McuMgrResponse> mResetCallback = new McuMgrCallback<McuMgrResponse>() {
         @Override
@@ -370,8 +370,8 @@ public class FirmwareUpgradeManager {
     };
 
     /**
-     * State: CONFIRM
-     * Callback for the confirm command
+     * State: CONFIRM.
+     * Callback for the confirm command.
      */
     private McuMgrCallback<McuMgrImageStateResponse> mConfirmCallback =
             new McuMgrCallback<McuMgrImageStateResponse>() {
@@ -418,7 +418,7 @@ public class FirmwareUpgradeManager {
     //******************************************************************
 
     /**
-     * Waits 21 seconds for the disconnect to occur after a reset then begins polling the device
+     * Waits 21 seconds for the disconnect to occur after a reset, then begins polling the device
      * until a response is received.
      */
     private Thread mResetPollThread = new Thread(new Runnable() {
@@ -431,7 +431,6 @@ public class FirmwareUpgradeManager {
                     wait(21 * 1000);
                 }
                 while (true) {
-
                     checkResetComplete();
 
                     if (attempts == 4) {
@@ -598,7 +597,7 @@ public class FirmwareUpgradeManager {
     //******************************************************************
 
     /**
-     * Used to execute callbacks on the main UI thread
+     * Used to execute callbacks on the main UI thread.
      */
     private static class MainThreadExecutor implements Executor {
         private Handler mainThreadHandler = new Handler(Looper.getMainLooper());

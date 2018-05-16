@@ -11,13 +11,15 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Queue;
 
 import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrHeader;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
+import io.runtime.mcumgr.util.CBOR;
 
 /**
  * A McuMgrRequest is a helper class which holds the necessary info and methods to perform both
@@ -35,6 +37,7 @@ import io.runtime.mcumgr.response.McuMgrResponse;
  * @param <T> The response type
  */
 // TODO make an abstract class and two subclasses for async and sync operations
+@SuppressWarnings("unused")
 class McuMgrRequest<T extends McuMgrResponse> {
 
     private final static String TAG = "McuMgrRequest";
@@ -76,8 +79,7 @@ class McuMgrRequest<T extends McuMgrResponse> {
      * @param responseType this request's response type
      */
     McuMgrRequest(byte[] requestData, Class<T> responseType) {
-        this.mBytes = requestData;
-        this.mResponseType = responseType;
+        this(requestData, responseType, null);
     }
 
     /**
@@ -99,6 +101,17 @@ class McuMgrRequest<T extends McuMgrResponse> {
 
     public byte[] getBytes() {
         return mBytes;
+    }
+
+    @Override
+    public String toString() {
+        try {
+            McuMgrHeader header = McuMgrHeader.fromBytes(mBytes);
+            byte[] payload = Arrays.copyOfRange(mBytes, 8, mBytes.length);
+            return header + ", Payload: " + CBOR.toString(payload);
+        } catch (IOException e) {
+            return Arrays.toString(mBytes);
+        }
     }
 
     /**

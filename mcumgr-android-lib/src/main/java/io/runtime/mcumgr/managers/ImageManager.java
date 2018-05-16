@@ -38,6 +38,7 @@ import io.runtime.mcumgr.util.CBOR;
  * a full firmware upgrade use {@link FirmwareUpgradeManager}.
  * @see FirmwareUpgradeManager
  */
+@SuppressWarnings("unused")
 public class ImageManager extends McuManager {
 
     private final static String TAG = "ImageManager";
@@ -45,12 +46,12 @@ public class ImageManager extends McuManager {
     private final static int IMG_HASH_LEN = 32;
 
     // Image manager command IDs
-    public final static int ID_STATE = 0;
-    public final static int ID_UPLOAD = 1;
-    public final static int ID_FILE = 2;
-    public final static int ID_CORELIST = 3;
-    public final static int ID_CORELOAD = 4;
-    public final static int ID_ERASE = 5;
+    private final static int ID_STATE = 0;
+    private final static int ID_UPLOAD = 1;
+    private final static int ID_FILE = 2;
+    private final static int ID_CORELIST = 3;
+    private final static int ID_CORELOAD = 4;
+    private final static int ID_ERASE = 5;
 
     /**
      * Construct an image manager.
@@ -66,7 +67,7 @@ public class ImageManager extends McuManager {
      * <p>
      * The response payload can be mapped to a {@link McuMgrImageStateResponse}.
      *
-     * @param callback the asynchronous callback
+     * @param callback the asynchronous callback.
      */
     public void list(McuMgrCallback<McuMgrImageStateResponse> callback) {
         send(OP_READ, ID_STATE, null, McuMgrImageStateResponse.class, callback);
@@ -77,7 +78,7 @@ public class ImageManager extends McuManager {
      * <p>
      * The response payload can be mapped to a {@link McuMgrImageStateResponse}.
      *
-     * @return the response
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     public McuMgrImageStateResponse list() throws McuMgrException {
@@ -90,8 +91,8 @@ public class ImageManager extends McuManager {
      * Testing an image will verify the image and put it in a pending state. That is, when the
      * device resets, the pending image will be booted into.
      *
-     * @param hash     the hash of the image to test
-     * @param callback the asynchronous callback
+     * @param hash     the hash of the image to test.
+     * @param callback the asynchronous callback.
      */
     public void test(byte[] hash, McuMgrCallback<McuMgrImageStateResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
@@ -106,8 +107,8 @@ public class ImageManager extends McuManager {
      * Testing an image will verify the image and put it in a pending state. That is, when the
      * device resets, the pending image will be booted into.
      *
-     * @param hash the hash of the image to test
-     * @return the response
+     * @param hash the hash of the image to test.
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     public McuMgrImageStateResponse test(byte[] hash) throws McuMgrException {
@@ -122,8 +123,8 @@ public class ImageManager extends McuManager {
      * <p>
      * Confirming an image will make it the default to boot into.
      *
-     * @param hash     the hash of the image to confirm
-     * @param callback the asynchronous callback
+     * @param hash     the hash of the image to confirm.
+     * @param callback the asynchronous callback.
      */
     public void confirm(byte[] hash, McuMgrCallback<McuMgrImageStateResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
@@ -137,8 +138,8 @@ public class ImageManager extends McuManager {
      * <p>
      * Confirming an image will make it the default to boot into.
      *
-     * @param hash the hash of the image to confirm
-     * @return the response
+     * @param hash the hash of the image to confirm.
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     public McuMgrImageStateResponse confirm(byte[] hash) throws McuMgrException {
@@ -153,8 +154,8 @@ public class ImageManager extends McuManager {
      * <p>
      * Only one upload can occur per ImageManager.
      *
-     * @param data     the image data to upload to slot 1
-     * @param callback the image upload callback
+     * @param data     the image data to upload to slot 1.
+     * @param callback the image upload callback.
      */
     public synchronized void upload(@NonNull byte[] data, @NonNull ImageUploadCallback callback) {
         if (mUploadState == STATE_NONE) {
@@ -173,17 +174,16 @@ public class ImageManager extends McuManager {
     /**
      * Erase the image in slot 1 (asynchronous).
      *
-     * @param callback the asynchronous callback
+     * @param callback the asynchronous callback.
      */
     public void erase(McuMgrCallback<McuMgrResponse> callback) {
-        send(OP_WRITE, ID_STATE, null, McuMgrResponse.class,
-                callback);
+        send(OP_WRITE, ID_STATE, null, McuMgrResponse.class, callback);
     }
 
     /**
      * Erase the image in slot 1 (synchronous).
      *
-     * @return the response
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     public McuMgrResponse erase() throws McuMgrException {
@@ -193,7 +193,7 @@ public class ImageManager extends McuManager {
     /**
      * Core list (asynchronous).
      *
-     * @param callback the asynchronous callback
+     * @param callback the asynchronous callback.
      */
     /* TODO : create the correct response class. I don't know what this does */
     public void coreList(McuMgrCallback<McuMgrResponse> callback) {
@@ -203,7 +203,7 @@ public class ImageManager extends McuManager {
     /**
      * Core list (synchronous).
      *
-     * @return the response
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     /* TODO : create the correct response class. I don't know what this does */
@@ -214,8 +214,8 @@ public class ImageManager extends McuManager {
     /**
      * Core load (asynchronous).
      *
-     * @param offset   offset
-     * @param callback the asynchronous callback
+     * @param offset   offset.
+     * @param callback the asynchronous callback.
      */
     /* TODO : create the correct response class. I don't know what this does */
     public void coreLoad(int offset, McuMgrCallback<McuMgrResponse> callback) {
@@ -227,8 +227,8 @@ public class ImageManager extends McuManager {
     /**
      * Core load (synchronous).
      *
-     * @param offset offset
-     * @return the response
+     * @param offset offset.
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     /* TODO : create the correct response class. I don't know what this does */
@@ -241,7 +241,7 @@ public class ImageManager extends McuManager {
     /**
      * Core erase (asynchronous).
      *
-     * @param callback the asynchronous callback
+     * @param callback the asynchronous callback.
      */
     /* TODO : create the correct response class. I don't know what this does */
     public void coreErase(McuMgrCallback<McuMgrResponse> callback) {
@@ -251,7 +251,7 @@ public class ImageManager extends McuManager {
     /**
      * Core erase (synchronous).
      *
-     * @return the response
+     * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
     /* TODO : create the correct response class. I don't know what this does */
@@ -267,21 +267,21 @@ public class ImageManager extends McuManager {
     private final static int DEFAULT_MTU = 512;
 
     // Upload states
-    public final static int STATE_NONE = 0;
-    public final static int STATE_UPLOADING = 1;
-    public final static int STATE_PAUSED = 2;
+    private final static int STATE_NONE = 0;
+    private final static int STATE_UPLOADING = 1;
+    private final static int STATE_PAUSED = 2;
 
     // Upload variables
     private int mUploadState = STATE_NONE;
     private int mUploadOffset = 0;
+    private int mMtu = DEFAULT_MTU;
     private byte[] mImageUploadData;
     private ImageUploadCallback mUploadCallback;
-    private int mMtu = DEFAULT_MTU;
 
     /**
      * Sets the upload MTU.
      *
-     * @param mtu the MTU to use for image upload
+     * @param mtu the MTU to use for image upload.
      */
     public synchronized boolean setUploadMtu(int mtu) {
         Log.v(TAG, "Setting image upload MTU");
@@ -303,7 +303,8 @@ public class ImageManager extends McuManager {
     /**
      * Get the current upload state. ({@link ImageManager#STATE_NONE},
      * {@link ImageManager#STATE_UPLOADING}, {@link ImageManager#STATE_PAUSED}).
-     * @return the current upload state.
+     *
+     * @return The current upload state.
      */
     public synchronized int getUploadState() {
         return mUploadState;
@@ -345,7 +346,6 @@ public class ImageManager extends McuManager {
         }
     }
 
-
     private synchronized void failUpload(McuMgrException error) {
         if (mUploadCallback != null) {
             mUploadCallback.onUploadFail(error);
@@ -362,7 +362,6 @@ public class ImageManager extends McuManager {
         ImageUploadCallback tempCallback = mUploadCallback;
         resetUpload();
         upload(tempData, tempCallback);
-        return;
     }
 
     private synchronized void resetUpload() {
@@ -392,9 +391,7 @@ public class ImageManager extends McuManager {
 
         // Copy the data from the image into a buffer.
         byte[] sendBuffer = new byte[dataLength];
-        for (int i = 0; i < dataLength; i++) {
-            sendBuffer[i] = mImageUploadData[offset + i];
-        }
+        System.arraycopy(mImageUploadData, offset, sendBuffer, 0, dataLength);
 
         // Create the map of key-values for the McuManager payload
         HashMap<String, Object> payloadMap = new HashMap<>();
@@ -515,14 +512,14 @@ public class ImageManager extends McuManager {
         /**
          * Called when a response has been received successfully.
          *
-         * @param bytesSent the number of bytes sent so far
-         * @param imageSize the size of the image in bytes
-         * @param ts        the timestamp of when the response was received
+         * @param bytesSent the number of bytes sent so far.
+         * @param imageSize the size of the image in bytes.
+         * @param ts        the timestamp of when the response was received.
          */
         void onProgressChange(int bytesSent, int imageSize, Date ts);
 
         /**
-         * Called when the upload has failed
+         * Called when the upload has failed.
          *
          * @param error the error. See the cause for more info.
          */

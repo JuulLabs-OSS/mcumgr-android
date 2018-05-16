@@ -67,7 +67,7 @@ public enum McuMgrErrorCode {
 
     @Override
     public String toString() {
-        return "McuMgrError: " + super.toString() + "(" + mCode + ")";
+        return "McuMgrError: " + super.toString() + " (" + mCode + ")";
     }
 
     public static McuMgrErrorCode valueOf(int error) {
