@@ -19,11 +19,12 @@ import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import no.nordicsemi.android.ble.BleManager;
+import no.nordicsemi.android.ble.BleManagerCallbacks;
 import no.nordicsemi.android.ble.Request;
-import no.nordicsemi.android.ble.callback.DataReceivedCallback;
 import no.nordicsemi.android.ble.callback.FailCallback;
-import no.nordicsemi.android.ble.data.Data;
 import no.nordicsemi.android.ble.error.GattError;
+import no.nordicsemi.android.ble.exception.DeviceDisconnectedException;
+import no.nordicsemi.android.ble.response.ReadResponse;
 
 /**
  * The McuMgrBleTransport is an implementation for the {@link McuMgrScheme#BLE} transport scheme.
@@ -32,7 +33,7 @@ import no.nordicsemi.android.ble.error.GattError;
  * existing BLE implementation, you may simply implement {@link McuMgrTransport} or use this class
  * to perform your BLE actions by calling {@link BleManager#enqueue(Request)}.
  */
-public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implements McuMgrTransport {
+public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implements McuMgrTransport {
 
     private final static String TAG = "McuMgrBleTransport";
 
@@ -61,12 +62,6 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
      * Queue of requests to send from Mcu Manager
      */
     private LinkedBlockingQueue<McuMgrRequest> mSendQueue = new LinkedBlockingQueue<>();
-
-    /**
-     * Used to wait while a writeCharacteristic request is sent. This lock is opened when a
-     * notification is received (onCharacteristicNotified) or an error occurs (onError).
-     */
-    private ConditionVariable mSendLock = new ConditionVariable(false);
 
     /**
      * The current request being sent. Used to finish or fail the request from an asynchronous
@@ -170,17 +165,24 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
                     continue;
                 }
 
-                // Close the send lock
-                mSendLock.close();
-
-                // Write the characteristic
-                mSmpCharacteristic.setValue(mRequest.getBytes());
-                Log.d(TAG, "Writing characteristic (" + mRequest.getBytes().length + " bytes)");
-                writeCharacteristic(mSmpCharacteristic);
-
-                // Block until the response is received
-                if (!mSendLock.block(10 * 1000)) {
+                try {
+                    // Block until the response is received
+                    ReadResponse response = setNotificationCallback(mSmpCharacteristic)
+							.merge(new McuMgrRequestMerger())
+							.awaitAfter(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Write the characteristic
+                                    Log.i(TAG, "Writing characteristic " + mRequest);
+                                    writeCharacteristic(mSmpCharacteristic, mRequest.getBytes());
+                                }
+                            }, ReadResponse.class, 10 * 1000);
+                    Log.i(TAG, "Response received: " + response.getRawData());
+                    mRequest.receive(response.getRawData().getValue());
+                } catch (InterruptedException e) {
                     mRequest.fail(new McuMgrException("Send timed out."));
+                } catch (DeviceDisconnectedException e) {
+                    mRequest.fail(new McuMgrException("Device disconnected."));
                 }
             }
         }
@@ -226,18 +228,9 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
         @Override
         protected void initialize() {
             enableNotifications(mSmpCharacteristic)
-                    .merge(new McuMgrRequestMerger())
-                    .with(new DataReceivedCallback() {
-                        @Override
-                        public void onDataReceived(@NonNull BluetoothDevice device, @NonNull Data data) {
-                            mRequest.receive(data.getValue());
-                            mSendLock.open();
-                        }
-                    })
                     .fail(new FailCallback() {
                         @Override
                         public void onRequestFailed(@NonNull BluetoothDevice device, int status) {
-                            mSendLock.open();
                             mRequest.fail(new McuMgrException(GattError.parse(status)));
                         }
                     });
@@ -259,7 +252,6 @@ public class McuMgrBleTransport extends BleManager<McuMgrBleCallbacks> implement
             mSmpService = null;
             mSmpCharacteristic = null;
             mReadyLock.open();
-            mSendLock.open();
         }
     };
 }
