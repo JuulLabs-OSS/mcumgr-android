@@ -111,6 +111,15 @@ public class McuMgrResponse {
     }
 
     /**
+     * Returns true if the response payload contains a return code of 0 or no return code. In other
+     * words, return true if the command was a success, false otherwise.
+     * @return return true if the command was a success, false otherwise
+     */
+    public boolean isSuccess() {
+        return rc == McuMgrErrorCode.OK.value();
+    }
+
+    /**
      * Get the response bytes.
      * <p>
      * If using a CoAP scheme this method and {@link McuMgrResponse#getPayload()} will return the
@@ -123,7 +132,7 @@ public class McuMgrResponse {
     }
 
     /**
-     * Get the response payload in bytes.
+     * Get the response payload bytes.
      * <p>
      * If using a CoAP scheme this method and {@link McuMgrResponse#getBytes()} will return the
      * same value.
