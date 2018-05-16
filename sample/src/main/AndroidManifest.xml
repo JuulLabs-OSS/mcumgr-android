@@ -22,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="McumgrSampleActivity"
+            android:name=".McuMgrSampleActivity"
             android:label="@string/title_activity_mcumgr_sample"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>

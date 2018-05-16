@@ -41,12 +41,12 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.McuMgrException;
 
 
-public class McumgrSampleActivity extends AppCompatActivity
+public class McuMgrSampleActivity extends AppCompatActivity
         implements BluetoothAdapter.LeScanCallback, FirmwareUpgradeCallback {
 
-    private final static String TAG = "McumgrSampleActivity";
+    private static final String TAG = "McuMgrSampleActivity";
 
-    private static final String DEFAULT_DEVICE_NAME = "";
+    private static final String DEFAULT_DEVICE_NAME = "Zephyr";
 
     private BluetoothAdapter mBluetoothAdapter;
     private Handler mHandler;
@@ -189,7 +189,7 @@ public class McumgrSampleActivity extends AppCompatActivity
 
     private Runnable mScanRunnable = () -> {
         scanLeDevice(false);
-        new AlertDialog.Builder(McumgrSampleActivity.this)
+        new AlertDialog.Builder(McuMgrSampleActivity.this)
                 .setTitle("Bluetooth error")
                 .setMessage("Could not find the device. Ensure that it is turned on and has its " +
                         "bluetooth enable")
@@ -254,6 +254,7 @@ public class McumgrSampleActivity extends AppCompatActivity
             return;
         }
         mBleTransport = new McuMgrBleTransport(this, mDevice);
+        mBleTransport.setGattCallbacks(new McuMgrBleCallbacks());
         mManager = new FirmwareUpgradeManager(mBleTransport, data, this);
         mManager.start();
     }

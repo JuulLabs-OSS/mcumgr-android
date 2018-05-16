@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package io.runtime.mcumgr.ble;
+package io.runtime.mcumgr.sample;
 
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 
+import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 
 /**
@@ -20,27 +19,6 @@ import no.nordicsemi.android.ble.BleManagerCallbacks;
  * Callbacks from {@link McuMgrBleTransport}.
  */
 public class McuMgrBleCallbacks implements BleManagerCallbacks {
-    public void onCharacteristicRead(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-    }
-
-    public void onCharacteristicWrite(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-    }
-
-    public void onDescriptorRead(BluetoothDevice device, BluetoothGattDescriptor descriptor) {
-    }
-
-    public void onDescriptorWrite(BluetoothDevice device, BluetoothGattDescriptor descriptor) {
-    }
-
-    public void onCharacteristicNotified(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-    }
-
-    public void onCharacteristicIndicated(BluetoothDevice device, BluetoothGattCharacteristic characteristic) {
-    }
-
-    public void onMtuChanged(int mtu) {
-    }
-
     @Override
     public void onDeviceConnecting(BluetoothDevice device) {
     }
@@ -58,7 +36,7 @@ public class McuMgrBleCallbacks implements BleManagerCallbacks {
     }
 
     @Override
-    public void onLinklossOccurred(BluetoothDevice device) {
+    public void onLinkLossOccurred(BluetoothDevice device) {
     }
 
     @Override
