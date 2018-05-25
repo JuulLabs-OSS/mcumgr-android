@@ -35,26 +35,26 @@ public abstract class McuManager {
     private final static String MCUMGR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ";
 
     // CoAP Constants
-    private final static String COAP_URI     = "/omgr";
-    private final static String HEADER_KEY   = "_h";
+    private final static String COAP_URI = "/omgr";
+    private final static String HEADER_KEY = "_h";
 
-    // Newt Manager operation codes
-    protected final static int OP_READ         = 0;
-    protected final static int OP_READ_RSP     = 1;
-    protected final static int OP_WRITE        = 2;
-    protected final static int OP_WRITE_RSP    = 3;
+    // Mcu Manager operation codes
+    protected final static int OP_READ = 0;
+    protected final static int OP_READ_RSP = 1;
+    protected final static int OP_WRITE = 2;
+    protected final static int OP_WRITE_RSP = 3;
 
-    // Newt Manager groups
-    protected final static int GROUP_DEFAULT   = 0;
-    protected final static int GROUP_IMAGE     = 1;
-    protected final static int GROUP_STATS     = 2;
-    protected final static int GROUP_CONFIG    = 3;
-    protected final static int GROUP_LOGS      = 4;
-    protected final static int GROUP_CRASH     = 5;
-    protected final static int GROUP_SPLIT     = 6;
-    protected final static int GROUP_RUN       = 7;
-    protected final static int GROUP_FS        = 8;
-    protected final static int GROUP_PERUSER   = 64;
+    // Mcu Manager groups
+    protected final static int GROUP_DEFAULT = 0;
+    protected final static int GROUP_IMAGE = 1;
+    protected final static int GROUP_STATS = 2;
+    protected final static int GROUP_CONFIG = 3;
+    protected final static int GROUP_LOGS = 4;
+    protected final static int GROUP_CRASH = 5;
+    protected final static int GROUP_SPLIT = 6;
+    protected final static int GROUP_RUN = 7;
+    protected final static int GROUP_FS = 8;
+    protected final static int GROUP_PERUSER = 64;
 
     /**
      * This manager's group ID.
@@ -62,14 +62,14 @@ public abstract class McuManager {
     private final int mGroupId;
 
     /**
-     * Handles sending the Newt Manager command data over the transport specified by its scheme.
+     * Handles sending the McuManager command data over the transport specified by its scheme.
      */
     private McuMgrTransport mTransporter;
 
     /**
      * Construct a McuManager instance.
      *
-     * @param groupId     the group ID of this Newt Manager instance.
+     * @param groupId     the group ID of this Mcu Manager instance.
      * @param transporter the transporter to use to send commands.
      */
     protected McuManager(int groupId, McuMgrTransport transporter) {
@@ -105,16 +105,18 @@ public abstract class McuManager {
     }
 
     /**
-     * Send an asynchronous Newt Manager command.
+     * Send an asynchronous Mcu Manager command.
      * <p>
-     * Additionally builds the Newt Manager header and formats the packet based on scheme before
+     * Additionally builds the Mcu Manager header and formats the packet based on scheme before
      * sending it to the transporter.
      *
      * @param op         the operation ({@link McuManager#OP_READ}, {@link McuManager#OP_WRITE}).
      * @param commandId  the ID of the command.
      * @param payloadMap the map of values to send along. This argument can be null if the header is
      *                   the only required field.
+     * @param respType   the response type.
      * @param callback   the response callback.
+     * @param <T>        the response type.
      */
     public <T extends McuMgrResponse> void send(int op, int commandId, Map<String, Object> payloadMap,
                                                 Class<T> respType, McuMgrCallback<T> callback) {
@@ -122,16 +124,19 @@ public abstract class McuManager {
     }
 
     /**
-     * Send synchronous Newt Manager command.
+     * Send synchronous Mcu Manager command.
      * <p>
-     * Additionally builds the Newt Manager header and formats the packet based on scheme before
+     * Additionally builds the Mcu Manager header and formats the packet based on scheme before
      * sending it to the transporter.
      *
      * @param op         the operation ({@link McuManager#OP_READ}, {@link McuManager#OP_WRITE}).
      * @param commandId  the ID of the command.
      * @param payloadMap the map of values to send along. This argument can be null if the header is
      *                   the only required field.
+     * @param respType   the response type.
+     * @param <T>        the response type.
      * @return The McuMgrResponse or null if an error occurred.
+     * @throws McuMgrException on transport error. See exception cause for more info.
      */
     public <T extends McuMgrResponse> T send(int op, int commandId, Map<String, Object> payloadMap,
                                              Class<T> respType)
@@ -140,18 +145,20 @@ public abstract class McuManager {
     }
 
     /**
-     * Send an asynchronous Newt Manager command.
+     * Send an asynchronous Mcu Manager command.
      * <p>
-     * Additionally builds the Newt Manager header and formats the packet based on scheme before
+     * Additionally builds the Mcu Manager header and formats the packet based on scheme before
      * sending it to the transporter.
      *
-     * @param op          the operation ({@link McuManager#OP_READ}, {@link McuManager#OP_WRITE}).
+     * @param op          the operation ({@link McuManager#OP_READ}, {@link McuManager#OP_WRITE})
      * @param flags       additional flags.
      * @param groupId     group ID of the command.
      * @param sequenceNum sequence number.
      * @param commandId   ID of the command in the group.
      * @param payloadMap  map of command's key-value pairs to construct a CBOR payload.
+     * @param respType    the response type.
      * @param callback    asynchronous callback.
+     * @param <T>         the response type.
      */
     public <T extends McuMgrResponse> void send(int op, int flags, int groupId, int sequenceNum, int
             commandId, Map<String, Object> payloadMap, Class<T> respType, McuMgrCallback<T> callback) {
@@ -164,18 +171,21 @@ public abstract class McuManager {
     }
 
     /**
-     * Send synchronous Newt Manager command.
+     * Send synchronous Mcu Manager command.
      * <p>
-     * Additionally builds the Newt Manager header and formats the packet based on scheme before
+     * Additionally builds the Mcu Manager header and formats the packet based on scheme before
      * sending it to the transporter.
      *
-     * @param op          the operation ({@link McuManager#OP_READ}, {@link McuManager#OP_WRITE}).
+     * @param op          the operation ({@link McuManager#OP_READ},
+	 *                    {@link McuManager#OP_WRITE}).
      * @param flags       additional flags.
      * @param groupId     group ID of the command.
      * @param sequenceNum sequence number.
      * @param commandId   ID of the command in the group.
+	 * @param respType    the response type.
      * @param payloadMap  map of payload key-value pairs.
-     * @return The newt manager response.
+	 * @param <T>         the response type.
+     * @return The Mcu Manager response.
      * @throws McuMgrException on transport error. See exception cause for more info.
      */
     public <T extends McuMgrResponse> T send(int op, int flags, int groupId, int sequenceNum,
@@ -190,7 +200,9 @@ public abstract class McuManager {
      * Send data asynchronously using the transporter.
      *
      * @param data     the data to send.
+     * @param respType the response type.
      * @param callback the response callback.
+     * @param <T>      the response type.
      */
     public <T extends McuMgrResponse> void send(byte[] data, Class<T> respType,
                                                 McuMgrCallback<T> callback) {
@@ -200,7 +212,10 @@ public abstract class McuManager {
     /**
      * Send data synchronously using the transporter.
      *
-     * @param data the data to send.
+     * @param data     the data to send.
+     * @param respType the response type.
+     * @param <T>      the response type.
+     * @return the Mcu Manager response.
      * @throws McuMgrException when an error occurs while sending the data.
      */
     public <T extends McuMgrResponse> T send(byte[] data, Class<T> respType)
@@ -215,9 +230,10 @@ public abstract class McuManager {
      * @param flags       additional flags.
      * @param groupId     group ID of the command.
      * @param sequenceNum sequence number.
-     * @param commandId   ID of the command in the group
+     * @param commandId   ID of the command in the group.
      * @param payloadMap  map of payload key-value pairs.
      * @return The packet data.
+     * @throws McuMgrException if the payload map could not be serialized into CBOR. See cause.
      */
     public byte[] buildPacket(int op, int flags, int groupId, int sequenceNum,
                               int commandId, @Nullable Map<String, Object> payloadMap)
@@ -265,7 +281,7 @@ public abstract class McuManager {
     //******************************************************************
 
     /**
-     * Format a Date and a TimeZone into a String which Newt Manager will accept.
+     * Format a Date and a TimeZone into a String which McuManager will accept.
      *
      * @param date     the date to format. If null, the current date on the device will be used.
      * @param timeZone the timezone of the given date. If null, the timezone on the device will be used.

@@ -178,6 +178,7 @@ public class DefaultManager extends McuManager {
      * @param date     the date to set the device to.
      * @param timeZone the timezone to use with the date.
      * @return The response.
+     * @throws McuMgrException Transport error. See cause.
      */
     public McuMgrResponse writeDatetime(Date date, TimeZone timeZone) throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();

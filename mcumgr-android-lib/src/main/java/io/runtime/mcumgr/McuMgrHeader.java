@@ -18,7 +18,7 @@ import io.runtime.mcumgr.util.Endian;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrHeader {
 
-    public final static int NMGR_HEADER_LEN = 8;
+    public final static int HEADER_LENGTH = 8;
 
     private int mOp;
     private int mFlags;
@@ -94,7 +94,7 @@ public class McuMgrHeader {
     }
 
     public static McuMgrHeader fromBytes(byte[] header) {
-        if (header == null || header.length < NMGR_HEADER_LEN) {
+        if (header == null || header.length != HEADER_LENGTH) {
             return null;
         }
         int op          = ByteUtil.unsignedByteArrayToInt(header, 0, 1, Endian.BIG);
