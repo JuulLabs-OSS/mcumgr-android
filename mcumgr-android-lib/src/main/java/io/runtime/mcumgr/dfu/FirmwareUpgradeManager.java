@@ -45,7 +45,6 @@ import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class FirmwareUpgradeManager {
-
     private final static String TAG = "FirmwareUpgradeManager";
 
     /**

@@ -23,7 +23,8 @@ public class McuMgrErrorException extends McuMgrException {
 
     /**
      * Get the code which caused this exception to be thrown.
-     * @return the McuManager response code which caused this exception to be thrown
+     *
+     * @return The McuManager response code which caused this exception to be thrown.
      */
     public McuMgrErrorCode getCode() {
         return mCode;

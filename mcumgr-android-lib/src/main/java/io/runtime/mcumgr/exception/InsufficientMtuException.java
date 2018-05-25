@@ -16,6 +16,7 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
  */
 public class InsufficientMtuException extends McuMgrException {
     private int mMtu;
+
     public InsufficientMtuException(int mtu) {
         super("Insufficient MTU!");
         mMtu = mtu;

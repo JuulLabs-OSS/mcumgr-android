@@ -43,7 +43,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             UUID.fromString("DA2E7828-FBCE-4E01-AE9E-261174997C48");
 
     /**
-     * Simple Management Protocol service
+     * Simple Management Protocol service.
      */
     private BluetoothGattService mSmpService;
 
@@ -59,7 +59,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     private ConditionVariable mReadyLock = new ConditionVariable(false);
 
     /**
-     * Queue of requests to send from Mcu Manager
+     * Queue of requests to send from Mcu Manager.
      */
     private LinkedBlockingQueue<McuMgrRequest> mSendQueue = new LinkedBlockingQueue<>();
 
@@ -70,15 +70,15 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     private McuMgrRequest mRequest;
 
     /**
-     * The bluetooth device for this transporter
+     * The bluetooth device for this transporter.
      */
     private BluetoothDevice mDevice;
 
     /**
      * Construct a McuMgrBleTransport object.
      *
-     * @param context The context used to connect to the device
-     * @param device  the device to connect to and communicate with
+     * @param context the context used to connect to the device.
+     * @param device  the device to connect to and communicate with.
      */
     public McuMgrBleTransport(Context context, BluetoothDevice device) {
         super(context);
@@ -86,6 +86,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         new SendThread().start();
     }
 
+    @NonNull
     @Override
     protected BleManagerGattCallback getGattCallback() {
         return mGattCallback;
@@ -113,7 +114,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     }
 
     @Override
-    public void log(int level, String message) {
+    public void log(int level, @NonNull String message) {
 
     }
 

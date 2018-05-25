@@ -40,7 +40,6 @@ import io.runtime.mcumgr.util.CBOR;
  */
 @SuppressWarnings("unused")
 public class ImageManager extends McuManager {
-
     private final static String TAG = "ImageManager";
 
     private final static int IMG_HASH_LEN = 32;

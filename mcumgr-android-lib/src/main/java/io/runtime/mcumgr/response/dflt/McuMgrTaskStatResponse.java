@@ -10,7 +10,6 @@ import java.util.Map;
 
 import io.runtime.mcumgr.response.McuMgrResponse;
 
-
 public class McuMgrTaskStatResponse extends McuMgrResponse {
     public Map<String, TaskStat> tasks;
 

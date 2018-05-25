@@ -21,7 +21,6 @@ import io.runtime.mcumgr.image.McuMgrImageHeader;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrImageTlv {
-
     public final static int IMG_TLV_SHA256 = 0x10;
     public final static int IMG_TLV_SHA256_V1 = 0x01;
     public final static int IMG_TLV_INFO_MAGIC = 0x6907;

@@ -17,7 +17,6 @@ import io.runtime.mcumgr.util.Endian;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrHeader {
-
     public final static int HEADER_LENGTH = 8;
 
     private int mOp;

@@ -28,7 +28,6 @@ import io.runtime.mcumgr.util.CBOR;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class McuManager {
-
     private static final String TAG = McuManager.class.getSimpleName();
 
     // Date format
@@ -215,7 +214,7 @@ public abstract class McuManager {
      * @param data     the data to send.
      * @param respType the response type.
      * @param <T>      the response type.
-     * @return the Mcu Manager response.
+     * @return The Mcu Manager response.
      * @throws McuMgrException when an error occurs while sending the data.
      */
     public <T extends McuMgrResponse> T send(byte[] data, Class<T> respType)

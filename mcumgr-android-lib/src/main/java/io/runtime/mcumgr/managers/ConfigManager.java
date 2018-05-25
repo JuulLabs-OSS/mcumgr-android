@@ -21,7 +21,6 @@ import io.runtime.mcumgr.response.config.McuMgrConfigReadResponse;
  */
 @SuppressWarnings("unused")
 public class ConfigManager extends McuManager {
-
     private final static int ID_CONFIG = 0;
 
     /**

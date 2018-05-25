@@ -19,7 +19,6 @@ import io.runtime.mcumgr.image.tlv.McuMgrImageTlv;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class McuMgrImage {
-
     public final static int IMG_HASH_LEN = 32;
 
     private final McuMgrImageHeader mHeader;

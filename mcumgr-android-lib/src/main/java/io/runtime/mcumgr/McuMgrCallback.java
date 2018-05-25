@@ -11,18 +11,18 @@ import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
 /**
- * Callback for asynchronous Newt Manager commands.
+ * Callback for asynchronous Mcu Manager commands.
  */
 public interface McuMgrCallback<T extends McuMgrResponse> {
     /**
-     * Newt Manager has received a response.
+     * Mcu Manager has received a response.
      *
      * @param response the response.
      */
     void onResponse(T response);
 
     /**
-     * Newt Manager has encountered a transport error while sending the command.
+     * Mcu Manager has encountered a transport error while sending the command.
      *
      * @param error the error.
      */

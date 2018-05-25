@@ -17,11 +17,12 @@ import io.runtime.mcumgr.util.Endian;
  * For more info about McuBoot and image format see:
  * <a href="https://runtimeco.github.io/mcuboot/design.html">https://runtimeco.github.io/mcuboot/design.html</a>
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrImageHeader {
     private static final String TAG = McuMgrImageHeader.class.getSimpleName();
 
-    public static int IMG_HEADER_MAGIC      = 0x96f3b83d;
-    public static int IMG_HEADER_MAGIC_V1   = 0x96f3b83c;
+    private static final int IMG_HEADER_MAGIC      = 0x96f3b83d;
+    private static final int IMG_HEADER_MAGIC_V1   = 0x96f3b83c;
 
     private static final int HEADER_LENGTH = 4 + 4 + 2 + 2 + 4 + 4 + 4;
     private int mMagic;

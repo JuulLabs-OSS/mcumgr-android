@@ -22,7 +22,6 @@ import io.runtime.mcumgr.util.CBOR;
 @SuppressWarnings({"WeakerAccess", "unused"})
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class McuMgrResponse {
-
     private final static String TAG = "McuMgrResponse";
 
     /**
@@ -73,7 +72,7 @@ public class McuMgrResponse {
         try {
             return CBOR.toString(mPayload);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to parse response", e);
         }
         return null;
     }

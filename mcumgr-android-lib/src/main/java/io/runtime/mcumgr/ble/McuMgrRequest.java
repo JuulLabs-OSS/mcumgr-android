@@ -39,7 +39,6 @@ import io.runtime.mcumgr.util.CBOR;
 // TODO make an abstract class and two subclasses for async and sync operations
 @SuppressWarnings("unused")
 class McuMgrRequest<T extends McuMgrResponse> {
-
     private final static String TAG = "McuMgrRequest";
 
     /**

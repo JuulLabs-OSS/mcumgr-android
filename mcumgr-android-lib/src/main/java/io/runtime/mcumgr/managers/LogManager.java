@@ -33,7 +33,6 @@ import io.runtime.mcumgr.util.CBOR;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class LogManager extends McuManager {
-
     private final static String TAG = "LogManager";
 
     // Command IDs
