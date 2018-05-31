@@ -176,8 +176,8 @@ public class FirmwareUpgradeManager {
         }
         // Begin the upload
         mState = State.UPLOAD;
-        mImageManager.upload(mImageData, mImageUploadCallback);
         mInternalCallback.onStart(this);
+        mImageManager.upload(mImageData, mImageUploadCallback);
     }
 
     /**
@@ -377,12 +377,13 @@ public class FirmwareUpgradeManager {
                 @Override
                 public void onResponse(McuMgrImageStateResponse response) {
                     if (response.getRc() != McuMgrErrorCode.OK) {
-                        Log.e(TAG, "Confirm failed due to Newt Manager error: " + response.getRc());
+                        Log.e(TAG, "Confirm failed due to Mcu Manager error: " + response.getRc());
                         fail(new McuMgrErrorException(response.getRc()));
                         return;
                     }
+                    Log.v(TAG, "Confirm response: " + response.toString());
                     if (response.images.length == 0) {
-                        fail(new McuMgrException("Test response does not contain enough info"));
+                        fail(new McuMgrException("Confirm response does not contain enough info"));
                         return;
                     }
                     if (!response.images[0].confirmed) {
@@ -432,13 +433,13 @@ public class FirmwareUpgradeManager {
                 while (true) {
                     checkResetComplete();
 
-                    if (attempts == 4) {
+                    if (attempts == 3) {
                         fail(new McuMgrException("Reset poller has reached attempt limit."));
                         return;
                     }
                     attempts++;
                     synchronized (this) {
-                        wait(5000);
+                        wait(7000);
                     }
                 }
             } catch (InterruptedException e) {
