@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 
 import io.runtime.mcumgr.McuManager;
@@ -22,10 +21,9 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
-import io.runtime.mcumgr.image.McuMgrImage;
+import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageUploadResponse;
-import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.util.CBOR;
 
 /**
@@ -452,17 +450,18 @@ public class ImageManager extends McuManager {
 
         @Override
         public void onError(McuMgrException error) {
-            // TODO if the Mtu is set successfully but the MTU is still insufficient, this will loop forever
-            // TODO add a maximum number of restarts due to MTU until failing
             // Check if the exception is due to an insufficient MTU.
             if (error instanceof InsufficientMtuException) {
                 InsufficientMtuException mtuErr = (InsufficientMtuException) error;
 
-                // Pause the upload
+                // Pause the upload, so it's not in STATE_UPLOADING
                 pauseUpload();
 
                 // Set the MTU to the value specified in the error response.
-                boolean isMtuSet = setUploadMtu(mtuErr.getMtu());
+                int mtu = mtuErr.getMtu();
+                if (mMtu == mtu)
+                    mtu -= 1;
+                boolean isMtuSet = setUploadMtu(mtu);
 
                 if (isMtuSet) {
                     // If the MTU has been set successfully, restart the upload.
