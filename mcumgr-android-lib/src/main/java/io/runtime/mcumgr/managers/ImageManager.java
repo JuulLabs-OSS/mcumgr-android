@@ -263,7 +263,7 @@ public class ImageManager extends McuManager {
     //******************************************************************
 
     // Image Upload Constants
-    private final static int DEFAULT_MTU = 512;
+    private final static int DEFAULT_MTU = 515;
 
     // Upload states
     private final static int STATE_NONE = 0;
@@ -385,7 +385,7 @@ public class ImageManager extends McuManager {
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
         Log.v(TAG, "Send upload data at offset: " + offset);
-        int dataLength = Math.min(mMtu - calculatePacketOverhead(mImageUploadData, offset),
+        int dataLength = Math.min(mMtu - 3 - calculatePacketOverhead(mImageUploadData, offset),
                 mImageUploadData.length - offset);
         Log.v(TAG, "Image data length: " + dataLength);
 
@@ -487,11 +487,11 @@ public class ImageManager extends McuManager {
                 return cborData.length + 20 + 5;
             } else {
                 byte[] cborData = CBOR.toBytes(overheadTestMap);
-                // 8 bytes for McuMgr header; 5 bytes for good measure
-                return cborData.length + 8 + 5;
+                // 8 bytes for McuMgr header; 2 bytes for data length
+                return cborData.length + 8 + 2;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error while calculating packet overhead", e);
         }
         return -1;
     }
