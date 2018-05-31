@@ -153,6 +153,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
     /**
      * Start the upgrade.
+     * <p>
+     * The specified image file will be sent to the target using the
+     * given transport, then verified using test command. If test successful, the reset
+     * command will be sent. The device should boot with the new firmware.
+     * The manager will try to connect to the SMP server on the new firmware and confirm
+     * the upload.
      */
     public synchronized void start() {
         if (mState != State.NONE) {
@@ -386,6 +392,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             case CONFIRM:
                 mState = State.SUCCESS;
                 break;
+
         }
         Log.d(TAG, "Moving from state " + prevState.name() + " to state " + mState.name());
         mInternalCallback.onStateChanged(prevState, mState);
