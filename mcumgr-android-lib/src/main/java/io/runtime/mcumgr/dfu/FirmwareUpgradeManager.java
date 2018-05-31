@@ -12,7 +12,6 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import java.util.Date;
 import java.util.concurrent.Executor;
 
 import io.runtime.mcumgr.McuMgrCallback;
@@ -20,6 +19,7 @@ import io.runtime.mcumgr.McuMgrErrorCode;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.managers.DefaultManager;
 import io.runtime.mcumgr.managers.ImageManager;
 import io.runtime.mcumgr.response.McuMgrResponse;
@@ -44,13 +44,8 @@ import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
  * {@link FirmwareUpgradeManager#resume}, and {@link FirmwareUpgradeManager#cancel}.
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class FirmwareUpgradeManager {
+public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private final static String TAG = "FirmwareUpgradeManager";
-
-    /**
-     * Transporter used to initialize managers.
-     */
-    private final McuMgrTransport mTransporter;
 
     /**
      * Performs the image upload, test, and confirmation steps.
@@ -104,9 +99,8 @@ public class FirmwareUpgradeManager {
                                   @NonNull FirmwareUpgradeCallback callback) {
         mCallback = callback;
         mState = State.NONE;
-        mTransporter = transport;
-        mImageManager = new ImageManager(mTransporter);
-        mDefaultManager = new DefaultManager(mTransporter);
+        mImageManager = new ImageManager(transport);
+        mDefaultManager = new DefaultManager(transport);
     }
 
     /**
@@ -117,17 +111,11 @@ public class FirmwareUpgradeManager {
      * @param callback  the callback.
      * @throws McuMgrException Thrown if the image data is invalid.
      */
-    public FirmwareUpgradeManager(@NonNull McuMgrTransport transport, byte[] imageData,
+    public FirmwareUpgradeManager(@NonNull McuMgrTransport transport, @NonNull byte[] imageData,
                                   @NonNull FirmwareUpgradeCallback callback) throws McuMgrException {
+        this(transport, callback);
         mImageData = imageData;
-        mCallback = callback;
-        mState = State.NONE;
-        mTransporter = transport;
-        mImageManager = new ImageManager(mTransporter);
-        mDefaultManager = new DefaultManager(mTransporter);
-        if (imageData != null) {
-            mHash = ImageManager.getHashFromImage(imageData);
-        }
+		mHash = McuMgrImage.getHash(imageData);
     }
 
     /**
@@ -151,7 +139,7 @@ public class FirmwareUpgradeManager {
             return;
         }
         mImageData = imageData;
-        mHash = ImageManager.getHashFromImage(imageData);
+        mHash = McuMgrImage.getHash(imageData);
     }
 
     /**
@@ -180,9 +168,11 @@ public class FirmwareUpgradeManager {
         mImageManager.upload(mImageData, mImageUploadCallback);
     }
 
-    /**
-     * Cancel the firmware upgrade.
-     */
+    //******************************************************************
+    // Upload Controller
+    //******************************************************************
+
+    @Override
     public synchronized void cancel() {
         if (mState.isInProgress()) {
             cancelPrivate();
@@ -190,9 +180,7 @@ public class FirmwareUpgradeManager {
         }
     }
 
-    /**
-     * Pause the firmware upgrade.
-     */
+    @Override
     public synchronized void pause() {
         if (mState.isInProgress()) {
             Log.d(TAG, "Pausing upgrade.");
@@ -203,14 +191,32 @@ public class FirmwareUpgradeManager {
         }
     }
 
-    /**
-     * Resume a paused firmware upgrade.
-     */
+    @Override
     public synchronized void resume() {
         if (mPaused) {
             mPaused = false;
             currentState();
         }
+    }
+
+    @Override
+    public boolean isPaused() {
+        return mPaused;
+    }
+
+    @Override
+    public boolean isInProgress() {
+        return mState.isInProgress() && !isPaused();
+    }
+
+    //******************************************************************
+    // Implementation
+    //******************************************************************
+
+
+    private synchronized void fail(McuMgrException error) {
+        cancelPrivate();
+        mInternalCallback.onFail(mState, error);
     }
 
     private synchronized void cancelPrivate() {
@@ -222,101 +228,8 @@ public class FirmwareUpgradeManager {
         }
     }
 
-    private synchronized void fail(McuMgrException error) {
-        cancelPrivate();
-        mInternalCallback.onFail(mState, error);
-    }
-
-    /**
-     * Determine whether the firmware upgrade is in progress.
-     *
-     * @return True if the firmware upgrade is in progress, false otherwise.
-     */
-    public boolean isInProgress() {
-        return mState.isInProgress() && !isPaused();
-    }
-
-    /**
-     * Determine whether the firmware upgrade is paused.
-     *
-     * @return True if the firmware upgrade is paused, false otherwise.
-     */
-    public boolean isPaused() {
-        return mPaused;
-    }
-
-    /**
-     * Get the current {@link State} of the firmware upgrade.
-     *
-     * @return The current state.
-     */
-    public State getState() {
-        return mState;
-    }
-
-    /**
-     * Called by {@link FirmwareUpgradeManager#resume} to run the current state.
-     */
-    private synchronized void currentState() {
-        if (mPaused) {
-            return;
-        }
-        switch (mState) {
-            case NONE:
-                return;
-            case UPLOAD:
-                mImageManager.continueUpload();
-                break;
-            case TEST:
-                mImageManager.test(mHash, mTestCallback);
-                break;
-            case RESET:
-                nextState();
-                break;
-            case CONFIRM:
-                mImageManager.confirm(mHash, mConfirmCallback);
-                break;
-        }
-    }
-
-    /**
-     * Called when a state has completed. Sets and executes the next state.
-     */
-    private synchronized void nextState() {
-        if (mPaused) {
-            return;
-        }
-        final State prevState = mState;
-        switch (mState) {
-            case NONE:
-                return;
-            case UPLOAD:
-                mState = State.TEST;
-                mImageManager.test(mHash, mTestCallback);
-                break;
-            case TEST:
-                mState = State.RESET;
-                mDefaultManager.reset(mResetCallback);
-                break;
-            case RESET:
-                mState = State.CONFIRM;
-                mImageManager.confirm(mHash, mConfirmCallback);
-                break;
-            case CONFIRM:
-                mState = State.SUCCESS;
-                break;
-        }
-        Log.d(TAG, "Moving from state " + prevState.name() + " to state " + mState.name());
-
-        mInternalCallback.onStateChanged(prevState, mState);
-
-        if (mState == State.SUCCESS) {
-            mInternalCallback.onSuccess();
-        }
-    }
-
     //******************************************************************
-    // CoAP Handlers
+    // Request Handlers
     //******************************************************************
 
     /**
@@ -413,6 +326,75 @@ public class FirmwareUpgradeManager {
         }
     }
 
+    /**
+     * Get the current {@link State} of the firmware upgrade.
+     *
+     * @return The current state.
+     */
+    public State getState() {
+        return mState;
+    }
+
+    /**
+     * Called by {@link FirmwareUpgradeManager#resume} to run the current state.
+     */
+    private synchronized void currentState() {
+        if (mPaused) {
+            return;
+        }
+        switch (mState) {
+            case NONE:
+                return;
+            case UPLOAD:
+                mImageManager.continueUpload();
+                break;
+            case TEST:
+                mImageManager.test(mHash, mTestCallback);
+                break;
+            case RESET:
+                nextState();
+                break;
+            case CONFIRM:
+                mImageManager.confirm(mHash, mConfirmCallback);
+                break;
+        }
+    }
+
+    /**
+     * Called when a state has completed. Sets and executes the next state.
+     */
+    private synchronized void nextState() {
+        if (mPaused) {
+            return;
+        }
+        final State prevState = mState;
+        switch (mState) {
+            case NONE:
+                return;
+            case UPLOAD:
+                mState = State.TEST;
+                mImageManager.test(mHash, mTestCallback);
+                break;
+            case TEST:
+                mState = State.RESET;
+                mDefaultManager.reset(mResetCallback);
+                break;
+            case RESET:
+                mState = State.CONFIRM;
+                mImageManager.confirm(mHash, mConfirmCallback);
+                break;
+            case CONFIRM:
+                mState = State.SUCCESS;
+                break;
+        }
+        Log.d(TAG, "Moving from state " + prevState.name() + " to state " + mState.name());
+        mInternalCallback.onStateChanged(prevState, mState);
+
+        if (mState == State.SUCCESS) {
+            mInternalCallback.onSuccess();
+        }
+    }
+
     //******************************************************************
     // Poll Reset Runnable
     //******************************************************************
@@ -477,8 +459,8 @@ public class FirmwareUpgradeManager {
      */
     private ImageManager.ImageUploadCallback mImageUploadCallback = new ImageManager.ImageUploadCallback() {
         @Override
-        public void onProgressChange(int bytesSent, int imageSize, Date ts) {
-            mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, ts);
+        public void onProgressChange(int bytesSent, int imageSize, long timestamp) {
+            mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
         }
 
         @Override
@@ -493,11 +475,14 @@ public class FirmwareUpgradeManager {
         }
     };
 
+    //******************************************************************
+    // Main Thread Executor
+    //******************************************************************
+
     /**
      * Internal callback to route callbacks to the UI thread if the flag has been set.
      */
     private FirmwareUpgradeCallback mInternalCallback = new FirmwareUpgradeCallback() {
-
         private MainThreadExecutor mMainThreadExecutor;
 
         private MainThreadExecutor getMainThreadExecutor() {
@@ -508,16 +493,16 @@ public class FirmwareUpgradeManager {
         }
 
         @Override
-        public void onStart(final FirmwareUpgradeManager manager) {
+        public void onStart(final FirmwareUpgradeController controller) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onStart(manager);
+                        mCallback.onStart(controller);
                     }
                 });
             } else {
-                mCallback.onStart(manager);
+                mCallback.onStart(controller);
             }
         }
 
@@ -578,23 +563,19 @@ public class FirmwareUpgradeManager {
         }
 
         @Override
-        public void onUploadProgressChanged(final int bytesSent, final int imageSize, final Date ts) {
+        public void onUploadProgressChanged(final int bytesSent, final int imageSize, final long timestamp) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onUploadProgressChanged(bytesSent, imageSize, ts);
+                        mCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
                     }
                 });
             } else {
-                mCallback.onUploadProgressChanged(bytesSent, imageSize, ts);
+                mCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
             }
         }
     };
-
-    //******************************************************************
-    // MainThreadExecutor
-    //******************************************************************
 
     /**
      * Used to execute callbacks on the main UI thread.

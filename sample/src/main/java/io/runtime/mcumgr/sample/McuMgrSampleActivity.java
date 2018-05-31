@@ -24,6 +24,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -37,6 +38,7 @@ import java.util.Locale;
 
 import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeCallback;
+import io.runtime.mcumgr.dfu.FirmwareUpgradeController;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.McuMgrException;
 
@@ -61,7 +63,7 @@ public class McuMgrSampleActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.mHandler = new Handler();
+        mHandler = new Handler();
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -77,8 +79,10 @@ public class McuMgrSampleActivity extends AppCompatActivity
         mSize = findViewById(R.id.size);
         mFile = findViewById(R.id.file);
 
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION}, 2);
+        ActivityCompat.requestPermissions(this, new String[] {
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+        }, 2);
     }
 
     private void showStartFota() {
@@ -189,10 +193,12 @@ public class McuMgrSampleActivity extends AppCompatActivity
 
     private Runnable mScanRunnable = () -> {
         scanLeDevice(false);
+        mBle.setText(null);
+        mFile.setText(null);
         new AlertDialog.Builder(McuMgrSampleActivity.this)
                 .setTitle("Bluetooth error")
                 .setMessage("Could not find the device. Ensure that it is turned on and has its " +
-                        "bluetooth enable")
+                        "Bluetooth enabled")
                 .setPositiveButton("OK", null)
                 .show();
         mFab.show();
@@ -222,7 +228,7 @@ public class McuMgrSampleActivity extends AppCompatActivity
                 prepareFota();
                 mBle.setText("Found");
             } catch (McuMgrException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Preparing file failed", e);
             }
         }
     }
@@ -254,14 +260,13 @@ public class McuMgrSampleActivity extends AppCompatActivity
             return;
         }
         mBleTransport = new McuMgrBleTransport(this, mDevice);
-        mBleTransport.setGattCallbacks(new McuMgrBleCallbacks());
-        mManager = new FirmwareUpgradeManager(mBleTransport, data, this);
-        mManager.start();
+        mManager = new FirmwareUpgradeManager(mBleTransport, this);
+        mManager.send(data);
     }
     
     @Override
-    public void onStart(FirmwareUpgradeManager manager) {
-
+    public void onStart(FirmwareUpgradeController controller) {
+        // ignore
     }
 
     @Override
@@ -278,30 +283,34 @@ public class McuMgrSampleActivity extends AppCompatActivity
                 .setPositiveButton("OK", null)
                 .show();
         mFab.show();
+        mBleTransport.release();
     }
 
     @Override
     public void onFail(FirmwareUpgradeManager.State state, McuMgrException error) {
+        Log.e(TAG, "Upload failed", error);
         mResult.setText("Fail");
         mFail.setText(error.getMessage());
 
         new AlertDialog.Builder(this)
                 .setTitle("FOTA error")
+                .setMessage(error.getMessage())
                 .setPositiveButton("OK", null)
                 .show();
 
         mFab.show();
-        error.printStackTrace();
+        mBleTransport.release();
     }
 
     @Override
     public void onCancel(FirmwareUpgradeManager.State state) {
         mResult.setText("Cancel");
         mFab.show();
+        mBleTransport.release();
     }
 
     @Override
-    public void onUploadProgressChanged(int bytesSent, int imageSize, Date ts) {
+    public void onUploadProgressChanged(int bytesSent, int imageSize, long timestamp) {
         mProgress.setText(String.format(Locale.getDefault(), "%d%%", bytesSent * 100 / imageSize));
     }
 }

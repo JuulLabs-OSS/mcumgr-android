@@ -32,6 +32,6 @@ public class McuMgrErrorException extends McuMgrException {
 
     @Override
     public String toString() {
-        return "McuMgrErrorException: " + mCode.toString() + " (" + mCode.value() + ")";
+        return "McuMgrErrorException: " + mCode.toString();
     }
 }

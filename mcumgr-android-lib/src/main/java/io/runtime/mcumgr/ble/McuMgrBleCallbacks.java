@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package io.runtime.mcumgr.sample;
+package io.runtime.mcumgr.ble;
 
 import android.bluetooth.BluetoothDevice;
 
-import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 
 /**

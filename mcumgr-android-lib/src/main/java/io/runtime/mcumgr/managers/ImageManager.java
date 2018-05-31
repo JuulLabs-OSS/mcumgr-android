@@ -266,9 +266,9 @@ public class ImageManager extends McuManager {
     private final static int DEFAULT_MTU = 515;
 
     // Upload states
-    private final static int STATE_NONE = 0;
-    private final static int STATE_UPLOADING = 1;
-    private final static int STATE_PAUSED = 2;
+    public final static int STATE_NONE = 0;
+    public final static int STATE_UPLOADING = 1;
+    public final static int STATE_PAUSED = 2;
 
     // Upload variables
     private int mUploadState = STATE_NONE;
@@ -284,7 +284,7 @@ public class ImageManager extends McuManager {
      * @return True if the upload has been set, false otherwise.
      */
     public synchronized boolean setUploadMtu(int mtu) {
-        Log.v(TAG, "Setting image upload MTU");
+        Log.v(TAG, "Setting image upload MTU: " + mtu);
         if (mUploadState == STATE_UPLOADING) {
             Log.e(TAG, "Upload must not be in progress!");
             return false;
@@ -301,7 +301,7 @@ public class ImageManager extends McuManager {
     }
 
     /**
-     * Get the current upload state. ({@link ImageManager#STATE_NONE},
+     * Get the current upload state ({@link ImageManager#STATE_NONE},
      * {@link ImageManager#STATE_UPLOADING}, {@link ImageManager#STATE_PAUSED}).
      *
      * @return The current upload state.
@@ -346,6 +346,10 @@ public class ImageManager extends McuManager {
         }
     }
 
+    //******************************************************************
+    // Implementation
+    //******************************************************************
+
     private synchronized void failUpload(McuMgrException error) {
         if (mUploadCallback != null) {
             mUploadCallback.onUploadFail(error);
@@ -372,8 +376,9 @@ public class ImageManager extends McuManager {
     }
 
     /**
-     * Send a packet of upload data from the specified offset
-     * @param offset the image data offset to send data from
+     * Send a packet of upload data from the specified offset.
+     *
+     * @param offset the image data offset to send data from.
      */
     private synchronized void sendUploadData(int offset) {
         // Check that the state is STATE_UPLOADING
@@ -432,7 +437,7 @@ public class ImageManager extends McuManager {
             mUploadOffset = response.off;
 
             // Call the progress callback
-            mUploadCallback.onProgressChange(mUploadOffset, mImageUploadData.length, new Date());
+            mUploadCallback.onProgressChange(mUploadOffset, mImageUploadData.length, System.currentTimeMillis());
 
             // Check if the upload has finished.
             if (mUploadOffset == mImageUploadData.length) {
@@ -496,10 +501,6 @@ public class ImageManager extends McuManager {
         return -1;
     }
 
-    public static byte[] getHashFromImage(byte[] data) throws McuMgrException {
-        return McuMgrImage.getHash(data);
-    }
-
     //******************************************************************
     // Image Upload Callback
     //******************************************************************
@@ -514,9 +515,9 @@ public class ImageManager extends McuManager {
          *
          * @param bytesSent the number of bytes sent so far.
          * @param imageSize the size of the image in bytes.
-         * @param ts        the timestamp of when the response was received.
+         * @param timestamp the timestamp of when the response was received.
          */
-        void onProgressChange(int bytesSent, int imageSize, Date ts);
+        void onProgressChange(int bytesSent, int imageSize, long timestamp);
 
         /**
          * Called when the upload has failed.
