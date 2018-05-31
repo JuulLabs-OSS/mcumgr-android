@@ -18,6 +18,7 @@ public class McuMgrErrorException extends McuMgrException {
     private McuMgrErrorCode mCode;
 
     public McuMgrErrorException(McuMgrErrorCode code) {
+        super("Mcu Mgr Error: " + code);
         mCode = code;
     }
 
@@ -28,10 +29,5 @@ public class McuMgrErrorException extends McuMgrException {
      */
     public McuMgrErrorCode getCode() {
         return mCode;
-    }
-
-    @Override
-    public String toString() {
-        return "McuMgrErrorException: " + mCode.toString();
     }
 }
