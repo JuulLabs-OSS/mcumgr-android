@@ -38,7 +38,7 @@ import io.runtime.mcumgr.util.CBOR;
  * a full firmware upgrade use {@link FirmwareUpgradeManager}.
  * @see FirmwareUpgradeManager
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class ImageManager extends McuManager {
     private final static String TAG = "ImageManager";
 
@@ -390,7 +390,7 @@ public class ImageManager extends McuManager {
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
         Log.v(TAG, "Send upload data at offset: " + offset);
-        int dataLength = Math.min(mMtu - 3 - calculatePacketOverhead(mImageUploadData, offset),
+        int dataLength = Math.min(mMtu - calculatePacketOverhead(mImageUploadData, offset),
                 mImageUploadData.length - offset);
         Log.v(TAG, "Image data length: " + dataLength);
 
@@ -478,7 +478,6 @@ public class ImageManager extends McuManager {
     // TODO more precise overhead calculations
     private int calculatePacketOverhead(byte[] data, int offset) {
         HashMap<String, Object> overheadTestMap = new HashMap<>();
-        byte[] nmgrHeader = {0, 0, 0, 0, 0, 0, 0, 0};
         overheadTestMap.put("data", new byte[0]);
         overheadTestMap.put("off", offset);
         if (offset == 0) {
@@ -486,14 +485,15 @@ public class ImageManager extends McuManager {
         }
         try {
             if (getScheme().isCoap()) {
-                overheadTestMap.put("_h", nmgrHeader);
+                byte[] header = {0, 0, 0, 0, 0, 0, 0, 0};
+                overheadTestMap.put("_h", header);
                 byte[] cborData = CBOR.toBytes(overheadTestMap);
                 // 20 byte estimate of CoAP Header; 5 bytes for good measure
                 return cborData.length + 20 + 5;
             } else {
                 byte[] cborData = CBOR.toBytes(overheadTestMap);
-                // 8 bytes for McuMgr header; 2 bytes for data length
-                return cborData.length + 8 + 2;
+                // 8 bytes for McuMgr header; 2 bytes for data length; 3 for command type and att ID
+                return cborData.length + 8 + 2 + 3;
             }
         } catch (IOException e) {
             Log.e(TAG, "Error while calculating packet overhead", e);
