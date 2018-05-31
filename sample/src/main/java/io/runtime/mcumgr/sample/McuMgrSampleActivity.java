@@ -260,8 +260,8 @@ public class McuMgrSampleActivity extends AppCompatActivity
             return;
         }
         mBleTransport = new McuMgrBleTransport(this, mDevice);
-        mManager = new FirmwareUpgradeManager(mBleTransport, this);
-        mManager.send(data);
+        mManager = new FirmwareUpgradeManager(mBleTransport, data, this);
+        mManager.start();
     }
     
     @Override

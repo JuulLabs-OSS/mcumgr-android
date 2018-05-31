@@ -50,4 +50,10 @@ public interface McuMgrTransport {
      */
     <T extends McuMgrResponse> void send(byte[] payload, Class<T> responseType,
                                          McuMgrCallback<T> callback);
+
+    /**
+     * Releases the transport connection. When the connection is already closed this method does
+     * nothing.
+     */
+    void release();
 }

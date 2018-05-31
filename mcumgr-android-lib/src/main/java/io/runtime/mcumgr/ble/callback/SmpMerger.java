@@ -1,4 +1,4 @@
-package io.runtime.mcumgr.ble;
+package io.runtime.mcumgr.ble.callback;
 
 import android.support.annotation.NonNull;
 
@@ -9,7 +9,7 @@ import io.runtime.mcumgr.response.McuMgrResponse;
 import no.nordicsemi.android.ble.data.DataMerger;
 import no.nordicsemi.android.ble.data.DataStream;
 
-class McuMgrRequestMerger implements DataMerger {
+public class SmpMerger implements DataMerger {
 	private Integer mExpectedLength;
 
 	@Override

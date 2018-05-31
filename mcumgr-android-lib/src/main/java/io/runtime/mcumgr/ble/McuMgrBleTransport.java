@@ -5,16 +5,17 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
-import android.os.ConditionVariable;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
+import io.runtime.mcumgr.ble.callback.SmpDataCallback;
+import io.runtime.mcumgr.ble.callback.SmpMerger;
+import io.runtime.mcumgr.ble.callback.SmpResponse;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
@@ -22,9 +23,12 @@ import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 import no.nordicsemi.android.ble.Request;
 import no.nordicsemi.android.ble.callback.FailCallback;
+import no.nordicsemi.android.ble.callback.SuccessCallback;
+import no.nordicsemi.android.ble.data.Data;
+import no.nordicsemi.android.ble.data.DataMerger;
 import no.nordicsemi.android.ble.error.GattError;
 import no.nordicsemi.android.ble.exception.DeviceDisconnectedException;
-import no.nordicsemi.android.ble.response.ReadResponse;
+import no.nordicsemi.android.ble.exception.RequestFailedException;
 
 /**
  * The McuMgrBleTransport is an implementation for the {@link McuMgrScheme#BLE} transport scheme.
@@ -34,7 +38,6 @@ import no.nordicsemi.android.ble.response.ReadResponse;
  * to perform your BLE actions by calling {@link BleManager#enqueue(Request)}.
  */
 public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implements McuMgrTransport {
-
     private final static String TAG = "McuMgrBleTransport";
 
     private final static UUID SMP_SERVICE_UUID =
@@ -53,26 +56,14 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     private BluetoothGattCharacteristic mSmpCharacteristic;
 
     /**
-     * Used to wait while a device is being connected and set up. This lock is opened once the
-     * device is ready (opened in onDeviceReady).
+     * The Bluetooth device for this transporter.
      */
-    private ConditionVariable mReadyLock = new ConditionVariable(false);
+    private final BluetoothDevice mDevice;
 
     /**
-     * Queue of requests to send from Mcu Manager.
+     * An instance of a merger used to merge SMP packets that are split into multiple BLE packets.
      */
-    private LinkedBlockingQueue<McuMgrRequest> mSendQueue = new LinkedBlockingQueue<>();
-
-    /**
-     * The current request being sent. Used to finish or fail the request from an asynchronous
-     * mCallback.
-     */
-    private McuMgrRequest mRequest;
-
-    /**
-     * The bluetooth device for this transporter.
-     */
-    private BluetoothDevice mDevice;
+    private final DataMerger mSMPMerger = new SmpMerger();
 
     /**
      * Construct a McuMgrBleTransport object.
@@ -80,10 +71,11 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
      * @param context the context used to connect to the device.
      * @param device  the device to connect to and communicate with.
      */
-    public McuMgrBleTransport(Context context, BluetoothDevice device) {
+    public McuMgrBleTransport(@NonNull Context context, @NonNull BluetoothDevice device) {
         super(context);
         mDevice = device;
-        new SendThread().start();
+        // The callbacks object will ignore all calls to it
+        setGattCallbacks(new McuMgrBleCallbacks());
     }
 
     @NonNull
@@ -102,103 +94,134 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     }
 
     @Override
-    public <T extends McuMgrResponse> T send(byte[] payload, Class<T> responseType)
+    public <T extends McuMgrResponse> T send(final byte[] payload, final Class<T> responseType)
             throws McuMgrException {
-        return new McuMgrRequest<>(payload, responseType, null).synchronous(mSendQueue);
+        // If device is not connected, connect
+        try {
+            // Await will wait until the device is ready (that is initialization is complete)
+            connect(mDevice).await(25 * 1000);
+        } catch (RequestFailedException e) {
+            switch (e.getStatus()) {
+                case FailCallback.REASON_DEVICE_NOT_SUPPORTED:
+                    throw new McuMgrException("Device does not support SMP Service");
+                case FailCallback.REASON_REQUEST_FAILED:
+                    // This could be thrown only if the manager was requested to connect for
+                    // a second time and to a different device than the one that's already
+                    // connected. This may not happen here.
+                    throw new McuMgrException("Other device already connected");
+                default:
+                    // Other errors are currently never thrown for the connect request.
+                    throw new McuMgrException("Unknown error");
+            }
+        } catch (InterruptedException e) {
+            // On timeout, fail the request
+            throw new McuMgrException("Connection routine timed out.");
+        } catch (DeviceDisconnectedException e) {
+            // When connection failed, fail the request
+            throw new McuMgrException("Device has disconnected");
+        }
+
+        // Ensure the MTU is sufficient
+        if (getMtu() - 3 < payload.length) {
+            throw new InsufficientMtuException(payload.length, getMtu());
+        }
+
+        // Send the request and wait for a notification in a synchronous way
+        try {
+            final SmpResponse<T> smpResponse = setNotificationCallback(mSmpCharacteristic)
+					.merge(mSMPMerger)
+					.awaitAfter(Request.newWriteRequest(mSmpCharacteristic, payload),
+                            new SmpResponse<>(responseType));
+            if (smpResponse.isValid()) {
+                return smpResponse.getResponse();
+            } else {
+                throw new McuMgrException("Error building McuMgrResponse from response data");
+            }
+        } catch (RequestFailedException e) {
+            throw new McuMgrException(GattError.parse(e.getStatus()));
+        } catch (DeviceDisconnectedException e) {
+            // When connection failed, fail the request
+            throw new McuMgrException("Device has disconnected");
+        }
     }
 
     @Override
-    public <T extends McuMgrResponse> void send(byte[] payload, Class<T> responseType,
-                                                McuMgrCallback<T> callback) {
-        new McuMgrRequest<>(payload, responseType, callback).asynchronous(mSendQueue);
+    public <T extends McuMgrResponse> void send(final byte[] payload, final Class<T> responseType,
+                                                final McuMgrCallback<T> callback) {
+        // If device is not connected, connect.
+        // If the device was already connected, the completion callback will be called immediately.
+        connect(mDevice).done(new SuccessCallback() {
+            @Override
+            public void onRequestCompleted(final BluetoothDevice device) {
+                // Ensure the MTU is sufficient
+                if (getMtu() - 3 < payload.length) {
+                    callback.onError(new InsufficientMtuException(payload.length, getMtu()));
+                    return;
+                }
+
+                setNotificationCallback(mSmpCharacteristic)
+                        .merge(mSMPMerger)
+                        .with(new SmpDataCallback<T>(responseType) {
+                            @Override
+                            public void onResponseReceived(@NonNull BluetoothDevice device,
+                                                           @NonNull T response) {
+                                callback.onResponse(response);
+                            }
+
+                            @Override
+                            public void onInvalidDataReceived(@NonNull BluetoothDevice device,
+                                                              @NonNull Data data) {
+                                callback.onError(new McuMgrException("Error building " +
+                                        "McuMgrResponse from response data: " + data));
+                            }
+                        });
+                writeCharacteristic(mSmpCharacteristic, payload)
+                        .fail(new FailCallback() {
+                            @Override
+                            public void onRequestFailed(@NonNull BluetoothDevice device,
+                                                        int status) {
+                                callback.onError(new McuMgrException(GattError.parse(status)));
+                            }
+                        });
+            }
+        }).fail(new FailCallback() {
+            @Override
+            public void onRequestFailed(final BluetoothDevice device, final int status) {
+                switch (status) {
+                    case REASON_DEVICE_DISCONNECTED:
+                        callback.onError(new McuMgrException("Device has disconnected"));
+                        break;
+                    case REASON_DEVICE_NOT_SUPPORTED:
+                        callback.onError(new McuMgrException("Device does not support SMP Service"));
+                        break;
+                    case REASON_REQUEST_FAILED:
+                        // This could be thrown only if the manager was requested to connect for
+                        // a second time and to a different device than the one that's already
+                        // connected. This may not happen here.
+                        callback.onError(new McuMgrException("Other device already connected"));
+                        break;
+                    default:
+                        callback.onError(new McuMgrException(GattError.parseConnectionError(status)));
+                        break;
+                }
+            }
+        });
+    }
+
+    @Override
+    public void release() {
+        disconnect();
     }
 
     @Override
     public void log(int level, @NonNull String message) {
-
+        Log.d(TAG, message);
     }
 
     @Override
     public void log(int level, int messageRes, Object... params) {
 
     }
-
-    //*******************************************************************************************
-    // Mcu Manager Main Send Thread
-    // TODO Look into disconnects causing race conditions
-    //*******************************************************************************************
-
-    /**
-     * This thread loops through the send queue blocking until a request is available. Once a
-     * request is popped, connection and setup is performed if necessary, otherwise the request is
-     * performed.
-     */
-    private class SendThread extends Thread {
-        @Override
-        public void run() {
-            super.run();
-            while (true) {
-                try {
-                    // Take a request for the queue, blocking until available.
-                    mRequest = mSendQueue.take();
-                } catch (InterruptedException e) {
-                    Log.e(TAG, "Waiting for request interrupted", e);
-                    continue;
-                }
-
-                // If device is not connected, connect
-                if (!isConnected()) {
-                    // Close the ready lock before
-                    mReadyLock.close();
-                    connect(mDevice);
-                }
-
-                // Wait until device is ready
-                if (!mReadyLock.block(25 * 1000)) {
-                    // On timeout, fail the request
-                    mRequest.fail(new McuMgrException("Connection routine timed out."));
-                    continue;
-                }
-
-                // Ensure that device supports SMP Service
-                if (mSmpCharacteristic == null) {
-                    if (!isConnected()) {
-                        mRequest.fail(new McuMgrException("Device has disconnected"));
-                    } else {
-                        mRequest.fail(new McuMgrException("Device does not support SMP Service"));
-                    }
-                    continue;
-                }
-
-                // Ensure the mtu is sufficient
-                if (getMtu() < mRequest.getBytes().length) {
-                    mRequest.fail(new InsufficientMtuException(getMtu()));
-                    continue;
-                }
-
-                try {
-                    // Block until the response is received
-                    ReadResponse response = setNotificationCallback(mSmpCharacteristic)
-							.merge(new McuMgrRequestMerger())
-							.awaitAfter(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Write the characteristic
-                                    Log.i(TAG, "Writing characteristic " + mRequest);
-                                    writeCharacteristic(mSmpCharacteristic, mRequest.getBytes());
-                                }
-                            }, ReadResponse.class, 10 * 1000);
-                    Log.i(TAG, "Response received: " + response.getRawData());
-                    mRequest.receive(response.getRawData().getValue());
-                } catch (InterruptedException e) {
-                    mRequest.fail(new McuMgrException("Send timed out."));
-                } catch (DeviceDisconnectedException e) {
-                    mRequest.fail(new McuMgrException("Device disconnected."));
-                }
-            }
-        }
-    }
-
 
     //*******************************************************************************************
     // Ble Manager Callbacks
@@ -235,34 +258,19 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         // Called once the connection has been established and services discovered. This method
         // adds a queue of requests necessary to set up the SMP service to begin writing
         // commands and receiving responses. Once these actions have completed onDeviceReady is
-        // called
+        // called.
         @Override
         protected void initialize() {
-            enableNotifications(mSmpCharacteristic)
-                    .fail(new FailCallback() {
-                        @Override
-                        public void onRequestFailed(@NonNull BluetoothDevice device, int status) {
-                            mRequest.fail(new McuMgrException(GattError.parse(status)));
-                        }
-                    });
-            requestMtu(512);
-        }
-
-        // Called once the device is ready. This method opens the lock waiting for the device to
-        // become ready.
-        @Override
-        protected void onDeviceReady() {
-            Log.d(TAG, "Device is ready");
-            mReadyLock.open();
+            requestMtu(515);
+            enableNotifications(mSmpCharacteristic);
         }
 
         // Called when the device has disconnected. This method nulls the services and
-        // characteristic variables and opens any waiting locks.
+        // characteristic variables.
         @Override
         protected void onDeviceDisconnected() {
             mSmpService = null;
             mSmpCharacteristic = null;
-            mReadyLock.open();
         }
     };
 }
