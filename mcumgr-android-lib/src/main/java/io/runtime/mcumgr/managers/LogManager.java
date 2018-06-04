@@ -205,9 +205,9 @@ public class LogManager extends McuManager {
     }
 
     /**
-     * Get all log entries from all logs on the device.
+     * Get all log entries from all logs on the device (synchronous).
      *
-     * @return a mapping of log name to state
+     * @return A mapping of log name to state.
      */
     public synchronized Map<String, State> getAll() {
         HashMap<String, State> logStates = new HashMap<>();
@@ -245,11 +245,11 @@ public class LogManager extends McuManager {
     }
 
     /**
-     * Get logs from a state. The logs will be collected from the state's next index and added to
-     * the list of entries.
+     * Get logs from a state (synchronous). The logs will be collected from the state's
+     * next index and added to the list of entries.
      *
-     * @param state The log state to collect logs from
-     * @return The log state with updated next index and entry list
+     * @param state The log state to collect logs from.
+     * @return The log state with updated next index and entry list.
      */
     public State getAllFromState(State state) {
         if (state == null) {
@@ -294,11 +294,12 @@ public class LogManager extends McuManager {
     }
 
     /**
-     * Get the next set of logs from a log state and return the response. This method does not
-     * update the log state and only collects as many logs as can fit into a single response.
+     * Get the next set of logs from a log state and return the response (synchronous).
+     * This method does not update the log state and only collects as many logs as can fit into
+     * a single response.
      *
-     * @param state The state to get logs from
-     * @return the show response
+     * @param state The state to get logs from.
+     * @return The show response.
      */
     public McuMgrLogResponse showNext(State state) {
         Log.d(TAG, "Show logs: name=" + state.getName() +
