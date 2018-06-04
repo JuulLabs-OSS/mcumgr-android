@@ -9,5 +9,5 @@ package io.runtime.mcumgr.response.stat;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
 public class McuMgrStatListResponse extends McuMgrResponse {
-    private String[] stat_list;
+    public String[] stat_list;
 }
