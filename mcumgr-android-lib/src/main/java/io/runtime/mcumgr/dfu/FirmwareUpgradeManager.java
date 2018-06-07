@@ -88,6 +88,21 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private boolean mUiThreadCallbacks = true;
 
     /**
+     * Construct a firmware upgrade manager. If using this constructor, image data
+     * and callback must be set
+     * using {@link FirmwareUpgradeManager#setImageData} and
+     * {@link #setFirmwareUpgradeCallback(FirmwareUpgradeCallback)} before calling
+     * {@link FirmwareUpgradeManager#start}.
+     *
+     * @param transport the transporter to use.
+     */
+    public FirmwareUpgradeManager(@NonNull McuMgrTransport transport) {
+        mState = State.NONE;
+        mImageManager = new ImageManager(transport);
+        mDefaultManager = new DefaultManager(transport);
+    }
+
+    /**
      * Construct a firmware upgrade manager. If using this constructor, image data must be set
      * using {@link FirmwareUpgradeManager#setImageData} before calling
      * {@link FirmwareUpgradeManager#start}.
@@ -97,10 +112,8 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     public FirmwareUpgradeManager(@NonNull McuMgrTransport transport,
                                   @NonNull FirmwareUpgradeCallback callback) {
+        this(transport);
         mCallback = callback;
-        mState = State.NONE;
-        mImageManager = new ImageManager(transport);
-        mDefaultManager = new DefaultManager(transport);
     }
 
     /**
@@ -143,9 +156,18 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     }
 
     /**
+     * Sets the manager callback.
+     *
+     * @param callback the callback for receiving status change events.
+     */
+    public void setFirmwareUpgradeCallback(@NonNull final FirmwareUpgradeCallback callback) {
+        mCallback = callback;
+    }
+
+    /**
      * Set the MTU of the image upload.
      *
-     * @param mtu the mtu.
+     * @param mtu the mtu (Maximum Transfer Unit).
      */
     public void setUploadMtu(int mtu) {
         mImageManager.setUploadMtu(mtu);
@@ -182,7 +204,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     public synchronized void cancel() {
         if (mState.isInProgress()) {
             cancelPrivate();
-            mInternalCallback.onCancel(mState);
         }
     }
 
@@ -244,7 +265,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrCallback<McuMgrImageStateResponse> mTestCallback = new McuMgrCallback<McuMgrImageStateResponse>() {
         @Override
-        public void onResponse(McuMgrImageStateResponse response) {
+        public void onResponse(@NonNull McuMgrImageStateResponse response) {
             if (response.getRc() != McuMgrErrorCode.OK) {
                 Log.e(TAG, "Test failed due to McuManager error: " + response.getRc());
                 fail(new McuMgrErrorException(response.getRc()));
@@ -265,7 +286,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onError(McuMgrException e) {
+        public void onError(@NonNull McuMgrException e) {
             fail(e);
         }
     };
@@ -276,13 +297,13 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrCallback<McuMgrResponse> mResetCallback = new McuMgrCallback<McuMgrResponse>() {
         @Override
-        public void onResponse(McuMgrResponse response) {
+        public void onResponse(@NonNull McuMgrResponse response) {
             Log.d(TAG, "Reset successful");
             mResetPollThread.start();
         }
 
         @Override
-        public void onError(McuMgrException e) {
+        public void onError(@NonNull McuMgrException e) {
             fail(e);
         }
     };
@@ -294,7 +315,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private McuMgrCallback<McuMgrImageStateResponse> mConfirmCallback =
             new McuMgrCallback<McuMgrImageStateResponse>() {
                 @Override
-                public void onResponse(McuMgrImageStateResponse response) {
+                public void onResponse(@NonNull McuMgrImageStateResponse response) {
                     if (response.getRc() != McuMgrErrorCode.OK) {
                         Log.e(TAG, "Confirm failed due to Mcu Manager error: " + response.getRc());
                         fail(new McuMgrErrorException(response.getRc()));
@@ -315,7 +336,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 }
 
                 @Override
-                public void onError(McuMgrException e) {
+                public void onError(@NonNull McuMgrException e) {
                     fail(e);
                 }
             };
@@ -440,7 +461,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             Log.d(TAG, "Calling image list...");
             mImageManager.list(new McuMgrCallback<McuMgrImageStateResponse>() {
                 @Override
-                public synchronized void onResponse(McuMgrImageStateResponse response) {
+                public synchronized void onResponse(@NonNull McuMgrImageStateResponse response) {
                     if (mState == State.RESET) {
                         // Device has reset, begin confirm
                         nextState();
@@ -450,7 +471,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 }
 
                 @Override
-                public void onError(McuMgrException e) {
+                public void onError(@NonNull McuMgrException e) {
                     // Do nothing...
                 }
             });
@@ -471,8 +492,13 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onUploadFail(McuMgrException error) {
+        public void onUploadFail(@NonNull McuMgrException error) {
             mInternalCallback.onFail(mState, error);
+        }
+
+        @Override
+        public void onUploadCancel() {
+            mInternalCallback.onCancel(mState);
         }
 
         @Override

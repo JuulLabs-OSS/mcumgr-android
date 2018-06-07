@@ -34,6 +34,7 @@ import io.runtime.mcumgr.util.CBOR;
  * <p>
  * It is important to note that image upload is only one step in a firmware upgrade. To perform
  * a full firmware upgrade use {@link FirmwareUpgradeManager}.
+ *
  * @see FirmwareUpgradeManager
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -55,7 +56,7 @@ public class ImageManager extends McuManager {
      *
      * @param transport the transport to use to send commands.
      */
-    public ImageManager(McuMgrTransport transport) {
+    public ImageManager(@NonNull McuMgrTransport transport) {
         super(GROUP_IMAGE, transport);
     }
 
@@ -66,7 +67,7 @@ public class ImageManager extends McuManager {
      *
      * @param callback the asynchronous callback.
      */
-    public void list(McuMgrCallback<McuMgrImageStateResponse> callback) {
+    public void list(@NonNull McuMgrCallback<McuMgrImageStateResponse> callback) {
         send(OP_READ, ID_STATE, null, McuMgrImageStateResponse.class, callback);
     }
 
@@ -78,9 +79,91 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
+    @NonNull
     public McuMgrImageStateResponse list() throws McuMgrException {
         return send(OP_READ, ID_STATE, null, McuMgrImageStateResponse.class);
     }
+
+	/**
+	 * Send a packet of given data from the specified offset to the device (asynchronous).
+	 * <p>
+	 * The chunk size is limited by the current MTU. If the current MTU set by
+	 * {@link #setUploadMtu(int)} is too large, the {@link McuMgrCallback#onError(McuMgrException)}
+	 * with {@link InsufficientMtuException} error will be returned.
+	 * Use {@link InsufficientMtuException#getMtu()} to get the current MTU and
+	 * pass it to {@link #setUploadMtu(int)} and try again.
+	 * <p>
+	 * Use {@link #upload(byte[], ImageUploadCallback)} to send the whole file asynchronously
+	 * using one command.
+	 *
+	 * @param data     image data.
+	 * @param offset   the offset, from which the chunk will be sent.
+	 * @param callback the asynchronous callback.
+	 * @see #upload(byte[], ImageUploadCallback)
+	 */
+	public void upload(byte[] data, int offset, @NonNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
+		// Get the length of data (in bytes) to put into the upload packet. This calculated as:
+		// min(MTU - packetOverhead, imageLength - uploadOffset)
+		int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
+				data.length - offset);
+
+		// Copy the data from the image into a buffer.
+		byte[] sendBuffer = new byte[dataLength];
+		System.arraycopy(data, offset, sendBuffer, 0, dataLength);
+
+		// Create the map of key-values for the McuManager payload
+		HashMap<String, Object> payloadMap = new HashMap<>();
+		// Put the data and offset
+		payloadMap.put("data", sendBuffer);
+		payloadMap.put("off", offset);
+		if (offset == 0) {
+			// Only send the length of the image in the first packet of the upload
+			payloadMap.put("len", data.length);
+		}
+
+		// Send the request
+		send(OP_WRITE, ID_UPLOAD, payloadMap, McuMgrImageUploadResponse.class, callback);
+	}
+
+	/**
+	 * Send a packet of given data from the specified offset to the device (synchronous).
+	 * <p>
+	 * The chunk size is limited by the current MTU. If the current MTU set by
+	 * {@link #setUploadMtu(int)} is too large, the {@link InsufficientMtuException} error will be
+	 * thrown. Use {@link InsufficientMtuException#getMtu()} to get the current MTU and
+	 * pass it to {@link #setUploadMtu(int)} and try again.
+	 * <p>
+	 * Use {@link #upload(byte[], ImageUploadCallback)} to send the whole file asynchronously
+	 * using one command.
+	 *
+	 * @param data   image data.
+	 * @param offset the offset, from which the chunk will be sent.
+	 * @return The upload response.
+	 * @see #upload(byte[], ImageUploadCallback)
+	 */
+	public McuMgrImageUploadResponse upload(byte[] data, int offset) throws McuMgrException {
+		// Get the length of data (in bytes) to put into the upload packet. This calculated as:
+		// min(MTU - packetOverhead, imageLength - uploadOffset)
+		int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
+				data.length - offset);
+
+		// Copy the data from the image into a buffer.
+		byte[] sendBuffer = new byte[dataLength];
+		System.arraycopy(data, offset, sendBuffer, 0, dataLength);
+
+		// Create the map of key-values for the McuManager payload
+		HashMap<String, Object> payloadMap = new HashMap<>();
+		// Put the data and offset
+		payloadMap.put("data", sendBuffer);
+		payloadMap.put("off", offset);
+		if (offset == 0) {
+			// Only send the length of the image in the first packet of the upload
+			payloadMap.put("len", data.length);
+		}
+
+		// Send the request
+		return send(OP_WRITE, ID_UPLOAD, payloadMap, McuMgrImageUploadResponse.class);
+	}
 
     /**
      * Test an image on the device (asynchronous).
@@ -91,7 +174,7 @@ public class ImageManager extends McuManager {
      * @param hash     the hash of the image to test.
      * @param callback the asynchronous callback.
      */
-    public void test(byte[] hash, McuMgrCallback<McuMgrImageStateResponse> callback) {
+    public void test(@NonNull byte[] hash, @NonNull McuMgrCallback<McuMgrImageStateResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("hash", hash);
         payloadMap.put("confirm", false);
@@ -108,7 +191,8 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    public McuMgrImageStateResponse test(byte[] hash) throws McuMgrException {
+    @NonNull
+    public McuMgrImageStateResponse test(@NonNull byte[] hash) throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("hash", hash);
         payloadMap.put("confirm", false);
@@ -123,7 +207,7 @@ public class ImageManager extends McuManager {
      * @param hash     the hash of the image to confirm.
      * @param callback the asynchronous callback.
      */
-    public void confirm(byte[] hash, McuMgrCallback<McuMgrImageStateResponse> callback) {
+    public void confirm(@NonNull byte[] hash, @NonNull McuMgrCallback<McuMgrImageStateResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("hash", hash);
         payloadMap.put("confirm", true);
@@ -139,7 +223,7 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    public McuMgrImageStateResponse confirm(byte[] hash) throws McuMgrException {
+    public McuMgrImageStateResponse confirm(@NonNull byte[] hash) throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("hash", hash);
         payloadMap.put("confirm", true);
@@ -163,9 +247,9 @@ public class ImageManager extends McuManager {
         }
 
         mUploadCallback = callback;
-        mImageUploadData = data;
+        mImageData = data;
 
-        sendUploadData(0);
+        sendNext(0);
     }
 
     /**
@@ -174,7 +258,7 @@ public class ImageManager extends McuManager {
      * @param callback the asynchronous callback.
      */
     public void erase(McuMgrCallback<McuMgrResponse> callback) {
-        send(OP_WRITE, ID_STATE, null, McuMgrResponse.class, callback);
+        send(OP_WRITE, ID_ERASE, null, McuMgrResponse.class, callback);
     }
 
     /**
@@ -184,7 +268,7 @@ public class ImageManager extends McuManager {
      * @throws McuMgrException Transport error. See cause.
      */
     public McuMgrResponse erase() throws McuMgrException {
-        return send(OP_WRITE, ID_STATE, null, McuMgrResponse.class);
+        return send(OP_WRITE, ID_ERASE, null, McuMgrResponse.class);
     }
 
     /**
@@ -260,9 +344,6 @@ public class ImageManager extends McuManager {
     // Image Upload
     //******************************************************************
 
-    // Image Upload Constants
-    private final static int DEFAULT_MTU = 515;
-
     // Upload states
     public final static int STATE_NONE = 0;
     public final static int STATE_UPLOADING = 1;
@@ -271,32 +352,8 @@ public class ImageManager extends McuManager {
     // Upload variables
     private int mUploadState = STATE_NONE;
     private int mUploadOffset = 0;
-    private int mMtu = DEFAULT_MTU;
-    private byte[] mImageUploadData;
+    private byte[] mImageData;
     private ImageUploadCallback mUploadCallback;
-
-    /**
-     * Sets the upload MTU. MTU must be between 23 and 1024.
-     *
-     * @param mtu the MTU to use for image upload.
-     * @return True if the upload has been set, false otherwise.
-     */
-    public synchronized boolean setUploadMtu(int mtu) {
-        Log.v(TAG, "Setting image upload MTU: " + mtu);
-        if (mUploadState == STATE_UPLOADING) {
-            Log.e(TAG, "Upload must not be in progress!");
-            return false;
-        } else if (mtu < 23) {
-            Log.e(TAG, "MTU is too small!");
-            return false;
-        } else if (mtu > 1024) {
-            Log.e(TAG, "MTU is too large!");
-            return false;
-        } else {
-            mMtu = mtu;
-            return true;
-        }
-    }
 
     /**
      * Get the current upload state ({@link ImageManager#STATE_NONE},
@@ -315,7 +372,7 @@ public class ImageManager extends McuManager {
         if (mUploadState == STATE_NONE) {
             Log.d(TAG, "Image upload is not in progress");
         } else {
-            resetUpload();
+            mUploadState = STATE_NONE;
         }
     }
 
@@ -338,7 +395,7 @@ public class ImageManager extends McuManager {
         if (mUploadState == STATE_PAUSED) {
             Log.d(TAG, "Continuing upload.");
             mUploadState = STATE_UPLOADING;
-            sendUploadData(mUploadOffset);
+            sendNext(mUploadOffset);
         } else {
             Log.d(TAG, "Upload is not paused.");
         }
@@ -356,11 +413,11 @@ public class ImageManager extends McuManager {
     }
 
     private synchronized void restartUpload() {
-        if (mImageUploadData == null || mUploadCallback == null) {
+        if (mImageData == null || mUploadCallback == null) {
             Log.e(TAG, "Could not restart upload: image data or callback is null!");
             return;
         }
-        byte[] tempData = mImageUploadData;
+        byte[] tempData = mImageData;
         ImageUploadCallback tempCallback = mUploadCallback;
         resetUpload();
         upload(tempData, tempCallback);
@@ -369,8 +426,7 @@ public class ImageManager extends McuManager {
     private synchronized void resetUpload() {
         mUploadState = STATE_NONE;
         mUploadOffset = 0;
-        mImageUploadData = null;
-        mUploadCallback = null;
+        mImageData = null;
     }
 
     /**
@@ -378,104 +434,88 @@ public class ImageManager extends McuManager {
      *
      * @param offset the image data offset to send data from.
      */
-    private synchronized void sendUploadData(int offset) {
-        // Check that the state is STATE_UPLOADING
+    private synchronized void sendNext(int offset) {
+        // Check that the state is STATE_UPLOADING.
         if (mUploadState != STATE_UPLOADING) {
-            Log.d(TAG, "Image upload is not in the UPLOADING state.");
+            Log.d(TAG, "Image Manager is not in the UPLOADING state.");
             return;
         }
-
-        // Get the length of data (in bytes) to put into the upload packet. This calculated as:
-        // min(MTU - packetOverhead, imageLength - uploadOffset)
-        Log.v(TAG, "Send upload data at offset: " + offset);
-        int dataLength = Math.min(mMtu - calculatePacketOverhead(mImageUploadData, offset),
-                mImageUploadData.length - offset);
-        Log.v(TAG, "Image data length: " + dataLength);
-
-        // Copy the data from the image into a buffer.
-        byte[] sendBuffer = new byte[dataLength];
-        System.arraycopy(mImageUploadData, offset, sendBuffer, 0, dataLength);
-
-        // Create the map of key-values for the McuManager payload
-        HashMap<String, Object> payloadMap = new HashMap<>();
-        // Put the data and offset
-        payloadMap.put("data", sendBuffer);
-        payloadMap.put("off", offset);
-        if (offset == 0) {
-            // Only send the length of the image in the first packet of the upload
-            payloadMap.put("len", mImageUploadData.length);
-        }
-
-        // Send the request
-        send(OP_WRITE, ID_UPLOAD, payloadMap, McuMgrImageUploadResponse.class, mCallback);
+        upload(mImageData, offset, mUploadCallbackImpl);
     }
 
     /**
-     * The upload which is called after a successful call to
-     * {@link ImageManager#sendUploadData(int)}'s response has been received or an error has
-     * occurred. On success, this callback parses the response, calls the upload progress callback
-     * and sends the next packet of image data from the offset specified in the response. On error,
-     * the upload is failed unless the error specifies that the packet sent to the transporter was
-     * too large to send ({@link InsufficientMtuException}). In this case, the MTU is set to the
-     * MTU in the exception and the upload is restarted.
+	 * The upload callback which is called after a {@link #sendNext(int)}'s response has been
+	 * received or an error has occurred. On success, this callback parses the response, calls the
+	 * upload progress callback and sends the next packet of image data from the offset specified
+	 * in the response. On error, the upload is failed unless the error specifies that the packet
+	 * sent to the transporter was too large to send ({@link InsufficientMtuException}).
+	 * In this case, the MTU is set to the MTU in the exception and the upload is restarted.
      */
-    private McuMgrCallback<McuMgrImageUploadResponse> mCallback =
+    private final McuMgrCallback<McuMgrImageUploadResponse> mUploadCallbackImpl =
             new McuMgrCallback<McuMgrImageUploadResponse>() {
-        @Override
-        public void onResponse(McuMgrImageUploadResponse response) {
-            // Check for a McuManager error
-            if (response.rc != 0) {
-                // TODO when the image in slot 1 is confirmed, this will return ENOMEM (2).
-                Log.e(TAG, "Upload failed due to McuManager error: " + response.rc);
-                failUpload(new McuMgrErrorException(McuMgrErrorCode.valueOf(response.rc)));
-                return;
-            }
+                @Override
+                public void onResponse(@NonNull McuMgrImageUploadResponse response) {
+                    // Check for a McuManager error.
+                    if (response.rc != 0) {
+                        // TODO when the image in slot 1 is confirmed, this will return ENOMEM (2).
+                        Log.e(TAG, "Upload failed due to McuManager error: " + response.rc);
+                        failUpload(new McuMgrErrorException(McuMgrErrorCode.valueOf(response.rc)));
+                        return;
+                    }
 
-            // Get the next offset to send image data from
-            mUploadOffset = response.off;
+                    // Get the next offset to send image data from.
+                    mUploadOffset = response.off;
 
-            // Call the progress callback
-            mUploadCallback.onProgressChange(mUploadOffset, mImageUploadData.length, System.currentTimeMillis());
+                    // Call the progress callback.
+                    mUploadCallback.onProgressChange(mUploadOffset, mImageData.length,
+							System.currentTimeMillis());
 
-            // Check if the upload has finished.
-            if (mUploadOffset == mImageUploadData.length) {
-                Log.d(TAG, "Upload finished!");
-                mUploadCallback.onUploadFinish();
-                return;
-            }
+                    if (mUploadState == STATE_NONE) {
+						Log.d(TAG, "Upload canceled!");
+						resetUpload();
+						mUploadCallback.onUploadCancel();
+						mUploadCallback = null;
+						return;
+					}
 
-            // Send the next packet of upload data from the offset provided in the response.
-            sendUploadData(mUploadOffset);
-        }
+                    // Check if the upload has finished.
+                    if (mUploadOffset == mImageData.length) {
+                        Log.d(TAG, "Upload finished!");
+						resetUpload();
+						mUploadCallback.onUploadFinish();
+						mUploadCallback = null;
+                        return;
+                    }
 
-        @Override
-        public void onError(McuMgrException error) {
-            // Check if the exception is due to an insufficient MTU.
-            if (error instanceof InsufficientMtuException) {
-                InsufficientMtuException mtuErr = (InsufficientMtuException) error;
-
-                // Pause the upload, so it's not in STATE_UPLOADING
-                pauseUpload();
-
-                // Set the MTU to the value specified in the error response.
-                int mtu = mtuErr.getMtu();
-                if (mMtu == mtu)
-                    mtu -= 1;
-                boolean isMtuSet = setUploadMtu(mtu);
-
-                if (isMtuSet) {
-                    // If the MTU has been set successfully, restart the upload.
-                    restartUpload();
-                    return;
+                    // Send the next packet of upload data from the offset provided in the response.
+                    sendNext(mUploadOffset);
                 }
-            }
-            // If the exception is not due to insufficient MTU fail the upload
-            failUpload(error);
-        }
-    };
+
+                @Override
+                public void onError(@NonNull McuMgrException error) {
+                    // Check if the exception is due to an insufficient MTU.
+                    if (error instanceof InsufficientMtuException) {
+                        InsufficientMtuException mtuErr = (InsufficientMtuException) error;
+
+                        // Set the MTU to the value specified in the error response.
+                        int mtu = mtuErr.getMtu();
+                        if (mMtu == mtu)
+                            mtu -= 1;
+                        boolean isMtuSet = setUploadMtu(mtu);
+
+                        if (isMtuSet) {
+                            // If the MTU has been set successfully, restart the upload.
+                            restartUpload();
+                            return;
+                        }
+                    }
+                    // If the exception is not due to insufficient MTU fail the upload.
+                    failUpload(error);
+                }
+            };
 
     // TODO more precise overhead calculations
-    private int calculatePacketOverhead(byte[] data, int offset) {
+    private int calculatePacketOverhead(@NonNull byte[] data, int offset) {
         HashMap<String, Object> overheadTestMap = new HashMap<>();
         overheadTestMap.put("data", new byte[0]);
         overheadTestMap.put("off", offset);
@@ -523,7 +563,12 @@ public class ImageManager extends McuManager {
          *
          * @param error the error. See the cause for more info.
          */
-        void onUploadFail(McuMgrException error);
+        void onUploadFail(@NonNull McuMgrException error);
+
+		/**
+		 * Called when the upload has been canceled.
+		 */
+		void onUploadCancel();
 
         /**
          * Called when the upload has finished successfully.
