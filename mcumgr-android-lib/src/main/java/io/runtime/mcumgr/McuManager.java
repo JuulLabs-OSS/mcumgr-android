@@ -7,6 +7,7 @@
 
 package io.runtime.mcumgr;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -30,10 +31,13 @@ import io.runtime.mcumgr.util.CBOR;
 public abstract class McuManager {
     private static final String TAG = McuManager.class.getSimpleName();
 
+    // Transport constants
+    private final static int DEFAULT_MTU = 515;
+
     // Date format
     private final static String MCUMGR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ";
 
-    // CoAP Constants
+    // CoAP constants
     private final static String COAP_URI = "/omgr";
     private final static String HEADER_KEY = "_h";
 
@@ -63,7 +67,13 @@ public abstract class McuManager {
     /**
      * Handles sending the McuManager command data over the transport specified by its scheme.
      */
-    private McuMgrTransport mTransporter;
+    @NonNull
+    private final McuMgrTransport mTransporter;
+
+    /**
+     * The MTU used to send data to the device.
+     */
+    protected int mMtu = DEFAULT_MTU;
 
     /**
      * Construct a McuManager instance.
@@ -71,7 +81,7 @@ public abstract class McuManager {
      * @param groupId     the group ID of this Mcu Manager instance.
      * @param transporter the transporter to use to send commands.
      */
-    protected McuManager(int groupId, McuMgrTransport transporter) {
+    protected McuManager(int groupId, @NonNull McuMgrTransport transporter) {
         mGroupId = groupId;
         mTransporter = transporter;
     }
@@ -90,6 +100,7 @@ public abstract class McuManager {
      *
      * @return The transporter's scheme.
      */
+    @NonNull
     public McuMgrScheme getScheme() {
         return mTransporter.getScheme();
     }
@@ -99,8 +110,37 @@ public abstract class McuManager {
      *
      * @return Transporter for this new manager instance.
      */
+    @NonNull
     public McuMgrTransport getTransporter() {
         return mTransporter;
+    }
+
+    /**
+     * Sets the upload MTU. MTU must be between 23 and 1024.
+     *
+     * @param mtu the MTU to use for image upload.
+     * @return True if the upload has been set, false otherwise.
+     */
+    public synchronized boolean setUploadMtu(int mtu) {
+        if (mtu < 23) {
+            Log.e(TAG, "MTU is too small!");
+            return false;
+        } else if (mtu > 1024) {
+            Log.e(TAG, "MTU is too large!");
+            return false;
+        } else {
+            mMtu = mtu;
+            return true;
+        }
+    }
+
+    /**
+     * Returns the upload MTU. MTU must be between 23 and 1024.
+     *
+     * @return The MTY.
+     */
+    public synchronized int getMtu() {
+        return mMtu;
     }
 
     /**
@@ -117,8 +157,10 @@ public abstract class McuManager {
      * @param callback   the response callback.
      * @param <T>        the response type.
      */
-    public <T extends McuMgrResponse> void send(int op, int commandId, Map<String, Object> payloadMap,
-                                                Class<T> respType, McuMgrCallback<T> callback) {
+    public <T extends McuMgrResponse> void send(int op, int commandId,
+                                                @Nullable Map<String, Object> payloadMap,
+                                                @NonNull Class<T> respType,
+                                                @NonNull McuMgrCallback<T> callback) {
         send(op, 0, mGroupId, 0, commandId, payloadMap, respType, callback);
     }
 
@@ -137,8 +179,10 @@ public abstract class McuManager {
      * @return The McuMgrResponse or null if an error occurred.
      * @throws McuMgrException on transport error. See exception cause for more info.
      */
-    public <T extends McuMgrResponse> T send(int op, int commandId, Map<String, Object> payloadMap,
-                                             Class<T> respType)
+    @NonNull
+    public <T extends McuMgrResponse> T send(int op, int commandId,
+                                             @Nullable Map<String, Object> payloadMap,
+                                             @NonNull Class<T> respType)
             throws McuMgrException {
         return send(op, 0, mGroupId, 0, commandId, respType, payloadMap);
     }
@@ -159,8 +203,11 @@ public abstract class McuManager {
      * @param callback    asynchronous callback.
      * @param <T>         the response type.
      */
-    public <T extends McuMgrResponse> void send(int op, int flags, int groupId, int sequenceNum, int
-            commandId, Map<String, Object> payloadMap, Class<T> respType, McuMgrCallback<T> callback) {
+    public <T extends McuMgrResponse> void send(int op, int flags, int groupId,
+                                                int sequenceNum, int commandId,
+                                                @Nullable Map<String, Object> payloadMap,
+                                                @NonNull Class<T> respType,
+                                                @NonNull McuMgrCallback<T> callback) {
         try {
             byte[] packet = buildPacket(op, flags, groupId, sequenceNum, commandId, payloadMap);
             send(packet, respType, callback);
@@ -187,9 +234,10 @@ public abstract class McuManager {
      * @return The Mcu Manager response.
      * @throws McuMgrException on transport error. See exception cause for more info.
      */
+    @NonNull
     public <T extends McuMgrResponse> T send(int op, int flags, int groupId, int sequenceNum,
-                                             int commandId, Class<T> respType,
-                                             Map<String, Object> payloadMap)
+                                             int commandId, @NonNull Class<T> respType,
+                                             @Nullable Map<String, Object> payloadMap)
             throws McuMgrException {
         byte[] packet = buildPacket(op, flags, groupId, sequenceNum, commandId, payloadMap);
         return send(packet, respType);
@@ -203,8 +251,8 @@ public abstract class McuManager {
      * @param callback the response callback.
      * @param <T>      the response type.
      */
-    public <T extends McuMgrResponse> void send(byte[] data, Class<T> respType,
-                                                McuMgrCallback<T> callback) {
+    public <T extends McuMgrResponse> void send(@NonNull byte[] data, @NonNull Class<T> respType,
+                                                @NonNull McuMgrCallback<T> callback) {
         mTransporter.send(data, respType, callback);
     }
 
@@ -217,7 +265,8 @@ public abstract class McuManager {
      * @return The Mcu Manager response.
      * @throws McuMgrException when an error occurs while sending the data.
      */
-    public <T extends McuMgrResponse> T send(byte[] data, Class<T> respType)
+    @NonNull
+    public <T extends McuMgrResponse> T send(@NonNull byte[] data, @NonNull Class<T> respType)
             throws McuMgrException {
         return mTransporter.send(data, respType);
     }
@@ -286,7 +335,8 @@ public abstract class McuManager {
      * @param timeZone the timezone of the given date. If null, the timezone on the device will be used.
      * @return A formatted string of the provided date and timezone.
      */
-    public static String dateToString(Date date, TimeZone timeZone) {
+    @NonNull
+    public static String dateToString(@Nullable Date date, @Nullable TimeZone timeZone) {
         if (date == null) {
             date = new Date();
         }
@@ -305,7 +355,8 @@ public abstract class McuManager {
      * @param dateString the string to parse.
      * @return The Date of the string, null on error.
      */
-    public static Date stringToDate(String dateString) {
+    @Nullable
+    public static Date stringToDate(@Nullable String dateString) {
         if (dateString == null) {
             return null;
         }

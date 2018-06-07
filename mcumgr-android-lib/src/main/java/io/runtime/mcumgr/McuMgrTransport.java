@@ -7,6 +7,8 @@
 
 package io.runtime.mcumgr;
 
+import android.support.annotation.NonNull;
+
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
@@ -23,6 +25,7 @@ public interface McuMgrTransport {
      *
      * @return The transport's scheme.
      */
+    @NonNull
     McuMgrScheme getScheme();
 
     /**
@@ -36,7 +39,9 @@ public interface McuMgrTransport {
      * @throws McuMgrException thrown on error. Set the cause of the error if caused by a different
      *                         type of exception.
      */
-    <T extends McuMgrResponse> T send(byte[] payload, Class<T> responseType) throws McuMgrException;
+    @NonNull
+    <T extends McuMgrResponse> T send(@NonNull byte[] payload, @NonNull Class<T> responseType)
+            throws McuMgrException;
 
     /**
      * Send an asynchronous Mcu Manager request. This method should not be blocked. When the
@@ -48,8 +53,8 @@ public interface McuMgrTransport {
      * @param callback     the callback to call on response or error.
      * @param <T>          the response type.
      */
-    <T extends McuMgrResponse> void send(byte[] payload, Class<T> responseType,
-                                         McuMgrCallback<T> callback);
+    <T extends McuMgrResponse> void send(@NonNull byte[] payload, @NonNull Class<T> responseType,
+                                         @NonNull McuMgrCallback<T> callback);
 
     /**
      * Releases the transport connection. When the connection is already closed this method does

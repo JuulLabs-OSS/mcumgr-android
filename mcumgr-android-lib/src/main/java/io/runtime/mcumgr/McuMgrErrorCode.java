@@ -6,6 +6,8 @@
 
 package io.runtime.mcumgr;
 
+import android.support.annotation.NonNull;
+
 /**
  * Almost all requests are responded to with an Mcu Manager return code in the response payload.
  * This value determines whether the request has been successful (rc = 0) or has failed (rc != 0).
@@ -70,6 +72,7 @@ public enum McuMgrErrorCode {
         return super.toString() + " (" + mCode + ")";
     }
 
+    @NonNull
     public static McuMgrErrorCode valueOf(int error) {
         switch (error) {
             case 0:
@@ -93,7 +96,7 @@ public enum McuMgrErrorCode {
             case 256:
                 return PER_USER;
             default:
-                return null;
+                return UNKNOWN;
         }
     }
 }
