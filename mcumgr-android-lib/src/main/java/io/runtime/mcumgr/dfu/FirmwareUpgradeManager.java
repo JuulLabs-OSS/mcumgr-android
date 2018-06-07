@@ -256,7 +256,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     }
 
     //******************************************************************
-    // Request Handlers
+    // McuManagerCallbacks
     //******************************************************************
 
     /**
