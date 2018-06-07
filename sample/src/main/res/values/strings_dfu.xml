@@ -22,12 +22,31 @@
   -->
 
 <resources>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="device_icon_size">36dp</dimen>
-    <dimen name="item_padding_top">8dp</dimen>
-    <dimen name="item_padding_bottom">8dp</dimen>
-    <dimen name="activity_vertical_margin_bottom">32dp</dimen>
-    <dimen name="activity_vertical_margin_top">50dp</dimen>
-    <dimen name="toolbar_title_margin">32dp</dimen>
+	<string name="dfu_title">Firmware Update</string>
+	<string name="dfu_file_name">File Name:</string>
+	<string name="dfu_size">File Size:</string>
+	<string name="dfu_size_value">%d bytes</string>
+	<string name="dfu_hash">File Hash:</string>
+	<string name="dfu_status">State:</string>
+	<string name="dfu_action_select">Select File</string>
+	<string name="dfu_action_start">Upload</string>
+	<string name="dfu_action_pause">Pause</string>
+	<string name="dfu_action_resume">Resume</string>
+	<string name="dfu_action_cancel">Cancel</string>
+
+	<string name="dfu_status_ready">READY</string>
+	<string name="dfu_status_validating">VALIDATING…</string>
+	<string name="dfu_status_uploading">UPLOADING…</string>
+	<string name="dfu_status_completed">UPLOAD COMPLETE</string>
+
+	<string name="dfu_error_no_file_browser">File Browser app not found.</string>
+	<string name="dfu_error_no_uri">No file found.</string>
+	<string name="dfu_error_loading_file_failed">Reading file failed.</string>
+	<string name="dfu_error_file_not_valid">Invalid image file.</string>
+
+	<string name="dfu_dialog_help_title">Help</string>
+	<string name="dfu_dialog_help_message"><b>Firmware Update</b> card lets you send a new firmware
+		image onto the device to slot&#160;1. After sending the image, use <b>Images</b> card
+		to test or confirm it, and the <b>Reset</b> card on <b>Reset</b> tab to reboot
+		the device.</string>
 </resources>

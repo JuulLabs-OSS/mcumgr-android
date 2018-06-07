@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2018, Nordic Semiconductor
+  ~ All rights reserved.
+  ~
+  ~ Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+  ~
+  ~ 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+  ~
+  ~ 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the
+  ~ documentation and/or other materials provided with the distribution.
+  ~
+  ~ 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this
+  ~ software without specific prior written permission.
+  ~
+  ~ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  ~ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  ~ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  ~ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+  ~ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+  ~ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  -->
+
+<android.support.v7.widget.CardView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content">
+
+	<android.support.constraint.ConstraintLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<android.support.v7.widget.Toolbar
+			android:id="@+id/toolbar"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			app:title="@string/dfu_title"/>
+
+		<TextView
+			android:id="@+id/dfu_file_name_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="16dp"
+			android:text="@string/dfu_file_name"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
+
+		<TextView
+			android:id="@+id/dfu_file_size_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/dfu_size"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_name"/>
+
+		<TextView
+			android:id="@+id/dfu_file_hash_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/dfu_hash"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_size"/>
+
+		<TextView
+			android:id="@+id/dfu_status_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/dfu_status"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_hash"/>
+
+		<TextView
+			android:id="@+id/dfu_file_name"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginEnd="16dp"
+			android:layout_marginStart="16dp"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintBaseline_toBaselineOf="@+id/dfu_file_name_label"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toEndOf="@+id/dfu_file_name_label"
+			tools:text="a_very_long_file_name_indeed_very_very_long.img"/>
+
+		<TextView
+			android:id="@+id/dfu_file_size"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="@+id/dfu_file_name"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_name"
+			tools:text="1234 bytes"/>
+
+		<TextView
+			android:id="@+id/dfu_file_hash"
+			android:layout_width="0dp"
+			android:layout_height="34dp"
+			android:freezesText="true"
+			android:minLines="2"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="@+id/dfu_file_name"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_size"
+			tools:text="001122334455667788990011223344556677889900112233445566778899AABB"/>
+
+		<TextView
+			android:id="@+id/dfu_status"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="@+id/dfu_file_name"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_hash"
+			tools:text="@string/dfu_status_uploading"/>
+
+		<ProgressBar
+			android:id="@+id/progress"
+			style="?android:attr/progressBarStyleHorizontal"
+			android:layout_width="0dp"
+			android:layout_height="4dp"
+			android:layout_marginTop="16dp"
+			android:max="100"
+			android:progressBackgroundTint="@color/white"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_status_label"/>
+
+		<View
+			android:id="@+id/divider"
+			android:layout_width="0dp"
+			android:layout_height="1dp"
+			android:background="@color/divider"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/progress"/>
+
+		<Button
+			android:id="@+id/action_select_file"
+			style="@style/Widget.ActionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/dfu_action_select"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toStartOf="@+id/action_upload"
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+		<Button
+			android:id="@+id/action_upload"
+			style="@style/Widget.ActionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginEnd="16dp"
+			android:enabled="false"
+			android:text="@string/dfu_action_start"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toStartOf="@+id/action_cancel"
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+		<Button
+			android:id="@+id/action_cancel"
+			style="@style/Widget.ActionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/dfu_action_cancel"
+			android:textColor="@color/button_destructive"
+			android:visibility="gone"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toStartOf="@+id/action_pause_resume"
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+		<Button
+			android:id="@+id/action_pause_resume"
+			style="@style/Widget.ActionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginEnd="16dp"
+			android:text="@string/dfu_action_pause"
+			android:visibility="gone"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+	</android.support.constraint.ConstraintLayout>
+</android.support.v7.widget.CardView>

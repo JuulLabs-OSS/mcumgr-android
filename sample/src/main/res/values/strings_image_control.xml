@@ -22,12 +22,31 @@
   -->
 
 <resources>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="device_icon_size">36dp</dimen>
-    <dimen name="item_padding_top">8dp</dimen>
-    <dimen name="item_padding_bottom">8dp</dimen>
-    <dimen name="activity_vertical_margin_bottom">32dp</dimen>
-    <dimen name="activity_vertical_margin_top">50dp</dimen>
-    <dimen name="toolbar_title_margin">32dp</dimen>
+	<string name="image_control_title">Images</string>
+	<string name="image_control_hint">Tap READ button to download image slots information.</string>
+	<string name="image_control_action_read">Read</string>
+	<string name="image_control_action_test">Test</string>
+	<string name="image_control_action_confirm">Confirm</string>
+	<string name="image_control_action_erase">Erase</string>
+
+	<string name="image_control_split_status">Split Status: %d</string>
+	<string name="image_control_slot"><b>Slot: %d</b>\n
+		• Version: %s\n
+		• Hash: %s\n
+		• Bootable: %B\n
+		• Pending: %B\n
+		• Confirmed: %B\n
+		• Active: %B\n
+		• Permanent: %B</string>
+
+	<string name="image_control_dialog_help_title">Help</string>
+	<string name="image_control_dialog_help_message"><b>Images</b> card lets you read the status
+		of image slots on the device.\nWhen a new firmware has been sent to slot&#160;1,
+		the TEST, CONFIRM and ERASE buttons become available.
+		The TEST button tells the device to run the new image on its next boot.
+		Such firmware may automatically confirm itself when it\'s configured to do so.
+		You may also make the image swap permanent by tapping CONFIRM button.
+		Each action requires rebooting the target to take effect. You can do this using the
+		<b>Reset</b> card on <b>Device</b> tab.\nERASE button erases the slot&#160;1.
+	</string>
 </resources>

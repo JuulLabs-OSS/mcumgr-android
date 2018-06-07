@@ -21,13 +21,14 @@
   ~ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   -->
 
-<resources>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="device_icon_size">36dp</dimen>
-    <dimen name="item_padding_top">8dp</dimen>
-    <dimen name="item_padding_bottom">8dp</dimen>
-    <dimen name="activity_vertical_margin_bottom">32dp</dimen>
-    <dimen name="activity_vertical_margin_top">50dp</dimen>
-    <dimen name="toolbar_title_margin">32dp</dimen>
-</resources>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+	<corners
+		android:bottomLeftRadius="0dp"
+		android:radius="16dp"/>
+	<solid android:color="@color/echo_error"/>
+	<padding
+		android:bottom="8dp"
+		android:left="16dp"
+		android:right="16dp"
+		android:top="8dp"/>
+</shape>

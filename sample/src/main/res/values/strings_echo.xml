@@ -22,12 +22,12 @@
   -->
 
 <resources>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="device_icon_size">36dp</dimen>
-    <dimen name="item_padding_top">8dp</dimen>
-    <dimen name="item_padding_bottom">8dp</dimen>
-    <dimen name="activity_vertical_margin_bottom">32dp</dimen>
-    <dimen name="activity_vertical_margin_top">50dp</dimen>
-    <dimen name="toolbar_title_margin">32dp</dimen>
+	<string name="echo_title">Echo</string>
+	<string name="echo_action">Send</string>
+	<string name="echo_hint">Text</string>
+	<string name="echo_empty">Empty</string>
+
+	<color name="echo_request">@color/colorPrimary</color>
+	<color name="echo_response">@color/zephyr</color>
+	<color name="echo_error">@color/red</color>
 </resources>

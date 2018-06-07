@@ -22,12 +22,8 @@
   -->
 
 <resources>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="device_icon_size">36dp</dimen>
-    <dimen name="item_padding_top">8dp</dimen>
-    <dimen name="item_padding_bottom">8dp</dimen>
-    <dimen name="activity_vertical_margin_bottom">32dp</dimen>
-    <dimen name="activity_vertical_margin_top">50dp</dimen>
-    <dimen name="toolbar_title_margin">32dp</dimen>
+	<string name="nav_default">Device</string>
+	<string name="nav_image">Image</string>
+	<string name="nav_fs">Files</string>
+	<string name="nav_stats">Logs &amp; Stats</string>
 </resources>
