@@ -164,6 +164,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
 					.awaitAfter(Request.newWriteRequest(mSmpCharacteristic, payload),
                             new SmpResponse<>(responseType));
             if (smpResponse.isValid()) {
+                //noinspection ConstantConditions
                 return smpResponse.getResponse();
             } else {
                 throw new McuMgrException("Error building McuMgrResponse from response data");
