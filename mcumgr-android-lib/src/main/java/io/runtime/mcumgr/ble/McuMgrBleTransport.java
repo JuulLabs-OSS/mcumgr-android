@@ -39,6 +39,7 @@ import io.runtime.mcumgr.ble.callback.SmpDataCallback;
 import io.runtime.mcumgr.ble.callback.SmpMerger;
 import io.runtime.mcumgr.ble.callback.SmpResponse;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
+import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import no.nordicsemi.android.ble.BleManager;
@@ -62,7 +63,7 @@ import no.nordicsemi.android.ble.exception.RequestFailedException;
 public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implements McuMgrTransport {
     private final static String TAG = "McuMgrBleTransport";
 
-    private final static UUID SMP_SERVICE_UUID =
+    public final static UUID SMP_SERVICE_UUID =
             UUID.fromString("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
     private final static UUID SMP_CHAR_UUID =
             UUID.fromString("DA2E7828-FBCE-4E01-AE9E-261174997C48");
@@ -96,8 +97,13 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     public McuMgrBleTransport(@NonNull Context context, @NonNull BluetoothDevice device) {
         super(context);
         mDevice = device;
-        // The callbacks object will ignore all calls to it
-        setGattCallbacks(new McuMgrBleCallbacks());
+        // By default, the callbacks will ignore all calls to it
+        setGattCallbacks(new McuMgrBleCallbacksStub());
+    }
+
+    @Override
+    public BluetoothDevice getBluetoothDevice() {
+        return mDevice;
     }
 
     @NonNull
@@ -110,13 +116,16 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     // Mcu Manager Transport
     //*******************************************************************************************
 
+    @NonNull
     @Override
     public McuMgrScheme getScheme() {
         return McuMgrScheme.BLE;
     }
 
+    @NonNull
     @Override
-    public <T extends McuMgrResponse> T send(final byte[] payload, final Class<T> responseType)
+    public <T extends McuMgrResponse> T send(@NonNull final byte[] payload,
+                                             @NonNull final Class<T> responseType)
             throws McuMgrException {
         // If device is not connected, connect
         try {
@@ -168,8 +177,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     }
 
     @Override
-    public <T extends McuMgrResponse> void send(final byte[] payload, final Class<T> responseType,
-                                                final McuMgrCallback<T> callback) {
+    public <T extends McuMgrResponse> void send(@NonNull final byte[] payload,
+                                                @NonNull final Class<T> responseType,
+                                                @NonNull final McuMgrCallback<T> callback) {
         // If device is not connected, connect.
         // If the device was already connected, the completion callback will be called immediately.
         connect(mDevice).done(new SuccessCallback() {
@@ -187,7 +197,11 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                             @Override
                             public void onResponseReceived(@NonNull BluetoothDevice device,
                                                            @NonNull T response) {
-                                callback.onResponse(response);
+                                if (response.isSuccess()) {
+                                    callback.onResponse(response);
+                                } else {
+                                    callback.onError(new McuMgrErrorException(response));
+                                }
                             }
 
                             @Override

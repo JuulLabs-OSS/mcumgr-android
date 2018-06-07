@@ -33,7 +33,8 @@ import no.nordicsemi.android.ble.BleManagerCallbacks;
  * <p>
  * Callbacks from {@link McuMgrBleTransport}.
  */
-public class McuMgrBleCallbacks implements BleManagerCallbacks {
+public class McuMgrBleCallbacksStub implements BleManagerCallbacks {
+
     @Override
     public void onDeviceConnecting(BluetoothDevice device) {
     }
