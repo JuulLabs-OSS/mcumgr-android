@@ -22,31 +22,16 @@
 
 package io.runtime.mcumgr.ble.callback;
 
-import android.bluetooth.BluetoothDevice;
 import android.support.annotation.NonNull;
 
-import java.io.IOException;
-
-import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.response.McuMgrResponse;
-import no.nordicsemi.android.ble.callback.profile.ProfileDataCallback;
-import no.nordicsemi.android.ble.data.Data;
+import no.nordicsemi.android.ble.callback.RequiredDataReceivedCallback;
 
-public abstract class SmpDataCallback<T extends McuMgrResponse>
-        implements ProfileDataCallback, SmpCallback<T> {
-    private final Class<T> responseType;
+@SuppressWarnings("WeakerAccess")
+public abstract class OneTimeSmpDataCallback<T extends McuMgrResponse> extends SmpDataCallback<T>
+        implements RequiredDataReceivedCallback {
 
-    SmpDataCallback(@NonNull Class<T> responseType) {
-        this.responseType = responseType;
-    }
-
-    @Override
-    public void onDataReceived(@NonNull BluetoothDevice device, @NonNull Data data) {
-        try {
-            T response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data.getValue(), responseType);
-            onResponseReceived(device, response);
-        } catch (IOException e) {
-            onInvalidDataReceived(device, data);
-        }
+    public OneTimeSmpDataCallback(@NonNull Class<T> responseType) {
+        super(responseType);
     }
 }

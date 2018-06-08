@@ -33,9 +33,16 @@ public final class SmpResponse<T extends McuMgrResponse> extends SmpDataCallback
     @Nullable
     private T response;
     private boolean valid;
+    private Data data;
 
     public SmpResponse(Class<T> responseType) {
         super(responseType);
+    }
+
+    @Override
+    public void onDataReceived(@NonNull final BluetoothDevice device, @NonNull final Data data) {
+        this.data = data;
+        super.onDataReceived(device, data);
     }
 
     @Override
@@ -52,6 +59,11 @@ public final class SmpResponse<T extends McuMgrResponse> extends SmpDataCallback
     @Nullable
     public T getResponse() {
         return response;
+    }
+
+    @NonNull
+    public Data getRawData() {
+        return data;
     }
 
     public boolean isValid() {

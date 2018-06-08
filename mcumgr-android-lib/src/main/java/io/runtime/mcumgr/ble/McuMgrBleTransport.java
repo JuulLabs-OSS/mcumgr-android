@@ -35,7 +35,7 @@ import java.util.UUID;
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.ble.callback.SmpDataCallback;
+import io.runtime.mcumgr.ble.callback.OneTimeSmpDataCallback;
 import io.runtime.mcumgr.ble.callback.SmpMerger;
 import io.runtime.mcumgr.ble.callback.SmpResponse;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
@@ -162,18 +162,22 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             final SmpResponse<T> smpResponse = setNotificationCallback(mSmpCharacteristic)
                     .merge(mSMPMerger)
                     .awaitAfter(Request.newWriteRequest(mSmpCharacteristic, payload),
-                            new SmpResponse<>(responseType));
+                            new SmpResponse<>(responseType), 1000);
             if (smpResponse.isValid()) {
                 //noinspection ConstantConditions
                 return smpResponse.getResponse();
             } else {
-                throw new McuMgrException("Error building McuMgrResponse from response data");
+                throw new McuMgrException("Error building " +
+                        "McuMgrResponse from response data: " + smpResponse.getRawData());
             }
         } catch (RequestFailedException e) {
             throw new McuMgrException(GattError.parse(e.getStatus()));
         } catch (DeviceDisconnectedException e) {
             // When connection failed, fail the request
             throw new McuMgrException("Device has disconnected");
+        } catch (InterruptedException e) {
+            // Device must have disconnected moment before the request was made
+            throw new McuMgrException("Request timed out");
         }
     }
 
@@ -185,7 +189,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         // If the device was already connected, the completion callback will be called immediately.
         connect(mDevice).done(new SuccessCallback() {
             @Override
-            public void onRequestCompleted(final BluetoothDevice device) {
+            public void onRequestCompleted(@NonNull final BluetoothDevice device) {
                 // Ensure the MTU is sufficient
                 if (getMtu() - 3 < payload.length) {
                     callback.onError(new InsufficientMtuException(payload.length, getMtu()));
@@ -194,7 +198,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
 
                 setNotificationCallback(mSmpCharacteristic)
                         .merge(mSMPMerger)
-                        .with(new SmpDataCallback<T>(responseType) {
+                        .with(new OneTimeSmpDataCallback<T>(responseType) {
                             @Override
                             public void onResponseReceived(@NonNull BluetoothDevice device,
                                                            @NonNull T response) {
@@ -211,7 +215,17 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                                 callback.onError(new McuMgrException("Error building " +
                                         "McuMgrResponse from response data: " + data));
                             }
-                        });
+
+                            @Override
+                            public void onTimeoutOccurred(@NonNull BluetoothDevice device) {
+                                callback.onError(new McuMgrException("Request timed out"));
+                            }
+
+                            @Override
+                            public void onDeviceDisconnected(@NonNull BluetoothDevice device) {
+                                callback.onError(new McuMgrException("Device has disconnected"));
+                            }
+                        }, 1000);
                 writeCharacteristic(mSmpCharacteristic, payload)
                         .fail(new FailCallback() {
                             @Override
@@ -223,7 +237,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             }
         }).fail(new FailCallback() {
             @Override
-            public void onRequestFailed(final BluetoothDevice device, final int status) {
+            public void onRequestFailed(@NonNull final BluetoothDevice device, final int status) {
                 switch (status) {
                     case REASON_DEVICE_DISCONNECTED:
                         callback.onError(new McuMgrException("Device has disconnected"));
