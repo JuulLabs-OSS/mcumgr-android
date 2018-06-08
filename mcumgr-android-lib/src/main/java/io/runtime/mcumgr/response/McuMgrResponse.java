@@ -257,7 +257,7 @@ public class McuMgrResponse {
         if (scheme.isCoap()) {
             throw new UnsupportedOperationException("Method not implemented for CoAP");
         } else {
-			int expectedLength = getExpectedLength(scheme, bytes);
+            int expectedLength = getExpectedLength(scheme, bytes);
             return (expectedLength > (bytes.length - McuMgrHeader.HEADER_LENGTH));
         }
     }

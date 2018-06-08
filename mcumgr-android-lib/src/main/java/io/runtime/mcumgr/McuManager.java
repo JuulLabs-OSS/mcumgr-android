@@ -223,14 +223,14 @@ public abstract class McuManager {
      * sending it to the transporter.
      *
      * @param op          the operation ({@link McuManager#OP_READ},
-	 *                    {@link McuManager#OP_WRITE}).
+     *                    {@link McuManager#OP_WRITE}).
      * @param flags       additional flags.
      * @param groupId     group ID of the command.
      * @param sequenceNum sequence number.
      * @param commandId   ID of the command in the group.
-	 * @param respType    the response type.
+     * @param respType    the response type.
      * @param payloadMap  map of payload key-value pairs.
-	 * @param <T>         the response type.
+     * @param <T>         the response type.
      * @return The Mcu Manager response.
      * @throws McuMgrException on transport error. See exception cause for more info.
      */

@@ -160,8 +160,8 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         // Send the request and wait for a notification in a synchronous way
         try {
             final SmpResponse<T> smpResponse = setNotificationCallback(mSmpCharacteristic)
-					.merge(mSMPMerger)
-					.awaitAfter(Request.newWriteRequest(mSmpCharacteristic, payload),
+                    .merge(mSMPMerger)
+                    .awaitAfter(Request.newWriteRequest(mSmpCharacteristic, payload),
                             new SmpResponse<>(responseType));
             if (smpResponse.isValid()) {
                 //noinspection ConstantConditions

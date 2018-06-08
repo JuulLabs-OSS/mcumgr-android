@@ -62,8 +62,8 @@ public class ConfigManager extends McuManager {
      *
      * @param name     the name of the config variable.
      * @param value    the value to write.
-	 * @param save     whether or not to save the value after it is set. A saved value will persist
-	 *                 in flash across device resets.
+     * @param save     whether or not to save the value after it is set. A saved value will persist
+     *                 in flash across device resets.
      * @param callback the asynchronous callback.
      */
     public void write(String name, String value, boolean save, McuMgrCallback<McuMgrResponse> callback) {
@@ -79,8 +79,8 @@ public class ConfigManager extends McuManager {
      *
      * @param name  the name of the config variable.
      * @param value the value to write.
-	 * @param save  whether or not to save the value after it is set. A saved value will persist
-	 *              in flash across device resets.
+     * @param save  whether or not to save the value after it is set. A saved value will persist
+     *              in flash across device resets.
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */

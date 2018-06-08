@@ -10,5 +10,5 @@ package io.runtime.mcumgr.response.fs;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
 public class McuMgrFsUploadResponse extends McuMgrResponse {
-	public int off;
+    public int off;
 }

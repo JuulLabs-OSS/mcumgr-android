@@ -128,7 +128,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                                   @NonNull FirmwareUpgradeCallback callback) throws McuMgrException {
         this(transport, callback);
         mImageData = imageData;
-		mHash = McuMgrImage.getHash(imageData);
+        mHash = McuMgrImage.getHash(imageData);
     }
 
     /**

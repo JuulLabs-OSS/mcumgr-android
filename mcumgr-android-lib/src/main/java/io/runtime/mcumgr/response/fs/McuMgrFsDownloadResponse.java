@@ -10,7 +10,7 @@ package io.runtime.mcumgr.response.fs;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
 public class McuMgrFsDownloadResponse extends McuMgrResponse {
-	public int off;
-	public int len;
-	public byte[] data;
+    public int off;
+    public int len;
+    public byte[] data;
 }
