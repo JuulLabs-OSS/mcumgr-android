@@ -371,9 +371,13 @@ public class ImageManager extends McuManager {
     public synchronized void cancelUpload() {
         if (mUploadState == STATE_NONE) {
             Log.d(TAG, "Image upload is not in progress");
-        } else {
-            mUploadState = STATE_NONE;
+        } else if (mUploadState == STATE_PAUSED) {
+            Log.d(TAG, "Upload canceled!");
+            resetUpload();
+            mUploadCallback.onUploadCancel();
+            mUploadCallback = null;
         }
+        mUploadState = STATE_NONE;
     }
 
     /**
