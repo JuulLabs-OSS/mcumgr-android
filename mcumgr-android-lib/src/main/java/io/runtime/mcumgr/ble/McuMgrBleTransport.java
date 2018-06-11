@@ -50,6 +50,7 @@ import no.nordicsemi.android.ble.callback.SuccessCallback;
 import no.nordicsemi.android.ble.data.Data;
 import no.nordicsemi.android.ble.data.DataMerger;
 import no.nordicsemi.android.ble.error.GattError;
+import no.nordicsemi.android.ble.exception.BluetoothDisabledException;
 import no.nordicsemi.android.ble.exception.DeviceDisconnectedException;
 import no.nordicsemi.android.ble.exception.RequestFailedException;
 
@@ -150,6 +151,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         } catch (DeviceDisconnectedException e) {
             // When connection failed, fail the request
             throw new McuMgrException("Device has disconnected");
+        } catch (BluetoothDisabledException e) {
+            // When Bluetooth was disabled, fail the request
+            throw new McuMgrException("Bluetooth adapter disabled");
         }
 
         // Ensure the MTU is sufficient
@@ -178,6 +182,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         } catch (InterruptedException e) {
             // Device must have disconnected moment before the request was made
             throw new McuMgrException("Request timed out");
+        } catch (BluetoothDisabledException e) {
+            // When Bluetooth was disabled, fail the request
+            throw new McuMgrException("Bluetooth adapter disabled");
         }
     }
 
@@ -225,6 +232,11 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                             public void onDeviceDisconnected(@NonNull BluetoothDevice device) {
                                 callback.onError(new McuMgrException("Device has disconnected"));
                             }
+
+                            @Override
+                            public void onBluetoothDisabled(@NonNull final BluetoothDevice device) {
+                                callback.onError(new McuMgrException("Bluetooth adapter disabled"));
+                            }
                         }, 1000);
                 writeCharacteristic(mSmpCharacteristic, payload)
                         .fail(new FailCallback() {
@@ -250,6 +262,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                         // a second time and to a different device than the one that's already
                         // connected. This may not happen here.
                         callback.onError(new McuMgrException("Other device already connected"));
+                        break;
+                    case REASON_BLUETOOTH_DISABLED:
+                        callback.onError(new McuMgrException("Bluetooth adapter disabled"));
                         break;
                     default:
                         callback.onError(new McuMgrException(GattError.parseConnectionError(status)));
