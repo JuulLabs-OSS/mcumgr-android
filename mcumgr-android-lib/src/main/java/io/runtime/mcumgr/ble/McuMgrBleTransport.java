@@ -30,6 +30,8 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 import io.runtime.mcumgr.McuMgrCallback;
@@ -128,10 +130,16 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     public <T extends McuMgrResponse> T send(@NonNull final byte[] payload,
                                              @NonNull final Class<T> responseType)
             throws McuMgrException {
+        notifyBusy();
+
         // If device is not connected, connect
+        final boolean wasConnected = isConnected();
         try {
             // Await will wait until the device is ready (that is initialization is complete)
             connect(mDevice).await(25 * 1000);
+            if (!wasConnected) {
+                notifyConnected();
+            }
         } catch (RequestFailedException e) {
             switch (e.getStatus()) {
                 case FailCallback.REASON_DEVICE_NOT_SUPPORTED:
@@ -192,11 +200,18 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     public <T extends McuMgrResponse> void send(@NonNull final byte[] payload,
                                                 @NonNull final Class<T> responseType,
                                                 @NonNull final McuMgrCallback<T> callback) {
+        notifyBusy();
+
         // If device is not connected, connect.
         // If the device was already connected, the completion callback will be called immediately.
+        final boolean wasConnected = isConnected();
         connect(mDevice).done(new SuccessCallback() {
             @Override
             public void onRequestCompleted(@NonNull final BluetoothDevice device) {
+                if (!wasConnected) {
+                    notifyConnected();
+                }
+
                 // Ensure the MTU is sufficient
                 if (getMtu() - 3 < payload.length) {
                     callback.onError(new InsufficientMtuException(payload.length, getMtu()));
@@ -337,6 +352,69 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         protected void onDeviceDisconnected() {
             mSmpService = null;
             mSmpCharacteristic = null;
+            notifyDisconnected();
+        }
+
+        // Called when all enqueued operations were completed (successfully, or not).
+        @Override
+        protected void onManagerReady() {
+            notifyReady();
         }
     };
+
+    //*******************************************************************************************
+    // Manager State Observers
+    //*******************************************************************************************
+
+    private final List<StateObserver> mStateObservers = new LinkedList<>();
+
+    @Override
+    public synchronized void addObserver(@NonNull final StateObserver observer) {
+        mStateObservers.add(observer);
+    }
+
+    @Override
+    public synchronized void removeObserver(@NonNull final StateObserver observer) {
+        mStateObservers.remove(observer);
+    }
+
+    private synchronized void notifyBusy() {
+        for (StateObserver o : mStateObservers) {
+            o.onBusy();
+        }
+    }
+
+    private synchronized void notifyReady() {
+        for (StateObserver o : mStateObservers) {
+            o.onReady();
+        }
+    }
+
+    //*******************************************************************************************
+    // Manager Connection Observers
+    //*******************************************************************************************
+
+    private final List<ConnectionObserver> mConnectionObservers = new LinkedList<>();
+
+    @Override
+    public synchronized void addObserver(@NonNull final ConnectionObserver observer) {
+        mConnectionObservers.add(observer);
+    }
+
+    @Override
+    public synchronized void removeObserver(@NonNull final ConnectionObserver observer) {
+        mConnectionObservers.remove(observer);
+    }
+
+    private synchronized void notifyConnected() {
+        for (ConnectionObserver o : mConnectionObservers) {
+            o.onConnected();
+        }
+    }
+
+    private synchronized void notifyDisconnected() {
+        for (ConnectionObserver o : mConnectionObservers) {
+            o.onDisconnected();
+        }
+    }
 }
