@@ -26,8 +26,7 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
-	android:layout_height="wrap_content"
-	android:animateLayoutChanges="true">
+	android:layout_height="wrap_content">
 
 	<android.support.constraint.ConstraintLayout
 		android:layout_width="match_parent"
@@ -40,86 +39,150 @@
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent"
-			app:title="@string/image_control_title"/>
+			app:title="@string/image_upload_title"/>
 
 		<TextView
-			android:id="@+id/image_control_value"
-			android:layout_width="0dp"
+			android:id="@+id/dfu_file_name_label"
+			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_marginEnd="16dp"
 			android:layout_marginStart="16dp"
-			android:freezesText="true"
-			android:text="@string/image_control_hint"
-			app:layout_constraintEnd_toEndOf="parent"
+			android:text="@string/image_upload_file_name"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
 
 		<TextView
-			android:id="@+id/image_control_error"
+			android:id="@+id/dfu_file_size_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/image_upload_size"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_name"/>
+
+		<TextView
+			android:id="@+id/dfu_file_hash_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/image_upload_hash"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_size"/>
+
+		<TextView
+			android:id="@+id/dfu_status_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/image_upload_status"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toBottomOf="@+id/dfu_file_hash"/>
+
+		<TextView
+			android:id="@+id/dfu_file_name"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:layout_marginEnd="16dp"
 			android:layout_marginStart="16dp"
 			android:freezesText="true"
-			android:textColor="@color/error"
-			android:visibility="gone"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toEndOf="@+id/dfu_file_name_label"
+			app:layout_constraintTop_toTopOf="@+id/dfu_file_name_label"
+			tools:text="a_very_long_file_name_indeed_very_very_long.img"/>
+
+		<TextView
+			android:id="@+id/dfu_file_size"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="@+id/dfu_file_name"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name"
+			app:layout_constraintTop_toTopOf="@+id/dfu_file_size_label"
+			tools:text="1234 bytes"/>
+
+		<TextView
+			android:id="@+id/dfu_file_hash"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="@+id/dfu_file_name"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name"
+			app:layout_constraintTop_toTopOf="@+id/dfu_file_hash_label"
+			tools:text="001122334455667788990011223344556677889900112233445566778899AABB"/>
+
+		<TextView
+			android:id="@+id/dfu_status"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="@+id/dfu_file_name"
+			app:layout_constraintStart_toStartOf="@+id/dfu_file_name"
+			app:layout_constraintTop_toTopOf="@+id/dfu_status_label"
+			tools:text="@string/image_upload_status_uploading"/>
+
+		<ProgressBar
+			android:id="@+id/progress"
+			style="?android:attr/progressBarStyleHorizontal"
+			android:layout_width="0dp"
+			android:layout_height="4dp"
+			android:layout_marginTop="16dp"
+			android:max="100"
+			android:progressBackgroundTint="@color/white"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/image_control_value"
-			tools:text="Some error"
-			tools:visibility="visible"/>
+			app:layout_constraintTop_toBottomOf="@+id/dfu_status"/>
 
 		<View
 			android:id="@+id/divider"
 			android:layout_width="0dp"
 			android:layout_height="1dp"
-			android:layout_marginTop="16dp"
 			android:background="@color/divider"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/image_control_error"/>
+			app:layout_constraintTop_toBottomOf="@+id/progress"/>
 
 		<Button
-			android:id="@+id/action_read"
+			android:id="@+id/action_select_file"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text="@string/image_control_action_read"
+			android:text="@string/image_action_select"
 			app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintEnd_toStartOf="@+id/action_test"
+			app:layout_constraintEnd_toStartOf="@+id/action_upload"
 			app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
 		<Button
-			android:id="@+id/action_test"
-			style="@style/Widget.ActionButton"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:enabled="false"
-			android:text="@string/image_control_action_test"
-			app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintEnd_toStartOf="@+id/action_confirm"
-			app:layout_constraintTop_toBottomOf="@+id/divider"/>
-
-		<Button
-			android:id="@+id/action_confirm"
-			style="@style/Widget.ActionButton"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:enabled="false"
-			android:text="@string/image_control_action_confirm"
-			app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintEnd_toStartOf="@+id/action_erase"
-			app:layout_constraintTop_toBottomOf="@+id/divider"/>
-
-		<Button
-			android:id="@+id/action_erase"
+			android:id="@+id/action_upload"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginEnd="16dp"
 			android:enabled="false"
-			android:text="@string/image_control_action_erase"
+			android:text="@string/image_upload_action_start"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toStartOf="@+id/action_cancel"
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+		<Button
+			android:id="@+id/action_cancel"
+			style="@style/Widget.ActionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/image_action_cancel"
 			android:textColor="@color/button_destructive"
+			android:visibility="gone"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toStartOf="@+id/action_pause_resume"
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+		<Button
+			android:id="@+id/action_pause_resume"
+			style="@style/Widget.ActionButton"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginEnd="16dp"
+			android:text="@string/image_action_pause"
+			android:visibility="gone"
 			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/divider"/>

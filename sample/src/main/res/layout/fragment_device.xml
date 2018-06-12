@@ -35,12 +35,4 @@
 		android:layout_height="wrap_content"
 		android:layout_margin="8dp"
 		tools:layout="@layout/fragment_card_echo"/>
-
-	<fragment
-		android:id="@+id/fragment_reset"
-		android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ResetFragment"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_margin="8dp"
-		tools:layout="@layout/fragment_card_reset"/>
 </LinearLayout>

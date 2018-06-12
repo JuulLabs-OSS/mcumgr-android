@@ -61,9 +61,9 @@ public class ImageControlFragment extends Fragment implements Injectable, Toolba
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 
-	@BindView(R.id.image_list_value)
+	@BindView(R.id.image_control_value)
 	TextView mValue;
-	@BindView(R.id.image_list_error)
+	@BindView(R.id.image_control_error)
 	TextView mError;
 	@BindView(R.id.action_read)
 	Button mReadAction;
@@ -132,39 +132,58 @@ public class ImageControlFragment extends Fragment implements Injectable, Toolba
 				enabled -> mConfirmAction.setEnabled(enabled));
 		mViewModel.getEraseOperationAvailability().observe(this,
 				enabled -> mEraseAction.setEnabled(enabled));
+		mViewModel.getBusyState().observe(this, busy -> {
+			if (busy) {
+				mReadAction.setEnabled(false);
+				mTestAction.setEnabled(false);
+				mConfirmAction.setEnabled(false);
+				mEraseAction.setEnabled(false);
+			} else {
+				mReadAction.setEnabled(true);
+				// Other actions will be optionally enabled by other observers
+			}
+		});
 		mReadAction.setOnClickListener(v -> mViewModel.read());
 		mTestAction.setOnClickListener(v -> mViewModel.test());
 		mConfirmAction.setOnClickListener(v -> mViewModel.confirm());
 		mEraseAction.setOnClickListener(v -> mViewModel.erase());
 	}
 
-	private void printImageSlotInfo(@NonNull final McuMgrImageStateResponse response) {
-		final SpannableStringBuilder builder = new SpannableStringBuilder();
-		builder.append(getString(R.string.image_control_split_status, response.splitStatus));
-		builder.setSpan(new StyleSpan(Typeface.BOLD),
-				0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-		for (final McuMgrImageStateResponse.ImageSlot slot : response.images) {
-			final int index = builder.length();
-			builder.append("\n");
-			builder.append(getString(R.string.image_control_slot,
-					slot.slot, slot.version, StringUtils.toHex(slot.hash),
-					slot.bootable, slot.pending, slot.confirmed,
-					slot.active, slot.permanent));
+	private void printImageSlotInfo(@Nullable final McuMgrImageStateResponse response) {
+		if (response != null) {
+			final SpannableStringBuilder builder = new SpannableStringBuilder();
+			builder.append(getString(R.string.image_control_split_status, response.splitStatus));
 			builder.setSpan(new StyleSpan(Typeface.BOLD),
-					index, index + 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+					0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+			for (final McuMgrImageStateResponse.ImageSlot slot : response.images) {
+				final int index = builder.length();
+				builder.append("\n");
+				builder.append(getString(R.string.image_control_slot,
+						slot.slot, slot.version, StringUtils.toHex(slot.hash),
+						slot.bootable, slot.pending, slot.confirmed,
+						slot.active, slot.permanent));
+				builder.setSpan(new StyleSpan(Typeface.BOLD),
+						index, index + 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+			}
+			mValue.setText(builder);
+			mError.setVisibility(View.GONE);
+		} else {
+			mValue.setText(null);
 		}
-		mValue.setText(builder);
-		mError.setVisibility(View.GONE);
 	}
 
-	private void printError(@NonNull final String error) {
-		final SpannableString spannable = new SpannableString(error);
-		spannable.setSpan(new ForegroundColorSpan(
-						ContextCompat.getColor(requireContext(), R.color.error)),
-				0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-		spannable.setSpan(new StyleSpan(Typeface.BOLD),
-				0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-		mError.setText(spannable);
-		mError.setVisibility(View.VISIBLE);
+	private void printError(@Nullable final String error) {
+		if (error != null) {
+			final SpannableString spannable = new SpannableString(error);
+			spannable.setSpan(new ForegroundColorSpan(
+							ContextCompat.getColor(requireContext(), R.color.error)),
+					0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+			spannable.setSpan(new StyleSpan(Typeface.BOLD),
+					0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+			mError.setText(spannable);
+			mError.setVisibility(View.VISIBLE);
+		} else {
+			mError.setText(null);
+		}
 	}
 }

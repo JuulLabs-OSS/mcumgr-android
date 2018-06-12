@@ -24,60 +24,34 @@ package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import io.runtime.mcumgr.McuMgrCallback;
-import io.runtime.mcumgr.exception.McuMgrException;
-import io.runtime.mcumgr.managers.DefaultManager;
-import io.runtime.mcumgr.response.dflt.McuMgrEchoResponse;
-
-public class EchoViewModel extends McuMgrViewModel {
-	private final DefaultManager mManager;
-
-	private final MutableLiveData<String> mRequestLiveData = new MutableLiveData<>();
-	private final MutableLiveData<String> mResponseLiveData = new MutableLiveData<>();
-	private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
+public class McuMgrViewModel extends ViewModel {
+	private final MutableLiveData<Boolean> mBusyStateLiveData;
 
 	@Inject
-	EchoViewModel(final DefaultManager manager,
-				  @Named("busy") final MutableLiveData<Boolean> state) {
-		super(state);
-		mManager = manager;
+	McuMgrViewModel(@Named("busy") final MutableLiveData<Boolean> state) {
+		mBusyStateLiveData = state;
 	}
 
 	@NonNull
-	public LiveData<String> getRequest() {
-		return mRequestLiveData;
+	public LiveData<Boolean> getBusyState() {
+		return mBusyStateLiveData;
 	}
 
-	@NonNull
-	public LiveData<String> getResponse() {
-		return mResponseLiveData;
+	void setBusy() {
+		mBusyStateLiveData.setValue(true);
 	}
 
-	@NonNull
-	public LiveData<String> getError() {
-		return mErrorLiveData;
+	void postBusy() {
+		mBusyStateLiveData.postValue(true);
 	}
 
-	public void echo(final String echo) {
-		setBusy();
-		mRequestLiveData.postValue(echo);
-		mManager.echo(echo, new McuMgrCallback<McuMgrEchoResponse>() {
-			@Override
-			public void onResponse(@NonNull final McuMgrEchoResponse response) {
-				mResponseLiveData.postValue(response.r);
-				postReady();
-			}
-
-			@Override
-			public void onError(@NonNull final McuMgrException error) {
-				mErrorLiveData.postValue(error.getMessage());
-				postReady();
-			}
-		});
+	void postReady() {
+		mBusyStateLiveData.postValue(false);
 	}
 }

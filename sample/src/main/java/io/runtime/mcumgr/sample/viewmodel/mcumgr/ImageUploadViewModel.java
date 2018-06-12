@@ -24,20 +24,21 @@ package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
 
 import java.util.Arrays;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.managers.ImageManager;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
+import io.runtime.mcumgr.sample.viewmodel.SingleLiveEvent;
 
-public class DfuViewModel extends ViewModel implements ImageManager.ImageUploadCallback {
+public class ImageUploadViewModel extends McuMgrViewModel implements ImageManager.ImageUploadCallback {
 	public enum State {
 		IDLE,
 		VALIDATING,
@@ -51,9 +52,12 @@ public class DfuViewModel extends ViewModel implements ImageManager.ImageUploadC
 	private final MutableLiveData<State> mStateLiveData = new MutableLiveData<>();
 	private final MutableLiveData<Integer> mProgressLiveData = new MutableLiveData<>();
 	private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
+	private final SingleLiveEvent<Void> mCancelledEvent = new SingleLiveEvent<>();
 
 	@Inject
-	DfuViewModel(final ImageManager manager) {
+	ImageUploadViewModel(final ImageManager manager,
+						 @Named("busy") final MutableLiveData<Boolean> state) {
+		super(state);
 		mManager = manager;
 		mStateLiveData.setValue(State.IDLE);
 		mProgressLiveData.setValue(0);
@@ -74,7 +78,13 @@ public class DfuViewModel extends ViewModel implements ImageManager.ImageUploadC
 		return mErrorLiveData;
 	}
 
+	@NonNull
+	public LiveData<Void> getCancelledEvent() {
+		return mCancelledEvent;
+	}
+
 	public void upload(@NonNull final byte[] data) {
+		setBusy();
 		mStateLiveData.setValue(State.VALIDATING);
 
 		byte[] hash;
@@ -93,6 +103,7 @@ public class DfuViewModel extends ViewModel implements ImageManager.ImageUploadC
 				if (response.images.length > 0 && Arrays.equals(hash, response.images[0].hash)) {
 					// TODO Externalize the text
 					mErrorLiveData.setValue("Firmware already active.");
+					postReady();
 					return;
 				}
 
@@ -100,17 +111,19 @@ public class DfuViewModel extends ViewModel implements ImageManager.ImageUploadC
 				if (response.images.length > 1 && Arrays.equals(hash, response.images[1].hash)) {
 					// Firmware is identical to one on slot 1. No need to send anything.
 					mStateLiveData.setValue(State.COMPLETE);
+					postReady();
 					return;
 				}
 
 				// Send the firmware.
 				mStateLiveData.postValue(State.UPLOADING);
-				mManager.upload(data, DfuViewModel.this);
+				mManager.upload(data, ImageUploadViewModel.this);
 			}
 
 			@Override
 			public void onError(@NonNull final McuMgrException error) {
 				mErrorLiveData.postValue(error.getMessage());
+				postReady();
 			}
 		});
 	}
@@ -138,17 +151,21 @@ public class DfuViewModel extends ViewModel implements ImageManager.ImageUploadC
 	public void onUploadFail(@NonNull final McuMgrException error) {
 		mProgressLiveData.postValue(0);
 		mErrorLiveData.postValue(error.getMessage());
+		postReady();
 	}
 
 	@Override
 	public void onUploadCancel() {
 		mProgressLiveData.postValue(0);
 		mStateLiveData.postValue(State.IDLE);
+		mCancelledEvent.post();
+		postReady();
 	}
 
 	@Override
 	public void onUploadFinish() {
 		mProgressLiveData.postValue(0);
 		mStateLiveData.postValue(State.COMPLETE);
+		postReady();
 	}
 }

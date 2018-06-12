@@ -24,10 +24,11 @@ package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrErrorCode;
@@ -37,7 +38,7 @@ import io.runtime.mcumgr.managers.ImageManager;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 
-public class ImageControlViewModel extends ViewModel {
+public class ImageControlViewModel extends McuMgrViewModel {
 	private final ImageManager mManager;
 
 	private final MutableLiveData<McuMgrImageStateResponse> mResponseLiveData = new MutableLiveData<>();
@@ -49,7 +50,9 @@ public class ImageControlViewModel extends ViewModel {
 	private byte[] mSlot1Hash;
 
 	@Inject
-	ImageControlViewModel(final ImageManager manager) {
+	ImageControlViewModel(final ImageManager manager,
+						  @Named("busy") final MutableLiveData<Boolean> state) {
+		super(state);
 		mManager = manager;
 	}
 
@@ -79,32 +82,34 @@ public class ImageControlViewModel extends ViewModel {
 	}
 
 	public void read() {
+		setBusy();
+		mErrorLiveData.setValue(null);
 		mManager.list(new McuMgrCallback<McuMgrImageStateResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrImageStateResponse response) {
-				mResponseLiveData.postValue(response);
-
 				// Save the hash of the image flashed to slot 1.
 				final boolean hasSlot1 = response.images != null && response.images.length > 1;
 				if (hasSlot1) {
 					mSlot1Hash = response.images[1].hash;
 				}
-				updateStates(response);
+				postReady(response);
 			}
 
 			@Override
 			public void onError(@NonNull final McuMgrException error) {
 				mErrorLiveData.postValue(error.getMessage());
+				postReady(null);
 			}
 		});
 	}
 
 	public void test() {
+		setBusy();
+		mErrorLiveData.setValue(null);
 		mManager.test(mSlot1Hash, new McuMgrCallback<McuMgrImageStateResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrImageStateResponse response) {
-				mResponseLiveData.postValue(response);
-				updateStates(response);
+				postReady(response);
 			}
 
 			@Override
@@ -112,35 +117,42 @@ public class ImageControlViewModel extends ViewModel {
 				if (error instanceof McuMgrErrorException) {
 					final McuMgrErrorCode code = ((McuMgrErrorException) error).getCode();
 					if (code == McuMgrErrorCode.UNKNOWN) {
+						// TODO Verify
 						// User tried to test a firmware with hash equal to the hash of the
 						// active firmware. This would result in changing the permanent flag
 						// of the slot 0 to false, which is not possible.
 						// TODO Externalize the text
 						mErrorLiveData.postValue("Image in slot 1 is identical to the active one.");
+						postReady();
 						return;
 					}
 				}
 				mErrorLiveData.postValue(error.getMessage());
+				postReady(null);
 			}
 		});
 	}
 
 	public void confirm() {
+		setBusy();
+		mErrorLiveData.setValue(null);
 		mManager.confirm(mSlot1Hash, new McuMgrCallback<McuMgrImageStateResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrImageStateResponse response) {
-				mResponseLiveData.postValue(response);
-				updateStates(response);
+				postReady(response);
 			}
 
 			@Override
 			public void onError(@NonNull final McuMgrException error) {
 				mErrorLiveData.postValue(error.getMessage());
+				postReady(null);
 			}
 		});
 	}
 
 	public void erase() {
+		setBusy();
+		mErrorLiveData.setValue(null);
 		mManager.erase(new McuMgrCallback<McuMgrResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrResponse response) {
@@ -150,16 +162,20 @@ public class ImageControlViewModel extends ViewModel {
 			@Override
 			public void onError(@NonNull final McuMgrException error) {
 				mErrorLiveData.postValue(error.getMessage());
+				postReady(null);
 			}
 		});
 	}
 
-	private void updateStates(@NonNull final McuMgrImageStateResponse response) {
-		final boolean hasSlot1 = response.images != null && response.images.length > 1;
+	private void postReady(@Nullable final McuMgrImageStateResponse response) {
+		final boolean hasSlot1 = response != null
+				&& response.images != null && response.images.length > 1;
 		final boolean slot1NotPending = hasSlot1 && !response.images[1].pending;
 		final boolean slot1NotPermanent = hasSlot1 && !response.images[1].permanent;
+		mResponseLiveData.postValue(response);
 		mTestAvailableLiveData.postValue(slot1NotPending);
 		mConfirmAvailableLiveData.postValue(slot1NotPermanent);
 		mEraseAvailableLiveData.postValue(hasSlot1);
+		postReady();
 	}
 }

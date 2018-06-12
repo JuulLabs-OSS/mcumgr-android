@@ -38,14 +38,12 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -64,17 +62,18 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.di.Injectable;
-import io.runtime.mcumgr.sample.dialog.HelpDialogFragment;
+import io.runtime.mcumgr.sample.dialog.FirmwareUpgradeModeDialogFragment;
 import io.runtime.mcumgr.sample.utils.StringUtils;
-import io.runtime.mcumgr.sample.viewmodel.mcumgr.DfuViewModel;
+import io.runtime.mcumgr.sample.viewmodel.mcumgr.ImageUpgradeViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 
-public class DfuFragment extends Fragment implements Injectable, LoaderManager.LoaderCallbacks<Cursor>, Toolbar.OnMenuItemClickListener {
-	private static final String TAG = DfuFragment.class.getSimpleName();
+public class ImageUpgradeFragment extends Fragment implements Injectable, LoaderManager.LoaderCallbacks<Cursor> {
+	private static final String TAG = ImageUpgradeFragment.class.getSimpleName();
 
 	private static final int SELECT_FILE_REQ = 1;
 	private static final int LOAD_FILE_LOADER_REQ = 2;
@@ -97,20 +96,21 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 	ProgressBar mProgress;
 	@BindView(R.id.action_select_file)
 	Button mSelectFileAction;
-	@BindView(R.id.action_upload)
-	Button mUploadAction;
+	@BindView(R.id.action_start)
+	Button mStartAction;
 	@BindView(R.id.action_cancel)
 	Button mCancelAction;
 	@BindView(R.id.action_pause_resume)
 	Button mPauseResumeAction;
 
-	private DfuViewModel mViewModel;
+	private ImageUpgradeViewModel mViewModel;
 	private byte[] mFileContent;
 
 	@Override
 	public void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mViewModel = ViewModelProviders.of(this, mViewModelFactory).get(DfuViewModel.class);
+		mViewModel = ViewModelProviders.of(this, mViewModelFactory)
+				.get(ImageUpgradeViewModel.class);
 
 		if (savedInstanceState != null) {
 			mFileContent = savedInstanceState.getByteArray(SIS_DATA);
@@ -120,7 +120,7 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 	@Override
 	public void onSaveInstanceState(@NonNull final Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putByteArray(SIS_DATA, mFileContent);
+ 		outState.putByteArray(SIS_DATA, mFileContent);
 	}
 
 	@Nullable
@@ -128,30 +128,13 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 	public View onCreateView(@NonNull final LayoutInflater inflater,
 							 @Nullable final ViewGroup container,
 							 @Nullable final Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_card_dfu, container, false);
+		return inflater.inflate(R.layout.fragment_card_image_upgrade, container, false);
 	}
 
 	@Override
 	public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 		ButterKnife.bind(this, view);
-
-		final Toolbar toolbar = view.findViewById(R.id.toolbar);
-		toolbar.inflateMenu(R.menu.help);
-		toolbar.setOnMenuItemClickListener(this);
-	}
-
-	@Override
-	public boolean onMenuItemClick(final MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.action_help:
-				final DialogFragment dialog = HelpDialogFragment.getInstance(
-						R.string.dfu_dialog_help_title,
-						R.string.dfu_dialog_help_message);
-				dialog.show(getChildFragmentManager(), null);
-				return true;
-		}
-		return false;
 	}
 
 	@SuppressWarnings("ConstantConditions")
@@ -161,72 +144,102 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 
 		mViewModel.getState().observe(this, state -> {
 			switch (state) {
-				case IDLE: // == Cancelled
-					mFileContent = null;
-					mFileName.setText(null);
-					mFileSize.setText(null);
-					mFileHash.setText(null);
-					mStatus.setText(null);
-					mSelectFileAction.setVisibility(View.VISIBLE);
-					mUploadAction.setVisibility(View.VISIBLE);
-					mUploadAction.setEnabled(false);
-					mCancelAction.setVisibility(View.GONE);
-					mPauseResumeAction.setVisibility(View.GONE);
-					break;
 				case VALIDATING:
 					mSelectFileAction.setVisibility(View.GONE);
-					mUploadAction.setVisibility(View.GONE);
+					mStartAction.setVisibility(View.GONE);
 					mCancelAction.setVisibility(View.VISIBLE);
 					mPauseResumeAction.setVisibility(View.VISIBLE);
 					mCancelAction.setEnabled(false);
 					mPauseResumeAction.setEnabled(false);
-					mStatus.setText(R.string.dfu_status_validating);
+					mStatus.setText(R.string.image_upgrade_status_validating);
 					break;
 				case UPLOADING:
 					mCancelAction.setEnabled(true);
 					mPauseResumeAction.setEnabled(true);
-					mPauseResumeAction.setText(R.string.dfu_action_pause);
-					mStatus.setText(R.string.dfu_status_uploading);
+					mPauseResumeAction.setText(R.string.image_action_pause);
+					mStatus.setText(R.string.image_upgrade_status_uploading);
 					break;
 				case PAUSED:
-					mPauseResumeAction.setText(R.string.dfu_action_resume);
+					mPauseResumeAction.setText(R.string.image_action_resume);
+					break;
+				case TESTING:
+					mCancelAction.setEnabled(false);
+					mPauseResumeAction.setEnabled(false);
+					mStatus.setText(R.string.image_upgrade_status_testing);
+					break;
+				case CONFIRMING:
+					mCancelAction.setEnabled(false);
+					mPauseResumeAction.setEnabled(false);
+					mStatus.setText(R.string.image_upgrade_status_confirming);
+					break;
+				case RESETTING:
+					mCancelAction.setEnabled(false);
+					mPauseResumeAction.setEnabled(false);
+					mStatus.setText(R.string.image_upgrade_status_resetting);
 					break;
 				case COMPLETE:
 					mFileContent = null;
 					mSelectFileAction.setVisibility(View.VISIBLE);
-					mUploadAction.setVisibility(View.VISIBLE);
-					mUploadAction.setEnabled(false);
+					mStartAction.setVisibility(View.VISIBLE);
+					mStartAction.setEnabled(false);
 					mCancelAction.setVisibility(View.GONE);
 					mPauseResumeAction.setVisibility(View.GONE);
-					mStatus.setText(R.string.dfu_status_completed);
+					mStatus.setText(R.string.image_upgrade_status_completed);
 					break;
 			}
 		});
 		mViewModel.getProgress().observe(this, progress -> mProgress.setProgress(progress));
 		mViewModel.getError().observe(this, error -> {
 			mSelectFileAction.setVisibility(View.VISIBLE);
-			mUploadAction.setVisibility(View.VISIBLE);
+			mStartAction.setVisibility(View.VISIBLE);
 			mCancelAction.setVisibility(View.GONE);
 			mPauseResumeAction.setVisibility(View.GONE);
 			printError(error);
+		});
+		mViewModel.getCancelledEvent().observe(this, nothing -> {
+			mFileContent = null;
+			mFileName.setText(null);
+			mFileSize.setText(null);
+			mFileHash.setText(null);
+			mStatus.setText(null);
+			mSelectFileAction.setVisibility(View.VISIBLE);
+			mStartAction.setVisibility(View.VISIBLE);
+			mStartAction.setEnabled(false);
+			mCancelAction.setVisibility(View.GONE);
+			mPauseResumeAction.setVisibility(View.GONE);
+		});
+		mViewModel.getBusyState().observe(this, busy -> {
+			mSelectFileAction.setEnabled(!busy);
+			mStartAction.setEnabled(mFileContent != null && !busy);
 		});
 
 		// Configure SELECT FILE action
 		mSelectFileAction.setOnClickListener(v -> selectFile());
 
-		// Restore UPLOAD action state after rotation
-		mUploadAction.setEnabled(mFileContent != null);
-		mUploadAction.setOnClickListener(v -> mViewModel.upload(mFileContent));
+		// Restore START action state after rotation
+		mStartAction.setEnabled(mFileContent != null);
+		mStartAction.setOnClickListener(v -> {
+			// Show a mode picker. When mode is selected, the upgrade(Mode) method will be called.
+			final DialogFragment dialog = FirmwareUpgradeModeDialogFragment.getInstance();
+			dialog.show(getChildFragmentManager(), null);
+		});
 
 		// Cancel and Pause/Resume buttons
 		mCancelAction.setOnClickListener(v -> mViewModel.cancel());
 		mPauseResumeAction.setOnClickListener(v -> {
-			if (mViewModel.getState().getValue() == DfuViewModel.State.UPLOADING) {
+			if (mViewModel.getState().getValue() == ImageUpgradeViewModel.State.UPLOADING) {
 				mViewModel.pause();
 			} else {
 				mViewModel.resume();
 			}
 		});
+	}
+
+	/**
+	 * Starts the Firmware Upgrade using a selected mode.
+	 */
+	public void start(@NonNull final FirmwareUpgradeManager.Mode mode) {
+		mViewModel.upgrade(mFileContent, mode);
 	}
 
 	@Override
@@ -237,12 +250,12 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 			switch (requestCode) {
 				case SELECT_FILE_REQ: {
 					mFileContent = null;
-					mUploadAction.setEnabled(false);
+					mStartAction.setEnabled(false);
 
 					final Uri uri = data.getData();
 
 					if (uri == null) {
-						Toast.makeText(requireContext(), R.string.dfu_error_no_uri,
+						Toast.makeText(requireContext(), R.string.image_error_no_uri,
 								Toast.LENGTH_SHORT).show();
 						return;
 					}
@@ -256,12 +269,12 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 
 						final File file = new File(path);
 						final int fileSize = (int) file.length();
-						mFileSize.setText(getString(R.string.dfu_size_value, fileSize));
+						mFileSize.setText(getString(R.string.image_upgrade_size_value, fileSize));
 						try {
 							loadContent(new FileInputStream(file));
 						} catch (final FileNotFoundException e) {
 							Log.e(TAG, "File not found", e);
-							mStatus.setText(R.string.dfu_error_no_uri);
+							mStatus.setText(R.string.image_error_no_uri);
 						}
 					} else {
 						// File name and size must be obtained from Content Provider
@@ -290,7 +303,7 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 	@Override
 	public void onLoadFinished(@NonNull final Loader<Cursor> loader, final Cursor data) {
 		if (data == null) {
-			Toast.makeText(requireContext(), R.string.dfu_error_loading_file_failed,
+			Toast.makeText(requireContext(), R.string.image_error_loading_file_failed,
 					Toast.LENGTH_SHORT).show();
 			return;
 		}
@@ -301,7 +314,7 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 				final int sizeColumn = data.getColumnIndex(MediaStore.MediaColumns.SIZE);
 
 				if (displayNameColumn == -1 || sizeColumn == -1) {
-					Toast.makeText(requireContext(), R.string.dfu_error_loading_file_failed,
+					Toast.makeText(requireContext(), R.string.image_error_loading_file_failed,
 							Toast.LENGTH_SHORT).show();
 					break;
 				}
@@ -310,13 +323,13 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 					final String fileName = data.getString(displayNameColumn);
 					final int fileSize = data.getInt(sizeColumn);
 					if (fileName == null || fileSize < 0) {
-						Toast.makeText(requireContext(), R.string.dfu_error_loading_file_failed,
+						Toast.makeText(requireContext(), R.string.image_error_loading_file_failed,
 								Toast.LENGTH_SHORT).show();
 						break;
 					}
 
 					mFileName.setText(fileName);
-					mFileSize.setText(getString(R.string.dfu_size_value, fileSize));
+					mFileSize.setText(getString(R.string.image_upgrade_size_value, fileSize));
 
 					try {
 						final CursorLoader cursorLoader = (CursorLoader) loader;
@@ -325,11 +338,11 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 						loadContent(is);
 					} catch (final FileNotFoundException e) {
 						Log.e(TAG, "File not found", e);
-						mStatus.setText(R.string.dfu_error_no_uri);
+						mStatus.setText(R.string.image_error_no_uri);
 					}
 				} else {
 					Log.e(TAG, "Empty cursor");
-					mStatus.setText(R.string.dfu_error_no_uri);
+					mStatus.setText(R.string.image_error_no_uri);
 				}
 				// Reset the loader as the URU read permission is one time only.
 				// We keep the file content in the fragment so no need to load it again.
@@ -352,14 +365,14 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 			// file browser has been found on the device
 			startActivityForResult(intent, SELECT_FILE_REQ);
 		} else {
-			Toast.makeText(requireContext(), R.string.dfu_error_no_file_browser,
+			Toast.makeText(requireContext(), R.string.image_error_no_file_browser,
 					Toast.LENGTH_SHORT).show();
 		}
 	}
 
 	private void loadContent(@Nullable final InputStream is) {
 		if (is == null) {
-			mStatus.setText(R.string.dfu_error_loading_file_failed);
+			mStatus.setText(R.string.image_error_loading_file_failed);
 			return;
 		}
 
@@ -379,15 +392,15 @@ public class DfuFragment extends Fragment implements Injectable, LoaderManager.L
 			}
 			final byte[] hash = McuMgrImage.getHash(bytes);
 			mFileHash.setText(StringUtils.toHex(hash));
-			mStatus.setText(R.string.dfu_status_ready);
+			mStatus.setText(R.string.image_upgrade_status_ready);
 			mFileContent = bytes;
-			mUploadAction.setEnabled(true);
+			mStartAction.setEnabled(true);
 		} catch (final IOException e) {
 			Log.e(TAG, "Reading file content failed", e);
-			mStatus.setText(R.string.dfu_error_loading_file_failed);
+			mStatus.setText(R.string.image_error_loading_file_failed);
 		} catch (final McuMgrException e) {
 			Log.e(TAG, "Reading hash failed, not a valid image", e);
-			mStatus.setText(R.string.dfu_error_file_not_valid);
+			mStatus.setText(R.string.image_error_file_not_valid);
 		}
 	}
 

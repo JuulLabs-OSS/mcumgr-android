@@ -22,31 +22,22 @@
   -->
 
 <resources>
-	<string name="image_control_title">Images</string>
-	<string name="image_control_hint">Tap READ button to download image slots information.</string>
-	<string name="image_control_action_read">Read</string>
-	<string name="image_control_action_test">Test</string>
-	<string name="image_control_action_confirm">Confirm</string>
-	<string name="image_control_action_erase">Erase</string>
+	<string name="image_upload_title">Firmware Upload</string>
+	<string name="image_upload_file_name">File Name:</string>
+	<string name="image_upload_size">File Size:</string>
+	<string name="image_upload_size_value">%d bytes</string>
+	<string name="image_upload_hash">File Hash:</string>
+	<string name="image_upload_status">State:</string>
+	<string name="image_upload_action_start">Upload</string>
 
-	<string name="image_control_split_status">Split Status: %d</string>
-	<string name="image_control_slot"><b>Slot: %d</b>\n
-		• Version: %s\n
-		• Hash: %s\n
-		• Bootable: %B\n
-		• Pending: %B\n
-		• Confirmed: %B\n
-		• Active: %B\n
-		• Permanent: %B</string>
+	<string name="image_upload_status_ready">READY</string>
+	<string name="image_upload_status_validating">VALIDATING…</string>
+	<string name="image_upload_status_uploading">UPLOADING…</string>
+	<string name="image_upload_status_completed">UPLOAD COMPLETE</string>
 
-	<string name="image_control_dialog_help_title">Help</string>
-	<string name="image_control_dialog_help_message"><b>Images</b> card lets you read the status
-		of image slots on the device.\nWhen a new firmware has been sent to slot&#160;1,
-		the TEST, CONFIRM and ERASE buttons become available.
-		The TEST button tells the device to run the new image on its next boot.
-		Such firmware may automatically confirm itself when it\'s configured to do so.
-		You may also make the image swap permanent by tapping CONFIRM button.
-		Each action requires rebooting the target to take effect. You can do this using the
-		<b>Reset</b> card below.\nERASE button erases the slot&#160;1.
-	</string>
+	<string name="image_upload_dialog_help_title">Help</string>
+	<string name="image_upload_dialog_help_message"><b>Firmware Update</b> card lets you send
+		a new firmware image onto the device to slot&#160;1. After sending the image,
+		use <b>Images</b> card to test or confirm it, and the <b>Reset</b> card to reboot
+		the device.</string>
 </resources>

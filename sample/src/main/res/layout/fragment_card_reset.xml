@@ -50,7 +50,7 @@
 			android:layout_marginEnd="8dp"
 			android:layout_marginStart="8dp"
 			android:text="@string/reset_action"
-			app:backgroundTint="@color/red"
+			app:backgroundTint="@color/button_destructive"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>

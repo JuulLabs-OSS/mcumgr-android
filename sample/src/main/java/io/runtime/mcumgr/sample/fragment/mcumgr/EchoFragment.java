@@ -88,10 +88,12 @@ public class EchoFragment extends Fragment implements Injectable {
 		ButterKnife.bind(this, view);
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@Override
 	public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
+		mViewModel.getBusyState().observe(this, busy -> mSendAction.setEnabled(!busy));
 		mViewModel.getRequest().observe(this, text -> {
 			clearValue();
 

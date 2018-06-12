@@ -75,11 +75,13 @@ public class ResetFragment extends Fragment implements Injectable {
 		ButterKnife.bind(this, view);
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@Override
 	public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
 		mViewModel.getError().observe(this, s -> mErrorView.setText(s));
+		mViewModel.getBusyState().observe(this, busy -> mResetAction.setEnabled(!busy));
 		mResetAction.setOnClickListener(v -> mViewModel.reset());
 
 		// Works

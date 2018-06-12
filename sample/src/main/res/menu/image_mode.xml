@@ -21,32 +21,14 @@
   ~ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   -->
 
-<resources>
-	<string name="image_control_title">Images</string>
-	<string name="image_control_hint">Tap READ button to download image slots information.</string>
-	<string name="image_control_action_read">Read</string>
-	<string name="image_control_action_test">Test</string>
-	<string name="image_control_action_confirm">Confirm</string>
-	<string name="image_control_action_erase">Erase</string>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
 
-	<string name="image_control_split_status">Split Status: %d</string>
-	<string name="image_control_slot"><b>Slot: %d</b>\n
-		• Version: %s\n
-		• Hash: %s\n
-		• Bootable: %B\n
-		• Pending: %B\n
-		• Confirmed: %B\n
-		• Active: %B\n
-		• Permanent: %B</string>
+	<item android:id="@+id/action_switch_to_advanced"
+		android:title="@string/image_action_switch_to_advanced"
+		app:showAsAction="ifRoom"/>
 
-	<string name="image_control_dialog_help_title">Help</string>
-	<string name="image_control_dialog_help_message"><b>Images</b> card lets you read the status
-		of image slots on the device.\nWhen a new firmware has been sent to slot&#160;1,
-		the TEST, CONFIRM and ERASE buttons become available.
-		The TEST button tells the device to run the new image on its next boot.
-		Such firmware may automatically confirm itself when it\'s configured to do so.
-		You may also make the image swap permanent by tapping CONFIRM button.
-		Each action requires rebooting the target to take effect. You can do this using the
-		<b>Reset</b> card below.\nERASE button erases the slot&#160;1.
-	</string>
-</resources>
+	<item android:id="@+id/action_switch_to_basic"
+		android:title="@string/image_action_switch_to_basic"
+		app:showAsAction="ifRoom"/>
+</menu>

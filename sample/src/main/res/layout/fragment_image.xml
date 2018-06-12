@@ -26,22 +26,39 @@
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
-	android:orientation="vertical">
+	android:orientation="vertical"
+	android:animateLayoutChanges="true">
 
 	<fragment
-		android:id="@+id/fragment_dfu"
-		android:name="io.runtime.mcumgr.sample.fragment.mcumgr.DfuFragment"
+		android:id="@+id/fragment_image_upgrade"
+		android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ImageUpgradeFragment"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_margin="8dp"
-		tools:layout="@layout/fragment_card_dfu"/>
+		tools:layout="@layout/fragment_card_image_upgrade"/>
 
 	<fragment
-		android:id="@+id/fragment_image_list"
+		android:id="@+id/fragment_image_upload"
+		android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ImageUploadFragment"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_margin="8dp"
+		tools:layout="@layout/fragment_card_image_upload"/>
+
+	<fragment
+		android:id="@+id/fragment_image_control"
 		android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ImageControlFragment"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_margin="8dp"
 		tools:layout="@layout/fragment_card_image_control"/>
+
+	<fragment
+		android:id="@+id/fragment_reset"
+		android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ResetFragment"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_margin="8dp"
+		tools:layout="@layout/fragment_card_reset"/>
 
 </LinearLayout>

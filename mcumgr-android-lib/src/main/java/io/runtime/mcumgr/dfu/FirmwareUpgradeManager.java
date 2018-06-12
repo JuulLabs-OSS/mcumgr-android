@@ -12,12 +12,11 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import java.util.Arrays;
 import java.util.concurrent.Executor;
 
 import io.runtime.mcumgr.McuMgrCallback;
-import io.runtime.mcumgr.McuMgrErrorCode;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.managers.DefaultManager;
@@ -47,6 +46,35 @@ import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private final static String TAG = "FirmwareUpgradeManager";
 
+    public enum Mode {
+        /**
+         * When this mode is set, the manager will send the test and reset commands to
+         * the device after the upload is complete. The device will reboot and will run the new
+         * image on its next boot. If the new image supports auto-confirm feature, it will try to
+         * confirm itself and change state to permanent. If not, test image will run just once
+         * and will be swapped again with the original image on the next boot.
+         * <p>
+         * Use this mode if you just want to test the image, when it can confirm itself.
+         */
+        TEST_ONLY,
+        /**
+         * When this flag is set, the manager will send confirm and reset commands immediately
+         * after upload.
+         * <p>
+         * Use this mode if when the new image does not support both auto-confirm feature and
+         * SMP service and could not be confirmed otherwise.
+         */
+        CONFIRM_ONLY,
+        /**
+         * When this flag is set, the manager will first send test followed by reset commands,
+         * then it will reconnect to the new application and will send confirm command.
+         * <p>
+         * Use this mode when the new image supports SMP service and you want to test it
+         * before confirming.
+         */
+        TEST_AND_CONFIRM
+    }
+
     /**
      * Performs the image upload, test, and confirmation steps.
      */
@@ -73,6 +101,11 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private byte[] mHash;
 
     /**
+     * The manager mode. By default the {@link Mode#TEST_AND_CONFIRM} mode is set.
+     */
+    private Mode mMode = Mode.TEST_AND_CONFIRM;
+
+    /**
      * State of the firmware upgrade.
      */
     private State mState;
@@ -88,10 +121,8 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private boolean mUiThreadCallbacks = true;
 
     /**
-     * Construct a firmware upgrade manager. If using this constructor, image data
-     * and callback must be set
-     * using {@link FirmwareUpgradeManager#setImageData} and
-     * {@link #setFirmwareUpgradeCallback(FirmwareUpgradeCallback)} before calling
+     * Construct a firmware upgrade manager. If using this constructor, the callback must be set
+     * using {@link #setFirmwareUpgradeCallback(FirmwareUpgradeCallback)} before calling
      * {@link FirmwareUpgradeManager#start}.
      *
      * @param transport the transporter to use.
@@ -103,9 +134,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     }
 
     /**
-     * Construct a firmware upgrade manager. If using this constructor, image data must be set
-     * using {@link FirmwareUpgradeManager#setImageData} before calling
-     * {@link FirmwareUpgradeManager#start}.
+     * Construct a firmware upgrade manager.
      *
      * @param transport the transporter to use.
      * @param callback  the callback.
@@ -114,21 +143,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                                   @NonNull FirmwareUpgradeCallback callback) {
         this(transport);
         mCallback = callback;
-    }
-
-    /**
-     * Construct a firmware upgrade manager.
-     *
-     * @param transport the transporter to use.
-     * @param imageData the data of the image to send.
-     * @param callback  the callback.
-     * @throws McuMgrException Thrown if the image data is invalid.
-     */
-    public FirmwareUpgradeManager(@NonNull McuMgrTransport transport, @NonNull byte[] imageData,
-                                  @NonNull FirmwareUpgradeCallback callback) throws McuMgrException {
-        this(transport, callback);
-        mImageData = imageData;
-        mHash = McuMgrImage.getHash(imageData);
     }
 
     /**
@@ -141,27 +155,29 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     }
 
     /**
-     * Set the image data of the upgrade. This must be called prior to starting the upgrade.
-     *
-     * @param imageData the image data to set.
-     * @throws McuMgrException if the format of the image data is not valid.
-     */
-    public void setImageData(byte[] imageData) throws McuMgrException {
-        if (mState != State.NONE) {
-            Log.e(TAG, "Cannot set image data in state " + mState);
-            return;
-        }
-        mImageData = imageData;
-        mHash = McuMgrImage.getHash(imageData);
-    }
-
-    /**
      * Sets the manager callback.
      *
      * @param callback the callback for receiving status change events.
      */
-    public void setFirmwareUpgradeCallback(@NonNull final FirmwareUpgradeCallback callback) {
+    public void setFirmwareUpgradeCallback(@NonNull FirmwareUpgradeCallback callback) {
         mCallback = callback;
+    }
+
+    /**
+     * Sets the manager mode. By default the {@link Mode#TEST_AND_CONFIRM} mode is used.
+     * The mode may be set only before calling {@link #start(byte[])} method.
+     *
+     * @param mode the manager mode.
+     * @see Mode#TEST_ONLY TEST_ONLY
+     * @see Mode#CONFIRM_ONLY CONFIRM_ONLY
+     * @see Mode#TEST_AND_CONFIRM TEST_AND_CONFIRM
+     */
+    public void setMode(@NonNull Mode mode) {
+        if (mState != State.NONE) {
+            Log.i(TAG, "Firmware upgrade is already in progress");
+            return;
+        }
+        mMode = mode;
     }
 
     /**
@@ -182,18 +198,18 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      * The manager will try to connect to the SMP server on the new firmware and confirm
      * the upload.
      */
-    public synchronized void start() {
+    public synchronized void start(@NonNull byte[] imageData) throws McuMgrException {
         if (mState != State.NONE) {
             Log.i(TAG, "Firmware upgrade is already in progress");
             return;
-        } else if (mImageData == null) {
-            Log.e(TAG, "Cannot start upgrade, image data is null!");
-            return;
         }
+        // Set image and validate
+        mImageData = imageData;
+        mHash = McuMgrImage.getHash(imageData);
+
         // Begin the upload
-        mState = State.UPLOAD;
-        mInternalCallback.onStart(this);
-        mImageManager.upload(mImageData, mImageUploadCallback);
+		mInternalCallback.onStart(this);
+        validate();
     }
 
     //******************************************************************
@@ -210,7 +226,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     @Override
     public synchronized void pause() {
         if (mState.isInProgress()) {
-            Log.d(TAG, "Pausing upgrade.");
+            Log.i(TAG, "Pausing upgrade.");
             mPaused = true;
             if (mState == State.UPLOAD) {
                 mImageManager.pauseUpload();
@@ -240,6 +256,56 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     // Implementation
     //******************************************************************
 
+	private synchronized void setState(State newState) {
+    	State prevState = mState;
+		mState = newState;
+		if (newState != prevState) {
+			Log.v(TAG, "Moving from state " + prevState.name() + " to state " + newState.name());
+			mInternalCallback.onStateChanged(prevState, newState);
+		}
+	}
+
+	private synchronized void validate() {
+		setState(State.VALIDATE);
+		if (!mPaused) {
+			mImageManager.list(mImageValidateCallback);
+		}
+	}
+
+	private synchronized void upload() {
+    	setState(State.UPLOAD);
+		if (!mPaused) {
+			mImageManager.upload(mImageData, mImageUploadCallback);
+		}
+	}
+
+	private synchronized void test() {
+		setState(State.TEST);
+		if (!mPaused) {
+			mImageManager.test(mHash, mTestCallback);
+		}
+	}
+
+	private synchronized void confirm() {
+		setState(State.CONFIRM);
+		if (!mPaused) {
+			mImageManager.confirm(mHash, mConfirmCallback);
+		}
+	}
+
+	private synchronized void reset() {
+		setState(State.RESET);
+		if (!mPaused) {
+			mDefaultManager.getTransporter().addObserver(mResetObserver);
+			mDefaultManager.reset(mResetCallback);
+		}
+	}
+
+    private synchronized void success() {
+        mState = State.NONE;
+        mPaused = false;
+        mInternalCallback.onSuccess();
+    }
 
     private synchronized void fail(McuMgrException error) {
         cancelPrivate();
@@ -247,17 +313,91 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     }
 
     private synchronized void cancelPrivate() {
+    	if (mState == State.UPLOAD) {
+			mImageManager.cancelUpload();
+		}
         mState = State.NONE;
         mPaused = false;
-        mImageManager.cancelUpload();
-        if (mResetPollThread != null) {
-            mResetPollThread.interrupt();
-        }
     }
 
     //******************************************************************
     // McuManagerCallbacks
     //******************************************************************
+
+    /**
+     * State: VALIDATE.
+     * Callback for the list command.
+     */
+    private McuMgrCallback<McuMgrImageStateResponse> mImageValidateCallback =
+            new McuMgrCallback<McuMgrImageStateResponse>() {
+                @Override
+                public void onResponse(@NonNull final McuMgrImageStateResponse response) {
+					Log.v(TAG, "Validation response: " + response.toString());
+
+					McuMgrImageStateResponse.ImageSlot[] images = response.images;
+
+                    // Check if the new firmware is different than the active one.
+                    if (images.length > 0 && Arrays.equals(mHash, images[0].hash)) {
+                        // The new firmware is already active. No need to do anything.
+                        success();
+                        return;
+                    }
+
+                    // Check if the new firmware was already sent.
+                    if (images.length > 1 && Arrays.equals(mHash, images[1].hash)) {
+                        // Firmware is identical to one on slot 1. No need to send anything.
+
+						// If the test or confirm commands were not sent, proceed with next state.
+						if (!images[1].pending) {
+							switch (mMode) {
+								case TEST_AND_CONFIRM:
+								case TEST_ONLY:
+									test();
+									break;
+								case CONFIRM_ONLY:
+									confirm();
+									break;
+							}
+							return;
+						}
+
+						// If image was already confirmed, reset (if confirm was planned), or fail.
+						if (images[1].permanent) {
+							switch (mMode) {
+								case CONFIRM_ONLY:
+								case TEST_AND_CONFIRM:
+									// If confirm command was sent, just reset.
+									reset();
+									break;
+								case TEST_ONLY:
+									fail(new McuMgrException("Image already confirmed. Can't be tested."));
+									break;
+							}
+							return;
+						}
+
+						// If image was not confirmed, but test command was sent, confirm or reset.
+						switch (mMode) {
+							case CONFIRM_ONLY:
+								confirm();
+								break;
+							case TEST_AND_CONFIRM:
+							case TEST_ONLY:
+								reset();
+								break;
+						}
+						return;
+                    }
+
+                    // Validation successful, begin image upload.
+                    upload();
+                }
+
+                @Override
+                public void onError(@NonNull McuMgrException e) {
+                    fail(e);
+                }
+            };
 
     /**
      * State: TEST.
@@ -266,11 +406,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private McuMgrCallback<McuMgrImageStateResponse> mTestCallback = new McuMgrCallback<McuMgrImageStateResponse>() {
         @Override
         public void onResponse(@NonNull McuMgrImageStateResponse response) {
-            if (response.getRc() != McuMgrErrorCode.OK) {
-                Log.e(TAG, "Test failed due to McuManager error: " + response.getRc());
-                fail(new McuMgrErrorException(response.getRc()));
-                return;
-            }
             Log.v(TAG, "Test response: " + response.toString());
             if (response.images.length != 2) {
                 fail(new McuMgrException("Test response does not contain enough info"));
@@ -281,8 +416,8 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 fail(new McuMgrException("Tested image is not in a pending state."));
                 return;
             }
-            // Test image success, begin device reset
-            nextState();
+            // Test image success, begin device reset.
+            reset();
         }
 
         @Override
@@ -293,13 +428,43 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
     /**
      * State: RESET.
+     * Observer for the transport disconnection.
+     */
+    private McuMgrTransport.ConnectionObserver mResetObserver
+            = new McuMgrTransport.ConnectionObserver() {
+        @Override
+        public void onConnected() {
+            // ignore
+        }
+
+        @Override
+        public void onDisconnected() {
+			// Device has reset.
+            mDefaultManager.getTransporter().removeObserver(this);
+            Log.v(TAG, "Reset successful");
+			switch (mMode) {
+				case TEST_AND_CONFIRM:
+					// The device reconnected after testing.
+					confirm();
+					break;
+				case TEST_ONLY:
+				case CONFIRM_ONLY:
+					// The device has been tested or confirmed.
+					success();
+					break;
+			}
+        }
+    };
+
+    /**
+     * State: RESET.
      * Callback for the reset command.
      */
     private McuMgrCallback<McuMgrResponse> mResetCallback = new McuMgrCallback<McuMgrResponse>() {
         @Override
         public void onResponse(@NonNull McuMgrResponse response) {
-            Log.d(TAG, "Reset successful");
-            mResetPollThread.start();
+			// Reset command has been sent.
+            Log.v(TAG, "Reset request sent. Waiting for reset");
         }
 
         @Override
@@ -316,11 +481,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             new McuMgrCallback<McuMgrImageStateResponse>() {
                 @Override
                 public void onResponse(@NonNull McuMgrImageStateResponse response) {
-                    if (response.getRc() != McuMgrErrorCode.OK) {
-                        Log.e(TAG, "Confirm failed due to Mcu Manager error: " + response.getRc());
-                        fail(new McuMgrErrorException(response.getRc()));
-                        return;
-                    }
                     Log.v(TAG, "Confirm response: " + response.toString());
                     if (response.images.length == 0) {
                         fail(new McuMgrException("Confirm response does not contain enough info"));
@@ -331,8 +491,17 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                         fail(new McuMgrException("Image is not in a confirmed state."));
                         return;
                     }
-                    // Confirm image success
-                    nextState();
+					// Confirm command has been sent.
+					switch (mMode) {
+						case CONFIRM_ONLY:
+							// Reset the device, we don't want to do anything more.
+							reset();
+							break;
+						case TEST_AND_CONFIRM:
+							// The device has been tested and confirmed.
+							success();
+							break;
+					}
                 }
 
                 @Override
@@ -346,10 +515,11 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     //******************************************************************
 
     public enum State {
-        NONE, UPLOAD, TEST, RESET, CONFIRM, SUCCESS;
+        NONE, VALIDATE, UPLOAD, TEST, RESET, CONFIRM, SUCCESS;
 
         public boolean isInProgress() {
-            return this == UPLOAD || this == TEST || this == RESET || this == CONFIRM;
+            return this == VALIDATE || this == UPLOAD || this == TEST ||
+                   this == RESET    || this == CONFIRM;
         }
     }
 
@@ -372,111 +542,24 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         switch (mState) {
             case NONE:
                 return;
+            case VALIDATE:
+                validate();
+                break;
             case UPLOAD:
                 mImageManager.continueUpload();
                 break;
             case TEST:
-                mImageManager.test(mHash, mTestCallback);
+                test();
                 break;
             case RESET:
-                nextState();
+				reset();
                 break;
             case CONFIRM:
-                mImageManager.confirm(mHash, mConfirmCallback);
+                confirm();
                 break;
         }
     }
 
-    /**
-     * Called when a state has completed. Sets and executes the next state.
-     */
-    private synchronized void nextState() {
-        if (mPaused) {
-            return;
-        }
-        final State prevState = mState;
-        switch (mState) {
-            case NONE:
-                return;
-            case UPLOAD:
-                mState = State.TEST;
-                mImageManager.test(mHash, mTestCallback);
-                break;
-            case TEST:
-                mState = State.RESET;
-                mDefaultManager.reset(mResetCallback);
-                break;
-            case RESET:
-                mState = State.CONFIRM;
-                mImageManager.confirm(mHash, mConfirmCallback);
-                break;
-            case CONFIRM:
-                mState = State.SUCCESS;
-                break;
-
-        }
-        Log.d(TAG, "Moving from state " + prevState.name() + " to state " + mState.name());
-        mInternalCallback.onStateChanged(prevState, mState);
-
-        if (mState == State.SUCCESS) {
-            mInternalCallback.onSuccess();
-        }
-    }
-
-    //******************************************************************
-    // Poll Reset Runnable
-    //******************************************************************
-
-    /**
-     * Waits 21 seconds for the disconnect to occur after a reset, then begins polling the device
-     * until a response is received.
-     */
-    private Thread mResetPollThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            int attempts = 0;
-            try {
-                //TODO need to figure out a better way for UDP
-                synchronized (this) {
-                    wait(21 * 1000);
-                }
-                while (true) {
-                    checkResetComplete();
-
-                    if (attempts == 3) {
-                        fail(new McuMgrException("Reset poller has reached attempt limit."));
-                        return;
-                    }
-                    attempts++;
-                    synchronized (this) {
-                        wait(7000);
-                    }
-                }
-            } catch (InterruptedException e) {
-                // Do nothing...
-            }
-        }
-
-        private void checkResetComplete() {
-            Log.d(TAG, "Calling image list...");
-            mImageManager.list(new McuMgrCallback<McuMgrImageStateResponse>() {
-                @Override
-                public synchronized void onResponse(@NonNull McuMgrImageStateResponse response) {
-                    if (mState == State.RESET) {
-                        // Device has reset, begin confirm
-                        nextState();
-                        // Interrupt the thread
-                        mResetPollThread.interrupt();
-                    }
-                }
-
-                @Override
-                public void onError(@NonNull McuMgrException e) {
-                    // Do nothing...
-                }
-            });
-        }
-    });
 
     //******************************************************************
     // Image Upload Callback
@@ -485,7 +568,8 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     /**
      * Image upload callback. Forwards upload callbacks to the FirmwareUpgradeCallback.
      */
-    private ImageManager.ImageUploadCallback mImageUploadCallback = new ImageManager.ImageUploadCallback() {
+    private ImageManager.ImageUploadCallback mImageUploadCallback =
+            new ImageManager.ImageUploadCallback() {
         @Override
         public void onProgressChange(int bytesSent, int imageSize, long timestamp) {
             mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
@@ -503,8 +587,16 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
         @Override
         public void onUploadFinish() {
-            // Upload finished, move to next state
-            nextState();
+			// When upload is complete, send test on confirm commands, depending on the mode.
+			switch (mMode) {
+				case TEST_ONLY:
+				case TEST_AND_CONFIRM:
+					test();
+					break;
+				case CONFIRM_ONLY:
+					confirm();
+					break;
+			}
         }
     };
 

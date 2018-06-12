@@ -27,5 +27,4 @@ import io.runtime.mcumgr.sample.di.component.McuMgrSubComponent;
 
 @Module(subcomponents = McuMgrSubComponent.class)
 public class McuMgrModule {
-	// empty
 }

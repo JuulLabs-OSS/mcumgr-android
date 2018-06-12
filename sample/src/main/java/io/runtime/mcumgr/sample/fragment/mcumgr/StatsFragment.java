@@ -61,6 +61,8 @@ public class StatsFragment extends Fragment implements Injectable {
 
 	@BindView(R.id.stats_value)
 	TextView mStatsValue;
+	@BindView(R.id.image_control_error)
+	TextView mError;
 	@BindView(R.id.action_refresh)
 	Button mActionRefresh;
 
@@ -99,6 +101,7 @@ public class StatsFragment extends Fragment implements Injectable {
 
 		mViewModel.getResponse().observe(this, this::printStats);
 		mViewModel.getError().observe(this, this::printError);
+		mViewModel.getBusyState().observe(this, busy -> mActionRefresh.setEnabled(!busy));
 		mActionRefresh.setOnClickListener(v -> mViewModel.readStats());
 	}
 
@@ -117,13 +120,18 @@ public class StatsFragment extends Fragment implements Injectable {
 		mStatsValue.setText(builder);
 	}
 
-	private void printError(@NonNull final String error) {
-		final SpannableString spannable = new SpannableString(error);
-		spannable.setSpan(new ForegroundColorSpan(
-						ContextCompat.getColor(requireContext(), R.color.error)),
-				0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-		spannable.setSpan(new StyleSpan(Typeface.BOLD),
-				0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-		mStatsValue.setText(spannable);
+	private void printError(@Nullable final String error) {
+		if (error != null) {
+			final SpannableString spannable = new SpannableString(error);
+			spannable.setSpan(new ForegroundColorSpan(
+							ContextCompat.getColor(requireContext(), R.color.error)),
+					0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+			spannable.setSpan(new StyleSpan(Typeface.BOLD),
+					0, error.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+			mError.setText(spannable);
+			mError.setVisibility(View.VISIBLE);
+		} else {
+			mError.setText(null);
+		}
 	}
 }

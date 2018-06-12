@@ -24,9 +24,11 @@ package io.runtime.mcumgr.sample.di.component;
 
 import dagger.Subcomponent;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.DeviceStatusViewModel;
-import io.runtime.mcumgr.sample.viewmodel.mcumgr.DfuViewModel;
+import io.runtime.mcumgr.sample.viewmodel.mcumgr.ImageUpgradeViewModel;
+import io.runtime.mcumgr.sample.viewmodel.mcumgr.ImageUploadViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.EchoViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.ImageControlViewModel;
+import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.ResetViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.StatsViewModel;
@@ -46,6 +48,8 @@ public interface McuMgrViewModelSubComponent {
 	EchoViewModel echoViewModel();
 	ResetViewModel resetViewModel();
 	StatsViewModel statsViewModel();
-	DfuViewModel dfuViewModel();
-	ImageControlViewModel imageListViewModel();
+	McuMgrViewModel mcuMgrViewModel();
+	ImageUpgradeViewModel imageUpgradeViewModel();
+	ImageUploadViewModel imageUploadViewModel();
+	ImageControlViewModel imageControlViewModel();
 }

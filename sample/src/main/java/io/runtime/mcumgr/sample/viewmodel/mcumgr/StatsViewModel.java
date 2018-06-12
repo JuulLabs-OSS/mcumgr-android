@@ -24,13 +24,13 @@ package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.exception.McuMgrException;
@@ -38,14 +38,16 @@ import io.runtime.mcumgr.managers.StatsManager;
 import io.runtime.mcumgr.response.stat.McuMgrStatListResponse;
 import io.runtime.mcumgr.response.stat.McuMgrStatResponse;
 
-public class StatsViewModel extends ViewModel {
+public class StatsViewModel extends McuMgrViewModel {
 	private final StatsManager mManager;
 
 	private final MutableLiveData<List<McuMgrStatResponse>> mResponseLiveData = new MutableLiveData<>();
 	private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
 
 	@Inject
-	StatsViewModel(final StatsManager manager) {
+	StatsViewModel(final StatsManager manager,
+				   @Named("busy") final MutableLiveData<Boolean> state) {
+		super(state);
 		mManager = manager;
 	}
 
@@ -59,6 +61,8 @@ public class StatsViewModel extends ViewModel {
 	}
 
 	public void readStats() {
+		setBusy();
+		mErrorLiveData.setValue(null);
 		mManager.list(new McuMgrCallback<McuMgrStatListResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrStatListResponse listResponse) {
@@ -71,11 +75,13 @@ public class StatsViewModel extends ViewModel {
 						public void onResponse(@NonNull final McuMgrStatResponse response) {
 							list.add(response);
 							mResponseLiveData.postValue(list);
+							postReady();
 						}
 
 						@Override
 						public void onError(@NonNull final McuMgrException error) {
 							mErrorLiveData.postValue(error.getMessage());
+							postReady();
 						}
 					});
 				}
@@ -84,6 +90,7 @@ public class StatsViewModel extends ViewModel {
 			@Override
 			public void onError(@NonNull final McuMgrException error) {
 				mErrorLiveData.postValue(error.getMessage());
+				postReady();
 			}
 		});
 	}

@@ -46,8 +46,10 @@ public class McuMgrViewModelFactory implements ViewModelProvider.Factory {
 		creators.put(EchoViewModel.class, viewModelSubComponent::echoViewModel);
 		creators.put(ResetViewModel.class, viewModelSubComponent::resetViewModel);
 		creators.put(StatsViewModel.class, viewModelSubComponent::statsViewModel);
-		creators.put(DfuViewModel.class, viewModelSubComponent::dfuViewModel);
-		creators.put(ImageControlViewModel.class, viewModelSubComponent::imageListViewModel);
+		creators.put(McuMgrViewModel.class, viewModelSubComponent::mcuMgrViewModel);
+		creators.put(ImageUpgradeViewModel.class, viewModelSubComponent::imageUpgradeViewModel);
+		creators.put(ImageUploadViewModel.class, viewModelSubComponent::imageUploadViewModel);
+		creators.put(ImageControlViewModel.class, viewModelSubComponent::imageControlViewModel);
 	}
 
 	@SuppressWarnings("unchecked")
