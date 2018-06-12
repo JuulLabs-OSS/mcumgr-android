@@ -19,22 +19,6 @@ import io.runtime.mcumgr.response.McuMgrResponse;
  * tear-down connections on its own accord.
  */
 public interface McuMgrTransport {
-    /**
-     * An observer will be notified whenever the transport object gets busy or when
-     * all enqueued tasks have been completed.
-     */
-    interface StateObserver {
-        /**
-         * A method called when the Msu Mgr transport object got a job to do.
-         */
-        void onBusy();
-
-        /**
-         * A method called when the Mcu Mgr transport object has finished sending all enqueued
-         * packets.
-         */
-        void onReady();
-    }
 
     interface ConnectionObserver {
         /**
@@ -89,21 +73,6 @@ public interface McuMgrTransport {
      * nothing.
      */
     void release();
-
-    /**
-     * Adds the transport observer. An observer will be notified whenever the transport gets busy
-     * or when it has finished performing operations.
-     *
-     * @param observer the observer.
-     */
-    void addObserver(@NonNull StateObserver observer);
-
-    /**
-     * Removes previously registered observer.
-     *
-     * @param observer the observer.
-     */
-    void removeObserver(@NonNull StateObserver observer);
 
     /**
      * Adds the connection observer. An observer will be notified whenever the connected device

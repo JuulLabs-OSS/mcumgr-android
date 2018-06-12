@@ -130,8 +130,6 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     public <T extends McuMgrResponse> T send(@NonNull final byte[] payload,
                                              @NonNull final Class<T> responseType)
             throws McuMgrException {
-        notifyBusy();
-
         // If device is not connected, connect
         final boolean wasConnected = isConnected();
         try {
@@ -200,8 +198,6 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     public <T extends McuMgrResponse> void send(@NonNull final byte[] payload,
                                                 @NonNull final Class<T> responseType,
                                                 @NonNull final McuMgrCallback<T> callback) {
-        notifyBusy();
-
         // If device is not connected, connect.
         // If the device was already connected, the completion callback will be called immediately.
         final boolean wasConnected = isConnected();
@@ -354,41 +350,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             mSmpCharacteristic = null;
             notifyDisconnected();
         }
-
-        // Called when all enqueued operations were completed (successfully, or not).
-        @Override
-        protected void onManagerReady() {
-            notifyReady();
-        }
     };
-
-    //*******************************************************************************************
-    // Manager State Observers
-    //*******************************************************************************************
-
-    private final List<StateObserver> mStateObservers = new LinkedList<>();
-
-    @Override
-    public synchronized void addObserver(@NonNull final StateObserver observer) {
-        mStateObservers.add(observer);
-    }
-
-    @Override
-    public synchronized void removeObserver(@NonNull final StateObserver observer) {
-        mStateObservers.remove(observer);
-    }
-
-    private synchronized void notifyBusy() {
-        for (StateObserver o : mStateObservers) {
-            o.onBusy();
-        }
-    }
-
-    private synchronized void notifyReady() {
-        for (StateObserver o : mStateObservers) {
-            o.onReady();
-        }
-    }
 
     //*******************************************************************************************
     // Manager Connection Observers
