@@ -28,18 +28,21 @@ import android.arch.lifecycle.ViewModel;
 import android.bluetooth.BluetoothDevice;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.ble.McuMgrBleCallbacksStub;
 import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.sample.R;
 
-public class DeviceStatusViewModel extends ViewModel {
+public class DeviceStatusViewModel extends McuMgrViewModel {
 	private final MutableLiveData<Integer> mConnectionStateLiveData = new MutableLiveData<>();
 	private final MutableLiveData<Integer> mBondStateLiveData = new MutableLiveData<>();
 
 	@Inject
-	DeviceStatusViewModel(final McuMgrTransport transport) {
+	DeviceStatusViewModel(final McuMgrTransport transport,
+						  @Named("busy") final MutableLiveData<Boolean> state) {
+		super(state);
 		if (transport instanceof McuMgrBleTransport) {
 			((McuMgrBleTransport) transport).setGattCallbacks(new DeviceCallbacks());
 		}

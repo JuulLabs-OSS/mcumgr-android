@@ -30,6 +30,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import javax.inject.Inject;
@@ -46,8 +47,12 @@ public class DeviceStatusFragment extends Fragment implements Injectable {
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 
-	@BindView(R.id.connection_status) TextView mConnectionStatus;
-	@BindView(R.id.bonding_status) TextView mBondingStatus;
+	@BindView(R.id.connection_status)
+	TextView mConnectionStatus;
+	@BindView(R.id.bonding_status)
+	TextView mBondingStatus;
+	@BindView(R.id.work_indicator)
+	ProgressBar mWorkIndicator;
 
 	private DeviceStatusViewModel mViewModel;
 
@@ -77,7 +82,11 @@ public class DeviceStatusFragment extends Fragment implements Injectable {
 	public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
-		mViewModel.getConnectionState().observe(this, resId -> mConnectionStatus.setText(resId));
-		mViewModel.getBondState().observe(this, resId -> mBondingStatus.setText(resId));
+		mViewModel.getConnectionState().observe(this,
+				resId -> mConnectionStatus.setText(resId));
+		mViewModel.getBondState().observe(this, resId ->
+				mBondingStatus.setText(resId));
+		mViewModel.getBusyState().observe(this, busy ->
+				mWorkIndicator.setVisibility(busy ? View.VISIBLE : View.GONE));
 	}
 }

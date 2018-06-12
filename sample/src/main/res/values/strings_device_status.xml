@@ -22,7 +22,7 @@
   -->
 
 <resources>
-	<string name="status_title">Device status</string>
+	<string name="status_title">Device Status</string>
 	<string name="status_status_label">Connection status:</string>
 	<string name="status_bond_label">Bonding status:</string>
 
