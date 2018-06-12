@@ -6,6 +6,8 @@
 
 package io.runtime.mcumgr.image;
 
+import android.support.annotation.NonNull;
+
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.image.tlv.McuMgrImageTlv;
 
@@ -26,10 +28,10 @@ public class McuMgrImage {
     private final byte[] mData;
     private final byte[] mHash;
 
-    public McuMgrImage(byte[] data) throws McuMgrException {
+    public McuMgrImage(@NonNull byte[] data) throws McuMgrException {
         mData = data;
-        mHeader = McuMgrImageHeader.fromBytes(mData);
-        mTlv = McuMgrImageTlv.fromBytes(mData, mHeader);
+        mHeader = McuMgrImageHeader.fromBytes(data);
+        mTlv = McuMgrImageTlv.fromBytes(data, mHeader);
         mHash = mTlv.getHash();
         if (mHash == null) {
             throw new McuMgrException("Image TLV trailer does not contain an image hash!");
@@ -52,7 +54,7 @@ public class McuMgrImage {
         return mHash;
     }
 
-    public static byte[] getHash(byte[] data) throws McuMgrException {
+    public static byte[] getHash(@NonNull byte[] data) throws McuMgrException {
         return new McuMgrImage(data).getHash();
     }
 }

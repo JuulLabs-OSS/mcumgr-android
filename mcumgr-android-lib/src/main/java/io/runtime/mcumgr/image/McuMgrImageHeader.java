@@ -6,6 +6,8 @@
 
 package io.runtime.mcumgr.image;
 
+import android.support.annotation.NonNull;
+
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.util.ByteUtil;
 import io.runtime.mcumgr.util.Endian;
@@ -36,11 +38,11 @@ public class McuMgrImageHeader {
 
     private McuMgrImageHeader() {}
 
-    public static McuMgrImageHeader fromBytes(byte[] b) throws McuMgrException {
+    public static McuMgrImageHeader fromBytes(@NonNull byte[] b) throws McuMgrException {
         return fromBytes(b, 0);
     }
 
-    public static McuMgrImageHeader fromBytes(byte[] b, int offset) throws McuMgrException {
+    public static McuMgrImageHeader fromBytes(@NonNull byte[] b, int offset) throws McuMgrException {
         if (b.length - offset < getSize()) {
             throw new McuMgrException("The byte array is too short to be a McuMgrImageHeader");
         }
