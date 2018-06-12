@@ -31,6 +31,7 @@ android {
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
+        resConfigs "en"
 
         vectorDrawables.useSupportLibrary = true
 
@@ -47,7 +48,7 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support:recyclerview-v7:27.1.1'
     implementation 'com.android.support:cardview-v7:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.1'
 
     // Lifecycle extensions
     implementation 'android.arch.lifecycle:extensions:1.1.1'
