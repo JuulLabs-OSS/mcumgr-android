@@ -150,7 +150,12 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 			if (content.length() == 0) {
 				mResult.setText(R.string.files_download_file_empty);
 			} else {
-				mResult.setText(content);
+				final String path = mFilePath.getText().toString();
+				final SpannableString spannable = new SpannableString(
+						getString(R.string.files_download_file, path, data.length, content));
+				spannable.setSpan(new StyleSpan(Typeface.BOLD),
+						0, path.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+				mResult.setText(spannable);
 			}
 		}
 	}

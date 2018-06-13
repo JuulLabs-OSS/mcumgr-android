@@ -37,9 +37,4 @@
 	<string name="files_action_pause">Pause</string>
 	<string name="files_action_resume">Resume</string>
 	<string name="files_action_cancel">Cancel</string>
-
-	<string name="files_error_no_file_browser">File Browser app not found.</string>
-	<string name="files_error_no_uri">No file found.</string>
-	<string name="files_error_loading_file_failed">Reading file failed.</string>
-	<string name="files_error_file_not_valid">Invalid image file.</string>
 </resources>
