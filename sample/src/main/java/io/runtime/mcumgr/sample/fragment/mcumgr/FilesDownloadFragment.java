@@ -24,6 +24,7 @@ package io.runtime.mcumgr.sample.fragment.mcumgr;
 
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -43,6 +44,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -75,6 +77,8 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 	View mDivider;
 	@BindView(R.id.file_result)
 	TextView mResult;
+	@BindView(R.id.image)
+	ImageView mImage;
 
 	private FilesDownloadViewModel mViewModel;
 	private InputMethodManager mImm;
@@ -142,20 +146,32 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 	private void printContent(@Nullable final byte[] data) {
 		mDivider.setVisibility(View.VISIBLE);
 		mResult.setVisibility(View.VISIBLE);
+		mImage.setVisibility(View.VISIBLE);
+		mImage.setImageDrawable(null);
 
 		if (data == null) {
 			mResult.setText(R.string.files_download_error_file_not_found);
 		} else {
-			final String content = new String(data);
-			if (content.length() == 0) {
+			if (data.length == 0) {
 				mResult.setText(R.string.files_download_file_empty);
 			} else {
 				final String path = mFilePath.getText().toString();
-				final SpannableString spannable = new SpannableString(
-						getString(R.string.files_download_file, path, data.length, content));
-				spannable.setSpan(new StyleSpan(Typeface.BOLD),
-						0, path.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-				mResult.setText(spannable);
+				final Bitmap bitmap = FsUtils.toBitmap(getResources(), data);
+				if (bitmap != null) {
+					final SpannableString spannable = new SpannableString(
+							getString(R.string.files_download_image, path, data.length));
+					spannable.setSpan(new StyleSpan(Typeface.BOLD),
+							0, path.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+					mResult.setText(spannable);
+					mImage.setImageBitmap(bitmap);
+				} else {
+					final String content = new String(data);
+					final SpannableString spannable = new SpannableString(
+							getString(R.string.files_download_file, path, data.length, content));
+					spannable.setSpan(new StyleSpan(Typeface.BOLD),
+							0, path.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+					mResult.setText(spannable);
+				}
 			}
 		}
 	}
@@ -165,7 +181,6 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 		mResult.setVisibility(View.VISIBLE);
 
 		if (error != null) {
-
 			final SpannableString spannable = new SpannableString(error);
 			spannable.setSpan(new ForegroundColorSpan(
 							ContextCompat.getColor(requireContext(), R.color.error)),

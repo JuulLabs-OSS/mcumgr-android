@@ -101,17 +101,29 @@
 			android:id="@+id/file_result"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
-			android:layout_marginBottom="8dp"
 			android:layout_marginEnd="16dp"
 			android:layout_marginStart="16dp"
 			android:layout_marginTop="16dp"
 			android:freezesText="true"
 			android:visibility="gone"
-			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/divider"
 			tools:text="Some text"
+			tools:visibility="visible"/>
+
+		<ImageView
+			android:id="@+id/image"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="8dp"
+			android:layout_marginEnd="8dp"
+			android:layout_marginStart="16dp"
+			android:visibility="gone"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/file_result"
 			tools:visibility="visible"/>
 
 	</android.support.constraint.ConstraintLayout>

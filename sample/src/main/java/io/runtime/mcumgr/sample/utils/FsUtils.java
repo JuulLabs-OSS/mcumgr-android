@@ -25,6 +25,11 @@ package io.runtime.mcumgr.sample.utils;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 
 public class FsUtils {
     private static final String PREFS_PARTITION = "partition";
@@ -53,6 +58,14 @@ public class FsUtils {
     public void setPartition(final String partition) {
         mPreferences.edit().putString(PREFS_PARTITION, partition).apply();
         mPartitionLiveData.postValue(partition);
+    }
+
+    public static Bitmap toBitmap(@NonNull final Resources resources, @NonNull final byte[] data) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();// whichever you want to load
+        options.inDensity = DisplayMetrics.DENSITY_MEDIUM;
+        options.inTargetDensity = resources.getDisplayMetrics().densityDpi;
+        options.inScaled = true;
+        return BitmapFactory.decodeByteArray(data, 0, data.length, options);
     }
 
     public static byte[] generateLoremIpsum(int size) {

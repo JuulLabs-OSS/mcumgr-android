@@ -30,4 +30,5 @@
 	<string name="files_download_error_file_not_found"><i>File not found</i></string>
 	<string name="files_download_file_empty"><i>File empty</i></string>
 	<string name="files_download_file">%s (%d bytes)\n\n%s</string>
+	<string name="files_download_image">%s (%d bytes)\n</string>
 </resources>

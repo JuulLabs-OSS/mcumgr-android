@@ -108,6 +108,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 		mViewModel.getState().observe(this, state -> {
 			switch (state) {
 				case UPLOADING:
+					mGenerateFileAction.setVisibility(View.GONE);
 					mSelectFileAction.setVisibility(View.GONE);
 					mUploadAction.setVisibility(View.GONE);
 					mCancelAction.setVisibility(View.VISIBLE);
@@ -120,6 +121,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 					break;
 				case COMPLETE:
 					clearFileContent();
+					mGenerateFileAction.setVisibility(View.VISIBLE);
 					mSelectFileAction.setVisibility(View.VISIBLE);
 					mUploadAction.setVisibility(View.VISIBLE);
 					mUploadAction.setEnabled(false);
@@ -131,6 +133,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 		});
 		mViewModel.getProgress().observe(this, progress -> mProgress.setProgress(progress));
 		mViewModel.getError().observe(this, error -> {
+			mGenerateFileAction.setVisibility(View.VISIBLE);
 			mSelectFileAction.setVisibility(View.VISIBLE);
 			mUploadAction.setVisibility(View.VISIBLE);
 			mCancelAction.setVisibility(View.GONE);
@@ -142,6 +145,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 			mFileName.setText(null);
 			mFileSize.setText(null);
 			mStatus.setText(null);
+			mGenerateFileAction.setVisibility(View.VISIBLE);
 			mSelectFileAction.setVisibility(View.VISIBLE);
 			mUploadAction.setVisibility(View.VISIBLE);
 			mUploadAction.setEnabled(false);
@@ -149,6 +153,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 			mPauseResumeAction.setVisibility(View.GONE);
 		});
 		mViewModel.getBusyState().observe(this, busy -> {
+			mGenerateFileAction.setEnabled(!busy);
 			mSelectFileAction.setEnabled(!busy);
 			mUploadAction.setEnabled(isFileLoaded() && !busy);
 		});
