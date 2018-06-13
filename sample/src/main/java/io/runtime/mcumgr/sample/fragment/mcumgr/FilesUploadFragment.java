@@ -32,7 +32,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
@@ -62,32 +61,29 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
-import io.runtime.mcumgr.exception.McuMgrException;
-import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.di.Injectable;
-import io.runtime.mcumgr.sample.dialog.FirmwareUpgradeModeDialogFragment;
-import io.runtime.mcumgr.sample.utils.StringUtils;
-import io.runtime.mcumgr.sample.viewmodel.mcumgr.ImageUpgradeViewModel;
+import io.runtime.mcumgr.sample.utils.FsUtils;
+import io.runtime.mcumgr.sample.viewmodel.mcumgr.FilesUploadViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 
-public class ImageUpgradeFragment extends Fragment implements Injectable, LoaderManager.LoaderCallbacks<Cursor> {
-	private static final String TAG = ImageUpgradeFragment.class.getSimpleName();
+public class FilesUploadFragment extends Fragment implements Injectable,
+		LoaderManager.LoaderCallbacks<Cursor> {
+	private static final String TAG = FilesUploadFragment.class.getSimpleName();
 
-	private static final int SELECT_FILE_REQ = 1;
-	private static final int LOAD_FILE_LOADER_REQ = 2;
+	private static final int SELECT_FILE_REQ = 21;
+	private static final int LOAD_FILE_LOADER_REQ = 22;
 	private static final String EXTRA_FILE_URI = "uri";
 
 	private static final String SIS_DATA = "data";
 
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
+	@Inject
+	FsUtils mFsUtils;
 
 	@BindView(R.id.file_name)
 	TextView mFileName;
-	@BindView(R.id.file_hash)
-	TextView mFileHash;
 	@BindView(R.id.file_size)
 	TextView mFileSize;
 	@BindView(R.id.status)
@@ -96,21 +92,21 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 	ProgressBar mProgress;
 	@BindView(R.id.action_select_file)
 	Button mSelectFileAction;
-	@BindView(R.id.action_start)
-	Button mStartAction;
+	@BindView(R.id.action_upload)
+	Button mUploadAction;
 	@BindView(R.id.action_cancel)
 	Button mCancelAction;
 	@BindView(R.id.action_pause_resume)
 	Button mPauseResumeAction;
 
-	private ImageUpgradeViewModel mViewModel;
+	private FilesUploadViewModel mViewModel;
 	private byte[] mFileContent;
 
 	@Override
 	public void onCreate(@Nullable final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mViewModel = ViewModelProviders.of(this, mViewModelFactory)
-				.get(ImageUpgradeViewModel.class);
+				.get(FilesUploadViewModel.class);
 
 		if (savedInstanceState != null) {
 			mFileContent = savedInstanceState.getByteArray(SIS_DATA);
@@ -120,7 +116,7 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 	@Override
 	public void onSaveInstanceState(@NonNull final Bundle outState) {
 		super.onSaveInstanceState(outState);
- 		outState.putByteArray(SIS_DATA, mFileContent);
+		outState.putByteArray(SIS_DATA, mFileContent);
 	}
 
 	@Nullable
@@ -128,7 +124,7 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 	public View onCreateView(@NonNull final LayoutInflater inflater,
 							 @Nullable final ViewGroup container,
 							 @Nullable final Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_card_image_upgrade, container, false);
+		return inflater.inflate(R.layout.fragment_card_files_upload, container, false);
 	}
 
 	@Override
@@ -144,54 +140,32 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 
 		mViewModel.getState().observe(this, state -> {
 			switch (state) {
-				case VALIDATING:
+				case UPLOADING:
 					mSelectFileAction.setVisibility(View.GONE);
-					mStartAction.setVisibility(View.GONE);
+					mUploadAction.setVisibility(View.GONE);
 					mCancelAction.setVisibility(View.VISIBLE);
 					mPauseResumeAction.setVisibility(View.VISIBLE);
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
-					mStatus.setText(R.string.image_upgrade_status_validating);
-					break;
-				case UPLOADING:
-					mCancelAction.setEnabled(true);
-					mPauseResumeAction.setEnabled(true);
-					mPauseResumeAction.setText(R.string.image_action_pause);
-					mStatus.setText(R.string.image_upgrade_status_uploading);
+					mPauseResumeAction.setText(R.string.files_action_pause);
+					mStatus.setText(R.string.files_upload_status_uploading);
 					break;
 				case PAUSED:
-					mPauseResumeAction.setText(R.string.image_action_resume);
-					break;
-				case TESTING:
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
-					mStatus.setText(R.string.image_upgrade_status_testing);
-					break;
-				case CONFIRMING:
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
-					mStatus.setText(R.string.image_upgrade_status_confirming);
-					break;
-				case RESETTING:
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
-					mStatus.setText(R.string.image_upgrade_status_resetting);
+					mPauseResumeAction.setText(R.string.files_action_resume);
 					break;
 				case COMPLETE:
 					mFileContent = null;
 					mSelectFileAction.setVisibility(View.VISIBLE);
-					mStartAction.setVisibility(View.VISIBLE);
-					mStartAction.setEnabled(false);
+					mUploadAction.setVisibility(View.VISIBLE);
+					mUploadAction.setEnabled(false);
 					mCancelAction.setVisibility(View.GONE);
 					mPauseResumeAction.setVisibility(View.GONE);
-					mStatus.setText(R.string.image_upgrade_status_completed);
+					mStatus.setText(R.string.files_upload_status_completed);
 					break;
 			}
 		});
 		mViewModel.getProgress().observe(this, progress -> mProgress.setProgress(progress));
 		mViewModel.getError().observe(this, error -> {
 			mSelectFileAction.setVisibility(View.VISIBLE);
-			mStartAction.setVisibility(View.VISIBLE);
+			mUploadAction.setVisibility(View.VISIBLE);
 			mCancelAction.setVisibility(View.GONE);
 			mPauseResumeAction.setVisibility(View.GONE);
 			printError(error);
@@ -200,46 +174,39 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 			mFileContent = null;
 			mFileName.setText(null);
 			mFileSize.setText(null);
-			mFileHash.setText(null);
 			mStatus.setText(null);
 			mSelectFileAction.setVisibility(View.VISIBLE);
-			mStartAction.setVisibility(View.VISIBLE);
-			mStartAction.setEnabled(false);
+			mUploadAction.setVisibility(View.VISIBLE);
+			mUploadAction.setEnabled(false);
 			mCancelAction.setVisibility(View.GONE);
 			mPauseResumeAction.setVisibility(View.GONE);
 		});
 		mViewModel.getBusyState().observe(this, busy -> {
 			mSelectFileAction.setEnabled(!busy);
-			mStartAction.setEnabled(mFileContent != null && !busy);
+			mUploadAction.setEnabled(mFileContent != null && !busy);
 		});
 
 		// Configure SELECT FILE action
-		mSelectFileAction.setOnClickListener(v -> selectFile("application/*"));
+		mSelectFileAction.setOnClickListener(v -> selectFile("*/*"));
 
-		// Restore START action state after rotation
-		mStartAction.setEnabled(mFileContent != null);
-		mStartAction.setOnClickListener(v -> {
-			// Show a mode picker. When mode is selected, the upgrade(Mode) method will be called.
-			final DialogFragment dialog = FirmwareUpgradeModeDialogFragment.getInstance();
-			dialog.show(getChildFragmentManager(), null);
+		// Restore UPLOAD action state after rotation
+		mUploadAction.setEnabled(mFileContent != null);
+		mUploadAction.setOnClickListener(v -> {
+			final String partition = mFsUtils.getPartitionString();
+			final String fileName = mFileName.getText().toString();
+			final String filePath = getString(R.string.files_file_path, partition, fileName);
+			mViewModel.upload(filePath, mFileContent);
 		});
 
 		// Cancel and Pause/Resume buttons
 		mCancelAction.setOnClickListener(v -> mViewModel.cancel());
 		mPauseResumeAction.setOnClickListener(v -> {
-			if (mViewModel.getState().getValue() == ImageUpgradeViewModel.State.UPLOADING) {
+			if (mViewModel.getState().getValue() == FilesUploadViewModel.State.UPLOADING) {
 				mViewModel.pause();
 			} else {
 				mViewModel.resume();
 			}
 		});
-	}
-
-	/**
-	 * Starts the Firmware Upgrade using a selected mode.
-	 */
-	public void start(@NonNull final FirmwareUpgradeManager.Mode mode) {
-		mViewModel.upgrade(mFileContent, mode);
 	}
 
 	@Override
@@ -250,12 +217,12 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 			switch (requestCode) {
 				case SELECT_FILE_REQ: {
 					mFileContent = null;
-					mStartAction.setEnabled(false);
+					mUploadAction.setEnabled(false);
 
 					final Uri uri = data.getData();
 
 					if (uri == null) {
-						Toast.makeText(requireContext(), R.string.image_error_no_uri,
+						Toast.makeText(requireContext(), R.string.files_error_no_uri,
 								Toast.LENGTH_SHORT).show();
 						return;
 					}
@@ -269,12 +236,12 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 
 						final File file = new File(path);
 						final int fileSize = (int) file.length();
-						mFileSize.setText(getString(R.string.image_upgrade_size_value, fileSize));
+						mFileSize.setText(getString(R.string.files_upload_size_value, fileSize));
 						try {
 							loadContent(new FileInputStream(file));
 						} catch (final FileNotFoundException e) {
 							Log.e(TAG, "File not found", e);
-							mStatus.setText(R.string.image_error_no_uri);
+							mStatus.setText(R.string.files_error_no_uri);
 						}
 					} else {
 						// File name and size must be obtained from Content Provider
@@ -303,7 +270,7 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 	@Override
 	public void onLoadFinished(@NonNull final Loader<Cursor> loader, final Cursor data) {
 		if (data == null) {
-			Toast.makeText(requireContext(), R.string.image_error_loading_file_failed,
+			Toast.makeText(requireContext(), R.string.files_error_loading_file_failed,
 					Toast.LENGTH_SHORT).show();
 			return;
 		}
@@ -314,7 +281,7 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 				final int sizeColumn = data.getColumnIndex(MediaStore.MediaColumns.SIZE);
 
 				if (displayNameColumn == -1 || sizeColumn == -1) {
-					Toast.makeText(requireContext(), R.string.image_error_loading_file_failed,
+					Toast.makeText(requireContext(), R.string.files_error_loading_file_failed,
 							Toast.LENGTH_SHORT).show();
 					break;
 				}
@@ -323,13 +290,13 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 					final String fileName = data.getString(displayNameColumn);
 					final int fileSize = data.getInt(sizeColumn);
 					if (fileName == null || fileSize < 0) {
-						Toast.makeText(requireContext(), R.string.image_error_loading_file_failed,
+						Toast.makeText(requireContext(), R.string.files_error_loading_file_failed,
 								Toast.LENGTH_SHORT).show();
 						break;
 					}
 
 					mFileName.setText(fileName);
-					mFileSize.setText(getString(R.string.image_upgrade_size_value, fileSize));
+					mFileSize.setText(getString(R.string.files_upload_size_value, fileSize));
 
 					try {
 						final CursorLoader cursorLoader = (CursorLoader) loader;
@@ -338,11 +305,11 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 						loadContent(is);
 					} catch (final FileNotFoundException e) {
 						Log.e(TAG, "File not found", e);
-						mStatus.setText(R.string.image_error_no_uri);
+						mStatus.setText(R.string.files_error_no_uri);
 					}
 				} else {
 					Log.e(TAG, "Empty cursor");
-					mStatus.setText(R.string.image_error_no_uri);
+					mStatus.setText(R.string.files_error_no_uri);
 				}
 				// Reset the loader as the URU read permission is one time only.
 				// We keep the file content in the fragment so no need to load it again.
@@ -365,14 +332,14 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 			// file browser has been found on the device
 			startActivityForResult(intent, SELECT_FILE_REQ);
 		} else {
-			Toast.makeText(requireContext(), R.string.image_error_no_file_browser,
+			Toast.makeText(requireContext(), R.string.files_error_no_file_browser,
 					Toast.LENGTH_SHORT).show();
 		}
 	}
 
 	private void loadContent(@Nullable final InputStream is) {
 		if (is == null) {
-			mStatus.setText(R.string.image_error_loading_file_failed);
+			mStatus.setText(R.string.files_error_loading_file_failed);
 			return;
 		}
 
@@ -390,17 +357,12 @@ public class ImageUpgradeFragment extends Fragment implements Injectable, Loader
 			} finally {
 				buf.close();
 			}
-			final byte[] hash = McuMgrImage.getHash(bytes);
-			mFileHash.setText(StringUtils.toHex(hash));
-			mStatus.setText(R.string.image_upgrade_status_ready);
+			mStatus.setText(R.string.files_upload_status_ready);
 			mFileContent = bytes;
-			mStartAction.setEnabled(true);
+			mUploadAction.setEnabled(true);
 		} catch (final IOException e) {
 			Log.e(TAG, "Reading file content failed", e);
-			mStatus.setText(R.string.image_error_loading_file_failed);
-		} catch (final McuMgrException e) {
-			Log.e(TAG, "Reading hash failed, not a valid image", e);
-			mStatus.setText(R.string.image_error_file_not_valid);
+			mStatus.setText(R.string.files_error_loading_file_failed);
 		}
 	}
 

@@ -123,7 +123,7 @@ public class ImageControlViewModel extends McuMgrViewModel {
 						// of the slot 0 to false, which is not possible.
 						// TODO Externalize the text
 						mErrorLiveData.postValue("Image in slot 1 is identical to the active one.");
-						postReady();
+						postReady(null);
 						return;
 					}
 				}

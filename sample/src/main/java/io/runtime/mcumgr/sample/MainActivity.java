@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity
 					.add(R.id.container, mImageFragment, "image")
 					.add(R.id.container, mFilesFragment, "fs")
 					.add(R.id.container, mLogsStatsFragment, "logs")
-					.hide(mImageFragment).hide(mLogsStatsFragment)
+					.hide(mImageFragment).hide(mFilesFragment).hide(mLogsStatsFragment)
 					.commit();
 		} else {
 			mDeviceFragment = getSupportFragmentManager().findFragmentByTag("device");

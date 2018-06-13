@@ -24,9 +24,12 @@ package io.runtime.mcumgr.sample.di.module;
 
 import dagger.Module;
 import dagger.android.ContributesAndroidInjector;
+import io.runtime.mcumgr.sample.dialog.PartitionDialogFragment;
 import io.runtime.mcumgr.sample.fragment.ImageFragment;
 import io.runtime.mcumgr.sample.fragment.mcumgr.DeviceStatusFragment;
 import io.runtime.mcumgr.sample.fragment.mcumgr.EchoFragment;
+import io.runtime.mcumgr.sample.fragment.mcumgr.FilesDownloadFragment;
+import io.runtime.mcumgr.sample.fragment.mcumgr.FilesUploadFragment;
 import io.runtime.mcumgr.sample.fragment.mcumgr.ImageControlFragment;
 import io.runtime.mcumgr.sample.fragment.mcumgr.ImageUpgradeFragment;
 import io.runtime.mcumgr.sample.fragment.mcumgr.ImageUploadFragment;
@@ -52,4 +55,10 @@ public abstract class McuMgrFragmentBuildersModule {
 	abstract ImageUploadFragment contributeImageUploadFragment();
 	@ContributesAndroidInjector
 	abstract ImageControlFragment contributeImageControlFragment();
+	@ContributesAndroidInjector
+	abstract PartitionDialogFragment contributePartitionDialogFragment();
+	@ContributesAndroidInjector
+	abstract FilesDownloadFragment contributeFileDownloadFragment();
+	@ContributesAndroidInjector
+	abstract FilesUploadFragment contributeFilesUploadFragment();
 }

@@ -23,7 +23,6 @@
 package io.runtime.mcumgr.sample.fragment.mcumgr;
 
 import android.app.Activity;
-import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.database.Cursor;
@@ -78,8 +77,8 @@ public class ImageUploadFragment extends Fragment implements Injectable,
 		LoaderManager.LoaderCallbacks<Cursor>, Toolbar.OnMenuItemClickListener {
 	private static final String TAG = ImageUploadFragment.class.getSimpleName();
 
-	private static final int SELECT_FILE_REQ = 1;
-	private static final int LOAD_FILE_LOADER_REQ = 2;
+	private static final int SELECT_FILE_REQ = 11;
+	private static final int LOAD_FILE_LOADER_REQ = 12;
 	private static final String EXTRA_FILE_URI = "uri";
 
 	private static final String SIS_DATA = "data";
@@ -87,13 +86,13 @@ public class ImageUploadFragment extends Fragment implements Injectable,
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 
-	@BindView(R.id.dfu_file_name)
+	@BindView(R.id.file_name)
 	TextView mFileName;
-	@BindView(R.id.dfu_file_hash)
+	@BindView(R.id.file_hash)
 	TextView mFileHash;
-	@BindView(R.id.dfu_file_size)
+	@BindView(R.id.file_size)
 	TextView mFileSize;
-	@BindView(R.id.dfu_status)
+	@BindView(R.id.status)
 	TextView mStatus;
 	@BindView(R.id.progress)
 	ProgressBar mProgress;
@@ -219,7 +218,7 @@ public class ImageUploadFragment extends Fragment implements Injectable,
 		});
 
 		// Configure SELECT FILE action
-		mSelectFileAction.setOnClickListener(v -> selectFile());
+		mSelectFileAction.setOnClickListener(v -> selectFile("application/*"));
 
 		// Restore UPLOAD action state after rotation
 		mUploadAction.setEnabled(mFileContent != null);
@@ -351,9 +350,9 @@ public class ImageUploadFragment extends Fragment implements Injectable,
 		// ignore
 	}
 
-	private void selectFile() {
+	private void selectFile(@Nullable final String mimeType) {
 		final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-		intent.setType("application/*");
+		intent.setType(mimeType);
 		intent.addCategory(Intent.CATEGORY_OPENABLE);
 		if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
 			// file browser has been found on the device

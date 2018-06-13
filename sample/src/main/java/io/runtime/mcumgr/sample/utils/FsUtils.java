@@ -20,42 +20,38 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.runtime.mcumgr.sample.viewmodel.mcumgr;
+package io.runtime.mcumgr.sample.utils;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
-import android.support.annotation.NonNull;
+import android.content.SharedPreferences;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+public class FsUtils {
+    private static final String PREFS_PARTITION = "partition";
+    private static final String PARTITION_DEFAULT = "nffs";
 
-public class McuMgrViewModel extends ViewModel {
-	private final MutableLiveData<Boolean> mBusyStateLiveData;
+    private final SharedPreferences mPreferences;
+    private final MutableLiveData<String> mPartitionLiveData = new MutableLiveData<>();
 
-	@Inject
-	McuMgrViewModel(@Named("busy") final MutableLiveData<Boolean> state) {
-		mBusyStateLiveData = state;
-	}
+    public FsUtils(final SharedPreferences preferences) {
+        mPreferences = preferences;
+        mPartitionLiveData.setValue(getPartitionString());
+    }
 
-	@NonNull
-	public LiveData<Boolean> getBusyState() {
-		return mBusyStateLiveData;
-	}
+    public LiveData<String> getPartition() {
+        return mPartitionLiveData;
+    }
 
-	void setBusy() {
-		mBusyStateLiveData.setValue(true);
-	}
+    public String getDefaultPartition() {
+        return PARTITION_DEFAULT;
+    }
 
-	void postBusy() {
-		mBusyStateLiveData.postValue(true);
-	}
+    public String getPartitionString() {
+        return mPreferences.getString(PREFS_PARTITION, PARTITION_DEFAULT);
+    }
 
-	void setReady() {
-		mBusyStateLiveData.setValue(false);
-	}
-
-	void postReady() {
-		mBusyStateLiveData.postValue(false);
-	}
+    public void setPartition(final String partition) {
+        mPreferences.edit().putString(PREFS_PARTITION, partition).apply();
+        mPartitionLiveData.postValue(partition);
+    }
 }

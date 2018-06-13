@@ -26,28 +26,22 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.support.annotation.NonNull;
 
-import java.util.Arrays;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.exception.McuMgrException;
-import io.runtime.mcumgr.image.McuMgrImage;
-import io.runtime.mcumgr.managers.ImageManager;
-import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
+import io.runtime.mcumgr.managers.FsManager;
 import io.runtime.mcumgr.sample.viewmodel.SingleLiveEvent;
 
-public class ImageUploadViewModel extends McuMgrViewModel implements ImageManager.ImageUploadCallback {
+public class FilesUploadViewModel extends McuMgrViewModel implements FsManager.FileUploadCallback {
 	public enum State {
 		IDLE,
-		VALIDATING,
 		UPLOADING,
 		PAUSED,
 		COMPLETE
 	}
 
-	private final ImageManager mManager;
+	private final FsManager mManager;
 
 	private final MutableLiveData<State> mStateLiveData = new MutableLiveData<>();
 	private final MutableLiveData<Integer> mProgressLiveData = new MutableLiveData<>();
@@ -55,12 +49,11 @@ public class ImageUploadViewModel extends McuMgrViewModel implements ImageManage
 	private final SingleLiveEvent<Void> mCancelledEvent = new SingleLiveEvent<>();
 
 	@Inject
-	ImageUploadViewModel(final ImageManager manager,
-						 @Named("busy") final MutableLiveData<Boolean> state) {
+    FilesUploadViewModel(final FsManager manager,
+                         @Named("busy") final MutableLiveData<Boolean> state) {
 		super(state);
-		mManager = manager;
 		mStateLiveData.setValue(State.IDLE);
-		mProgressLiveData.setValue(0);
+		mManager = manager;
 	}
 
 	@NonNull
@@ -83,69 +76,30 @@ public class ImageUploadViewModel extends McuMgrViewModel implements ImageManage
 		return mCancelledEvent;
 	}
 
-	public void upload(@NonNull final byte[] data) {
+	public void upload(final String path, final byte[] data) {
 		setBusy();
-		mStateLiveData.setValue(State.VALIDATING);
-
-		byte[] hash;
-		try {
-			hash = McuMgrImage.getHash(data);
-		} catch (final McuMgrException e) {
-			// TODO Externalize the text
-			mErrorLiveData.setValue("Invalid image file.");
-			return;
-		}
-
-		mManager.list(new McuMgrCallback<McuMgrImageStateResponse>() {
-			@Override
-			public void onResponse(@NonNull final McuMgrImageStateResponse response) {
-				// Check if the new firmware is different than the active one.
-				if (response.images.length > 0 && Arrays.equals(hash, response.images[0].hash)) {
-					// TODO Externalize the text
-					mErrorLiveData.setValue("Firmware already active.");
-					postReady();
-					return;
-				}
-
-				// Check if the new firmware was already sent.
-				if (response.images.length > 1 && Arrays.equals(hash, response.images[1].hash)) {
-					// Firmware is identical to one on slot 1. No need to send anything.
-					mStateLiveData.setValue(State.COMPLETE);
-					postReady();
-					return;
-				}
-
-				// Send the firmware.
-				mStateLiveData.postValue(State.UPLOADING);
-				mManager.upload(data, ImageUploadViewModel.this);
-			}
-
-			@Override
-			public void onError(@NonNull final McuMgrException error) {
-				mErrorLiveData.postValue(error.getMessage());
-				postReady();
-			}
-		});
+		mStateLiveData.setValue(State.UPLOADING);
+		mManager.upload(path, data, this);
 	}
 
 	public void pause() {
-		if (mManager.getUploadState() == ImageManager.STATE_UPLOADING) {
+		if (mManager.getState() == FsManager.STATE_UPLOADING) {
 			mStateLiveData.setValue(State.PAUSED);
-			mManager.pauseUpload();
+			mManager.pauseTransfer();
 			setReady();
 		}
 	}
 
 	public void resume() {
-		if (mManager.getUploadState() == ImageManager.STATE_PAUSED) {
-			setBusy();
+		if (mManager.getState() == FsManager.STATE_PAUSED) {
 			mStateLiveData.setValue(State.UPLOADING);
-			mManager.continueUpload();
+			setBusy();
+			mManager.continueTransfer();
 		}
 	}
 
 	public void cancel() {
-		mManager.cancelUpload();
+		mManager.cancelTransfer();
 	}
 
 	@Override

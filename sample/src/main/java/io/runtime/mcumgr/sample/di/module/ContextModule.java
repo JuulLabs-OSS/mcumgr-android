@@ -24,6 +24,8 @@ package io.runtime.mcumgr.sample.di.module;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import javax.inject.Singleton;
 
@@ -48,5 +50,11 @@ public class ContextModule {
 	@Singleton
 	public Context provideApplicationContext() {
 		return mApplication.getApplicationContext();
+	}
+
+	@Provides
+	@Singleton
+	public SharedPreferences provideSharedPreferences() {
+		return PreferenceManager.getDefaultSharedPreferences(mApplication);
 	}
 }

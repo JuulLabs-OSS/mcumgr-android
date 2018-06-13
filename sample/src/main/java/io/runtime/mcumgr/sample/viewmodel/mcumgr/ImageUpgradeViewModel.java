@@ -102,13 +102,19 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 	}
 
 	public void pause() {
-		mStateLiveData.postValue(State.PAUSED);
-		mManager.pause();
+		if (mManager.isInProgress()) {
+			mStateLiveData.postValue(State.PAUSED);
+			mManager.pause();
+			setReady();
+		}
 	}
 
 	public void resume() {
-		mStateLiveData.postValue(State.UPLOADING);
-		mManager.resume();
+		if (mManager.isPaused()) {
+			setBusy();
+			mStateLiveData.postValue(State.UPLOADING);
+			mManager.resume();
+		}
 	}
 
 	public void cancel() {
@@ -142,7 +148,8 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 
 	@Override
 	public void onUploadProgressChanged(final int bytesSent, final int imageSize, final long timestamp) {
-		mProgressLiveData.postValue((int) (bytesSent * 100.f / imageSize)); // Convert to percent
+		// Convert to percent
+		mProgressLiveData.postValue((int) (bytesSent * 100.f / imageSize));
 	}
 
 	@Override

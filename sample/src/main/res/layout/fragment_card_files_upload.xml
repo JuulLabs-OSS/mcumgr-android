@@ -39,14 +39,14 @@
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent"
-			app:title="@string/image_upgrade_title"/>
+			app:title="@string/files_upload_title"/>
 
 		<TextView
 			android:id="@+id/file_name_label"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginStart="16dp"
-			android:text="@string/image_upgrade_file_name"
+			android:text="@string/files_upload_file_name"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
 
@@ -54,25 +54,17 @@
 			android:id="@+id/file_size_label"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text="@string/image_upgrade_size"
+			android:text="@string/files_upload_size"
 			app:layout_constraintStart_toStartOf="@+id/file_name_label"
 			app:layout_constraintTop_toBottomOf="@+id/file_name"/>
-
-		<TextView
-			android:id="@+id/file_hash_label"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="@string/image_upgrade_hash"
-			app:layout_constraintStart_toStartOf="@+id/file_name_label"
-			app:layout_constraintTop_toBottomOf="@+id/file_size"/>
 
 		<TextView
 			android:id="@+id/status_label"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text="@string/image_upgrade_status"
+			android:text="@string/files_upload_status"
 			app:layout_constraintStart_toStartOf="@+id/file_name_label"
-			app:layout_constraintTop_toBottomOf="@+id/file_hash"/>
+			app:layout_constraintTop_toBottomOf="@+id/file_size"/>
 
 		<TextView
 			android:id="@+id/file_name"
@@ -99,17 +91,6 @@
 			tools:text="1234 bytes"/>
 
 		<TextView
-			android:id="@+id/file_hash"
-			android:layout_width="0dp"
-			android:layout_height="wrap_content"
-			android:freezesText="true"
-			android:textStyle="bold"
-			app:layout_constraintEnd_toEndOf="@+id/file_name"
-			app:layout_constraintStart_toStartOf="@+id/file_name"
-			app:layout_constraintTop_toTopOf="@+id/file_hash_label"
-			tools:text="001122334455667788990011223344556677889900112233445566778899AABB"/>
-
-		<TextView
 			android:id="@+id/status"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
@@ -118,7 +99,7 @@
 			app:layout_constraintEnd_toEndOf="@+id/file_name"
 			app:layout_constraintStart_toStartOf="@+id/file_name"
 			app:layout_constraintTop_toTopOf="@+id/status_label"
-			tools:text="@string/image_upload_status_uploading"/>
+			tools:text="@string/files_upload_status_uploading"/>
 
 		<ProgressBar
 			android:id="@+id/progress"
@@ -148,20 +129,20 @@
 			android:layout_height="wrap_content"
 			android:text="@string/image_action_select"
 			app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintEnd_toStartOf="@+id/action_start"
+			app:layout_constraintEnd_toStartOf="@+id/action_upload"
 			app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
 		<Button
-			android:id="@+id/action_start"
+			android:id="@+id/action_upload"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginEnd="16dp"
 			android:enabled="false"
-			android:text="@string/image_upgrade_action_start"
+			android:text="@string/files_upload_action_start"
 			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintEnd_toStartOf="@+id/action_cancel"
-			app:layout_constraintTop_toTopOf="@+id/action_select_file"/>
+			app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
 		<Button
 			android:id="@+id/action_cancel"
