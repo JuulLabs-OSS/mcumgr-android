@@ -50,8 +50,8 @@ import io.runtime.mcumgr.sample.R;
 public abstract class FileBrowserFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 	private static final String TAG = FileBrowserFragment.class.getSimpleName();
 
-	private static final int SELECT_FILE_REQ = 21;
-	private static final int LOAD_FILE_LOADER_REQ = 22;
+	private static final int SELECT_FILE_REQ = 1;
+	private static final int LOAD_FILE_LOADER_REQ = 2;
 	private static final String EXTRA_FILE_URI = "uri";
 
 	private static final String SIS_DATA = "data";
@@ -81,6 +81,11 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
 	@Nullable
 	protected byte[] getFileContent() {
 		return mFileContent;
+	}
+
+	protected void setFileContent(@NonNull final byte[] data) {
+		mFileContent = data;
+		onFileLoaded(data);
 	}
 
 	/**

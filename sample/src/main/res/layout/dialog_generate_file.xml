@@ -21,25 +21,31 @@
   ~ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   -->
 
-<resources>
-	<string name="files_upload_title">Upload</string>
-	<string name="files_upload_file_name">File Name:</string>
-	<string name="files_upload_size">File Size:</string>
-	<string name="files_upload_size_value">%d bytes</string>
-	<string name="files_upload_status">State:</string>
-	<string name="files_upload_action_start">Upload</string>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:padding="16dp"
+	android:orientation="horizontal"
+	android:gravity="center_vertical">
 
-	<string name="files_upload_status_ready">READY</string>
-	<string name="files_upload_status_uploading">UPLOADING…</string>
-	<string name="files_upload_status_completed">UPLOAD COMPLETE</string>
+	<android.support.design.widget.TextInputLayout
+		android:layout_width="0dp"
+		android:layout_weight="1"
+		android:layout_height="wrap_content"
+		android:hint="@string/files_upload_generate_hint"
+		android:layout_marginEnd="8dp">
 
-	<string name="files_action_generate">Generate</string>
-	<string name="files_action_select">Select</string>
-	<string name="files_action_pause">Pause</string>
-	<string name="files_action_resume">Resume</string>
-	<string name="files_action_cancel">Cancel</string>
+		<android.support.design.widget.TextInputEditText
+			android:id="@+id/file_size"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:inputType="number"/>
+	</android.support.design.widget.TextInputLayout>
 
-	<string name="files_upload_generate_title">Generate File</string>
-	<string name="files_upload_generate_hint">File size</string>
-	<string name="files_upload_generate_unit">bytes</string>
-</resources>
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textSize="16sp"
+		android:text="@string/files_upload_generate_unit"/>
+</LinearLayout>

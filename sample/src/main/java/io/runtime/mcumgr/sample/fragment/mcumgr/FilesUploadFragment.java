@@ -27,6 +27,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -45,6 +46,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.di.Injectable;
+import io.runtime.mcumgr.sample.dialog.GenerateFileDialogFragment;
 import io.runtime.mcumgr.sample.utils.FsUtils;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.FilesUploadViewModel;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
@@ -64,6 +66,8 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 	TextView mStatus;
 	@BindView(R.id.progress)
 	ProgressBar mProgress;
+	@BindView(R.id.action_generate)
+	Button mGenerateFileAction;
 	@BindView(R.id.action_select_file)
 	Button mSelectFileAction;
 	@BindView(R.id.action_upload)
@@ -149,6 +153,12 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 			mUploadAction.setEnabled(isFileLoaded() && !busy);
 		});
 
+		// Configure GENERATE FILE action
+		mGenerateFileAction.setOnClickListener(v -> {
+			final DialogFragment dialog = GenerateFileDialogFragment.getInstance();
+			dialog.show(getChildFragmentManager(), null);
+		});
+
 		// Configure SELECT FILE action
 		mSelectFileAction.setOnClickListener(v -> selectFile("*/*"));
 
@@ -170,6 +180,11 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 				mViewModel.resume();
 			}
 		});
+	}
+
+	public void onGenerateFileRequested(final int fileSize) {
+		onFileSelected("Lorem_" + fileSize + ".txt", fileSize);
+		setFileContent(FsUtils.generateLoremIpsum(fileSize));
 	}
 
 	@Override
