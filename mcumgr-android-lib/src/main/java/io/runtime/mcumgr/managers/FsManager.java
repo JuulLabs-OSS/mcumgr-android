@@ -266,7 +266,7 @@ public class FsManager extends McuManager {
     /**
      * Continue a paused file transfer.
      */
-    public synchronized void continueUpload() {
+    public synchronized void continueTransfer() {
         if (mTransferState == STATE_PAUSED) {
             Log.d(TAG, "Continuing transfer.");
             if (mDownloadCallback != null) {
@@ -360,13 +360,7 @@ public class FsManager extends McuManager {
                         return;
                     }
 
-                    // Get the next offset to send image data from.
-                    mOffset = response.off;
-
-                    // Call the progress callback.
-                    mUploadCallback.onProgressChange(mOffset, mFileData.length,
-                            System.currentTimeMillis());
-
+                    // Check if upload hasn't been cancelled.
                     if (mTransferState == STATE_NONE) {
                         Log.d(TAG, "Upload canceled!");
                         resetTransfer();
@@ -374,6 +368,13 @@ public class FsManager extends McuManager {
                         mUploadCallback = null;
                         return;
                     }
+
+                    // Get the next offset to send image data from.
+                    mOffset = response.off;
+
+                    // Call the progress callback.
+                    mUploadCallback.onProgressChange(mOffset, mFileData.length,
+                            System.currentTimeMillis());
 
                     // Check if the upload has finished.
                     if (mOffset == mFileData.length) {
@@ -425,6 +426,15 @@ public class FsManager extends McuManager {
                     if (response.rc != 0) {
                         Log.e(TAG, "Download failed due to McuManager error: " + response.rc);
                         failUpload(new McuMgrErrorException(McuMgrErrorCode.valueOf(response.rc)));
+                        return;
+                    }
+
+                    // Check if download hasn't been cancelled.
+                    if (mTransferState == STATE_NONE) {
+                        Log.d(TAG, "Download canceled!");
+                        resetTransfer();
+                        mDownloadCallback.onDownloadCancel();
+                        mDownloadCallback = null;
                         return;
                     }
 
@@ -547,6 +557,11 @@ public class FsManager extends McuManager {
          * @param error the error. See the cause for more info.
          */
         void onDownloadFail(@NonNull McuMgrException error);
+
+        /**
+         * Called when the download has been canceled.
+         */
+        void onDownloadCancel();
 
         /**
          * Called when the download has finished successfully.
