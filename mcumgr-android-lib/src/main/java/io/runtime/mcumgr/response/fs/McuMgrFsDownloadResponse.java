@@ -10,7 +10,10 @@ package io.runtime.mcumgr.response.fs;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
 public class McuMgrFsDownloadResponse extends McuMgrResponse {
+    /** The offset. Number of bytes that were sent. */
     public int off;
+    /** The length of the file (in bytes). Set only in the first packet. */
     public int len;
+    /** The chunk data. */
     public byte[] data;
 }
