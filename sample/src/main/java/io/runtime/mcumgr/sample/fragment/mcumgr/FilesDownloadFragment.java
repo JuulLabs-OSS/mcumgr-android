@@ -31,6 +31,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.PopupMenu;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -39,6 +40,7 @@ import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -47,6 +49,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -69,6 +75,8 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 	EditText mFileName;
 	@BindView(R.id.file_path)
 	TextView mFilePath;
+	@BindView(R.id.action_history)
+	View mHistoryAction;
 	@BindView(R.id.action_download)
 	Button mDownloadAction;
 	@BindView(R.id.progress)
@@ -128,12 +136,33 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 		mViewModel.getResponse().observe(this, this::printContent);
 		mViewModel.getError().observe(this, this::printError);
 		mViewModel.getBusyState().observe(this, busy -> mDownloadAction.setEnabled(!busy));
+		mHistoryAction.setOnClickListener(v -> {
+			final PopupMenu popupMenu = new PopupMenu(requireContext(), v);
+			final Menu menu = popupMenu.getMenu();
+			final Set<String> recents = mFsUtils.getRecents();
+			if (recents.isEmpty()) {
+				menu.add(R.string.files_download_recent_files_empty).setEnabled(false);
+			} else {
+				final String[] recentsArray = recents.toArray(new String[recents.size()]);
+				Arrays.sort(recentsArray); // Alphabetic order
+				for (final String fileName : recentsArray) {
+					menu.add(fileName);
+				}
+			}
+			popupMenu.setOnMenuItemClickListener(item -> {
+				mFileName.setError(null);
+				mFileName.setText(item.getTitle());
+                return true;
+            });
+			popupMenu.show();
+		});
 		mDownloadAction.setOnClickListener(v -> {
 			final String fileName = mFileName.getText().toString();
 			if (TextUtils.isEmpty(fileName)) {
 				mFileName.setError(getString(R.string.files_download_empty));
 			} else {
 				hideKeyboard();
+				mFsUtils.addRecent(fileName);
 				mViewModel.download(mFilePath.getText().toString());
 			}
 		});

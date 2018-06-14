@@ -179,6 +179,8 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 		// Restore UPLOAD action state after rotation
 		mUploadAction.setEnabled(isFileLoaded());
 		mUploadAction.setOnClickListener(v -> {
+			final String fileName = mFileName.getText().toString();
+			mFsUtils.addRecent(fileName);
 			final String filePath = mFileDestination.getText().toString();
 			mViewModel.upload(filePath, getFileContent());
 		});

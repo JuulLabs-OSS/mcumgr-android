@@ -29,18 +29,25 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.support.v4.util.ArraySet;
 import android.util.DisplayMetrics;
 
+import java.util.Set;
+
 public class FsUtils {
+    private static final String PREFS_RECENTS = "recents";
     private static final String PREFS_PARTITION = "partition";
     private static final String PARTITION_DEFAULT = "nffs";
 
     private final SharedPreferences mPreferences;
     private final MutableLiveData<String> mPartitionLiveData = new MutableLiveData<>();
+    private final Set<String> mRecents;
 
-    public FsUtils(final SharedPreferences preferences) {
+    public FsUtils(@NonNull final SharedPreferences preferences) {
         mPreferences = preferences;
         mPartitionLiveData.setValue(getPartitionString());
+
+        mRecents = preferences.getStringSet(PREFS_RECENTS, new ArraySet<>());
     }
 
     /**
@@ -48,6 +55,7 @@ public class FsUtils {
      *
      * @return Observable partition.
      */
+    @NonNull
     public LiveData<String> getPartition() {
         return mPartitionLiveData;
     }
@@ -57,6 +65,7 @@ public class FsUtils {
      *
      * @return The default partition name.
      */
+    @NonNull
     public String getDefaultPartition() {
         return PARTITION_DEFAULT;
     }
@@ -66,6 +75,7 @@ public class FsUtils {
      *
      * @return The partition name.
      */
+    @NonNull
     public String getPartitionString() {
         return mPreferences.getString(PREFS_PARTITION, PARTITION_DEFAULT);
     }
@@ -75,9 +85,28 @@ public class FsUtils {
      *
      * @param partition The new partition name.
      */
-    public void setPartition(final String partition) {
+    public void setPartition(@NonNull final String partition) {
         mPreferences.edit().putString(PREFS_PARTITION, partition).apply();
         mPartitionLiveData.postValue(partition);
+    }
+
+    /**
+     * Adds the file name to Recents.
+     *
+     * @param fileName the file name.
+     */
+    public void addRecent(@NonNull final String fileName) {
+        mRecents.add(fileName);
+        mPreferences.edit().putStringSet(PREFS_RECENTS, mRecents).apply();
+    }
+
+    /**
+     * Returns unordered set of previously added file names.
+     *
+     * @return A set of file names added using {@link #addRecent(String)}.
+     */
+    public Set<String> getRecents() {
+        return mRecents;
     }
 
     /**
