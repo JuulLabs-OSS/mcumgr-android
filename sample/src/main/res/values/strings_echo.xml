@@ -24,6 +24,7 @@
 <resources>
 	<string name="echo_title">Echo</string>
 	<string name="echo_action">Send</string>
+	<string name="echo_hello">Hello!</string>
 	<string name="echo_hint">Text</string>
 	<string name="echo_empty">Empty</string>
 
