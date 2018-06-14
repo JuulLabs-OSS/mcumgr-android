@@ -22,6 +22,7 @@ import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
+import io.runtime.mcumgr.response.img.McuMgrCoreLoadResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageUploadResponse;
 import io.runtime.mcumgr.util.CBOR;
@@ -50,6 +51,7 @@ public class ImageManager extends McuManager {
     private final static int ID_CORELIST = 3;
     private final static int ID_CORELOAD = 4;
     private final static int ID_ERASE = 5;
+    private final static int ID_ERASE_STATE = 6;
 
     /**
      * Construct an image manager.
@@ -272,11 +274,29 @@ public class ImageManager extends McuManager {
     }
 
     /**
+     * Erase the state of image in slot 1 (asynchronous).
+     *
+     * @param callback the asynchronous callback.
+     */
+    public void eraseState(McuMgrCallback<McuMgrResponse> callback) {
+        send(OP_WRITE, ID_ERASE_STATE, null, McuMgrResponse.class, callback);
+    }
+
+    /**
+     * Erase the state of image in slot 1 (synchronous).
+     *
+     * @return The response.
+     * @throws McuMgrException Transport error. See cause.
+     */
+    public McuMgrResponse eraseState() throws McuMgrException {
+        return send(OP_WRITE, ID_ERASE_STATE, null, McuMgrResponse.class);
+    }
+
+    /**
      * Core list (asynchronous).
      *
      * @param callback the asynchronous callback.
      */
-    /* TODO : create the correct response class. I don't know what this does */
     public void coreList(McuMgrCallback<McuMgrResponse> callback) {
         send(OP_READ, ID_CORELIST, null, McuMgrResponse.class, callback);
     }
@@ -287,7 +307,6 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    /* TODO : create the correct response class. I don't know what this does */
     public McuMgrResponse coreList() throws McuMgrException {
         return send(OP_READ, ID_CORELIST, null, McuMgrResponse.class);
     }
@@ -298,11 +317,10 @@ public class ImageManager extends McuManager {
      * @param offset   offset.
      * @param callback the asynchronous callback.
      */
-    /* TODO : create the correct response class. I don't know what this does */
-    public void coreLoad(int offset, McuMgrCallback<McuMgrResponse> callback) {
+    public void coreLoad(int offset, McuMgrCallback<McuMgrCoreLoadResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("off", offset);
-        send(OP_READ, ID_CORELOAD, payloadMap, McuMgrResponse.class, callback);
+        send(OP_READ, ID_CORELOAD, payloadMap, McuMgrCoreLoadResponse.class, callback);
     }
 
     /**
@@ -312,11 +330,10 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    /* TODO : create the correct response class. I don't know what this does */
-    public McuMgrResponse coreLoad(int offset) throws McuMgrException {
+    public McuMgrCoreLoadResponse coreLoad(int offset) throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("off", offset);
-        return send(OP_READ, ID_CORELOAD, payloadMap, McuMgrResponse.class);
+        return send(OP_READ, ID_CORELOAD, payloadMap, McuMgrCoreLoadResponse.class);
     }
 
     /**
@@ -324,7 +341,6 @@ public class ImageManager extends McuManager {
      *
      * @param callback the asynchronous callback.
      */
-    /* TODO : create the correct response class. I don't know what this does */
     public void coreErase(McuMgrCallback<McuMgrResponse> callback) {
         send(OP_WRITE, ID_CORELOAD, null, McuMgrResponse.class, callback);
     }
@@ -335,7 +351,6 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    /* TODO : create the correct response class. I don't know what this does */
     public McuMgrResponse coreErase() throws McuMgrException {
         return send(OP_WRITE, ID_CORELOAD, null, McuMgrResponse.class);
     }
