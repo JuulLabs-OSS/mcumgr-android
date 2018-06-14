@@ -24,17 +24,22 @@ package io.runtime.mcumgr.sample.application;
 
 import android.app.Activity;
 import android.app.Application;
+import android.bluetooth.BluetoothDevice;
+import android.support.annotation.NonNull;
 
 import javax.inject.Inject;
 
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 import io.runtime.mcumgr.sample.di.AppInjector;
+import io.runtime.mcumgr.sample.di.component.McuMgrSubComponent;
 
 public class Dagger2Application extends Application implements HasActivityInjector {
 
 	@Inject
 	DispatchingAndroidInjector<Activity> dispatchingAndroidInjector;
+	@Inject
+	McuMgrSubComponent.Builder mBuilder;
 
 	@Override
 	public void onCreate() {
@@ -48,5 +53,14 @@ public class Dagger2Application extends Application implements HasActivityInject
 	@Override
 	public DispatchingAndroidInjector<Activity> activityInjector() {
 		return dispatchingAndroidInjector;
+	}
+
+	/**
+	 * Binds the target {@link BluetoothDevice} with the Dagger2 sub component.
+	 *
+	 * @param device the target device.
+	 */
+	public void setTarget(@NonNull final BluetoothDevice device) {
+		mBuilder.target(device).build().update(this);
 	}
 }

@@ -48,9 +48,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.runtime.mcumgr.sample.adapter.DevicesAdapter;
-import io.runtime.mcumgr.sample.application.Dagger2Application;
 import io.runtime.mcumgr.sample.di.Injectable;
-import io.runtime.mcumgr.sample.di.component.McuMgrSubComponent;
 import io.runtime.mcumgr.sample.utils.Utils;
 import io.runtime.mcumgr.sample.viewmodel.ScannerLiveData;
 import io.runtime.mcumgr.sample.viewmodel.ScannerViewModel;
@@ -60,8 +58,6 @@ public class ScannerActivity extends AppCompatActivity
 		implements Injectable, DevicesAdapter.OnItemClickListener {
 	private static final int REQUEST_ACCESS_COARSE_LOCATION = 1022; // random number
 
-	@Inject
-	McuMgrSubComponent.Builder mBuilder;
 	@Inject
 	ViewModelFactory mViewModelFactory;
 
@@ -125,9 +121,8 @@ public class ScannerActivity extends AppCompatActivity
 
 	@Override
 	public void onItemClick(final BluetoothDevice device) {
-		mBuilder.target(device).build().update((Dagger2Application) getApplication());
-
 		final Intent intent = new Intent(this, MainActivity.class);
+		intent.putExtra(MainActivity.EXTRA_DEVICE, device);
 		startActivity(intent);
 	}
 

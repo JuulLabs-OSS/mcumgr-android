@@ -34,7 +34,7 @@ import javax.inject.Inject;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.support.HasSupportFragmentInjector;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.ble.McuMgrBleTransport;
+import io.runtime.mcumgr.sample.application.Dagger2Application;
 import io.runtime.mcumgr.sample.di.Injectable;
 import io.runtime.mcumgr.sample.fragment.DeviceFragment;
 import io.runtime.mcumgr.sample.fragment.FilesFragment;
@@ -44,6 +44,7 @@ import io.runtime.mcumgr.sample.fragment.LogsStatsFragment;
 @SuppressWarnings("ConstantConditions")
 public class MainActivity extends AppCompatActivity
 		implements Injectable, HasSupportFragmentInjector {
+	public static final String EXTRA_DEVICE = "device";
 
 	@Inject
 	DispatchingAndroidInjector<Fragment> mDispatchingAndroidInjector;
@@ -62,13 +63,22 @@ public class MainActivity extends AppCompatActivity
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
+		// The target must be set before calling super.onCreate(Bundle).
+		// Otherwise, Dagger2 will fail to inflate this Activity.
+		final BluetoothDevice device = getIntent().getParcelableExtra(EXTRA_DEVICE);
+		final String deviceName = device.getName();
+		final String deviceAddress = device.getAddress();
+		((Dagger2Application)getApplication()).setTarget(device);
+
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		// Configure the view
+		// Configure the view.
 		final Toolbar toolbar = findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setTitle(deviceName);
+		getSupportActionBar().setSubtitle(deviceAddress);
 
 		final BottomNavigationView navMenu = findViewById(R.id.nav_menu);
 		navMenu.setSelectedItemId(R.id.nav_default);
@@ -102,7 +112,7 @@ public class MainActivity extends AppCompatActivity
 			return false;
 		});
 
-		// Initialize fragments
+		// Initialize fragments.
 		if (savedInstanceState == null) {
 			mDeviceFragment = new DeviceFragment();
 			mImageFragment = new ImageFragment();
@@ -114,6 +124,7 @@ public class MainActivity extends AppCompatActivity
 					.add(R.id.container, mImageFragment, "image")
 					.add(R.id.container, mFilesFragment, "fs")
 					.add(R.id.container, mLogsStatsFragment, "logs")
+                    // Initially, show the Device fragment and hide others.
 					.hide(mImageFragment).hide(mFilesFragment).hide(mLogsStatsFragment)
 					.commit();
 		} else {
@@ -122,23 +133,6 @@ public class MainActivity extends AppCompatActivity
 			mFilesFragment = getSupportFragmentManager().findFragmentByTag("fs");
 			mLogsStatsFragment = getSupportFragmentManager().findFragmentByTag("logs");
 		}
-	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-
-		final BluetoothDevice device = ((McuMgrBleTransport) mMcuMgrTransport).getBluetoothDevice();
-		// When the app was killed, the Bluetooth device may be null. In this case just quit.
-		if (device == null) {
-			finish();
-			return;
-		}
-		final String deviceName = device.getName();
-		final String deviceAddress = device.getAddress();
-
-		getSupportActionBar().setTitle(deviceName);
-		getSupportActionBar().setSubtitle(deviceAddress);
 	}
 
 	@Override
