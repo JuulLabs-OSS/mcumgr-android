@@ -43,31 +43,64 @@ public class FsUtils {
         mPartitionLiveData.setValue(getPartitionString());
     }
 
+    /**
+     * Returns a LiveData object that can observe changes of the partition.
+     *
+     * @return Observable partition.
+     */
     public LiveData<String> getPartition() {
         return mPartitionLiveData;
     }
 
+    /**
+     * Returns the default partition ({@value #PARTITION_DEFAULT}).
+     *
+     * @return The default partition name.
+     */
     public String getDefaultPartition() {
         return PARTITION_DEFAULT;
     }
 
+    /**
+     * Returns the current value of the partition name.
+     *
+     * @return The partition name.
+     */
     public String getPartitionString() {
         return mPreferences.getString(PREFS_PARTITION, PARTITION_DEFAULT);
     }
 
+    /**
+     * Sets the partition name. The observable LiveData will be notified.
+     *
+     * @param partition The new partition name.
+     */
     public void setPartition(final String partition) {
         mPreferences.edit().putString(PREFS_PARTITION, partition).apply();
         mPartitionLiveData.postValue(partition);
     }
 
+    /**
+     * Tries to create a Bitmap from the given data.
+     *
+     * @param resources the resources.
+     * @param data the byte array to be decoded.
+     * @return A decoded bitmap, or null, if data do not contain an image.
+     */
     public static Bitmap toBitmap(@NonNull final Resources resources, @NonNull final byte[] data) {
-        final BitmapFactory.Options options = new BitmapFactory.Options();// whichever you want to load
+        final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inDensity = DisplayMetrics.DENSITY_MEDIUM;
         options.inTargetDensity = resources.getDisplayMetrics().densityDpi;
         options.inScaled = true;
         return BitmapFactory.decodeByteArray(data, 0, data.length, options);
     }
 
+    /**
+     * Generates a sample data with Lorem Ipsum text of given length.
+     *
+     * @param size the required output length.
+     * @return Lorem Ipsum text of given length as byte array.
+     */
     public static byte[] generateLoremIpsum(int size) {
         final StringBuilder builder = new StringBuilder();
         while (size > 0) {
@@ -78,6 +111,9 @@ public class FsUtils {
         return builder.toString().getBytes();
     }
 
+    /**
+     * Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+     */
     private static final String LOREM =
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ex ante, semper ut " +
                     "faucibus pharetra, accumsan et augue. Vestibulum vulputate elit ligula, eu " +
