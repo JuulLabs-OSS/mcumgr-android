@@ -202,6 +202,7 @@ public class ImageUpgradeFragment extends FileBrowserFragment implements Injecta
 	/**
 	 * Starts the Firmware Upgrade using a selected mode.
 	 */
+	@SuppressWarnings("ConstantConditions")
 	public void start(@NonNull final FirmwareUpgradeManager.Mode mode) {
 		mViewModel.upgrade(getFileContent(), mode);
 	}

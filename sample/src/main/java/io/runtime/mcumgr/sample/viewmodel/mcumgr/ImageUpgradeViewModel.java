@@ -24,22 +24,15 @@ package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.support.annotation.NonNull;
-
-import java.util.Arrays;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeCallback;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeController;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.McuMgrException;
-import io.runtime.mcumgr.image.McuMgrImage;
-import io.runtime.mcumgr.managers.ImageManager;
-import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.sample.viewmodel.SingleLiveEvent;
 
 public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUpgradeCallback {

@@ -24,7 +24,6 @@ package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
 import android.bluetooth.BluetoothDevice;
 
 import javax.inject.Inject;

@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * Note that only one observer is going to be notified of changes.
  */
+@SuppressWarnings("unused")
 public class SingleLiveEvent<T> extends MutableLiveData<T> {
     private static final String TAG = "SingleLiveEvent";
 
@@ -57,7 +58,7 @@ public class SingleLiveEvent<T> extends MutableLiveData<T> {
     }
 
     @MainThread
-    public void setValue(@Nullable T t) {
+    public void setValue(@Nullable final T t) {
         mPending.set(true);
         super.setValue(t);
     }
@@ -74,6 +75,6 @@ public class SingleLiveEvent<T> extends MutableLiveData<T> {
      * Used for cases where T is Void, to make calls cleaner.
      */
     public void post() {
-        super.postValue(null);
+        postValue(null);
     }
 }
