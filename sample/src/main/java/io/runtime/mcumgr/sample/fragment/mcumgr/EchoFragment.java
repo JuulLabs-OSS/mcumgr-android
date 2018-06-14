@@ -86,6 +86,8 @@ public class EchoFragment extends Fragment implements Injectable {
 	public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 		ButterKnife.bind(this, view);
+
+		mValue.setSelection(mValue.getText().length());
 	}
 
 	@SuppressWarnings("ConstantConditions")
