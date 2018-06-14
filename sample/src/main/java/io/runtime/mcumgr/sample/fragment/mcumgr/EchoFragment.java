@@ -95,8 +95,6 @@ public class EchoFragment extends Fragment implements Injectable {
 
 		mViewModel.getBusyState().observe(this, busy -> mSendAction.setEnabled(!busy));
 		mViewModel.getRequest().observe(this, text -> {
-			clearValue();
-
 			mDivider.setVisibility(View.VISIBLE);
 			print(mRequest, text);
 			if (mResponse.getVisibility() == View.VISIBLE) {
@@ -116,13 +114,15 @@ public class EchoFragment extends Fragment implements Injectable {
 			mRequest.setText(null);
 			mResponse.setText(null);
 
+			hideKeyboard();
+
 			final String text = mValue.getText().toString();
+			mValue.setText(null);
 			mViewModel.echo(text);
 		});
 	}
 
-	private void clearValue() {
-		mValue.setText(null);
+	private void hideKeyboard() {
 		mImm.hideSoftInputFromWindow(mValue.getWindowToken(), 0);
 	}
 
