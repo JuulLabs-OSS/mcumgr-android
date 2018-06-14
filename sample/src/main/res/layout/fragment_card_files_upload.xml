@@ -59,12 +59,22 @@
 			app:layout_constraintTop_toBottomOf="@+id/file_name"/>
 
 		<TextView
+			android:id="@+id/file_path_label"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="16dp"
+			android:text="@string/files_upload_file_path"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/file_size"
+			tools:layout_editor_absoluteY="92dp"/>
+
+		<TextView
 			android:id="@+id/status_label"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="@string/files_upload_status"
 			app:layout_constraintStart_toStartOf="@+id/file_name_label"
-			app:layout_constraintTop_toBottomOf="@+id/file_size"/>
+			app:layout_constraintTop_toBottomOf="@+id/file_path"/>
 
 		<TextView
 			android:id="@+id/file_name"
@@ -78,6 +88,18 @@
 			app:layout_constraintStart_toEndOf="@+id/file_name_label"
 			app:layout_constraintTop_toTopOf="@+id/file_name_label"
 			tools:text="a_very_long_file_name_indeed_very_very_long.img"/>
+
+		<TextView
+			android:id="@+id/file_path"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:layout_marginEnd="16dp"
+			android:freezesText="true"
+			android:textStyle="bold"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="@+id/file_name"
+			app:layout_constraintTop_toTopOf="@+id/file_path_label"
+			tools:text="/nffs/a_very_long_file_name_indeed_very_very_long.img"/>
 
 		<TextView
 			android:id="@+id/file_size"

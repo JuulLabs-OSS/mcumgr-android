@@ -60,6 +60,8 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 
 	@BindView(R.id.file_name)
 	TextView mFileName;
+	@BindView(R.id.file_path)
+	TextView mFileDestination;
 	@BindView(R.id.file_size)
 	TextView mFileSize;
 	@BindView(R.id.status)
@@ -105,6 +107,12 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 	public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 
+		mFsUtils.getPartition().observe(this, partition -> {
+			if (isFileLoaded()) {
+				final String fileName = mFileName.getText().toString();
+				mFileDestination.setText(getString(R.string.files_file_path, partition, fileName));
+			}
+		});
 		mViewModel.getState().observe(this, state -> {
 			switch (state) {
 				case UPLOADING:
@@ -143,6 +151,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 		mViewModel.getCancelledEvent().observe(this, nothing -> {
 			clearFileContent();
 			mFileName.setText(null);
+			mFileDestination.setText(null);
 			mFileSize.setText(null);
 			mStatus.setText(null);
 			mGenerateFileAction.setVisibility(View.VISIBLE);
@@ -170,9 +179,7 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 		// Restore UPLOAD action state after rotation
 		mUploadAction.setEnabled(isFileLoaded());
 		mUploadAction.setOnClickListener(v -> {
-			final String partition = mFsUtils.getPartitionString();
-			final String fileName = mFileName.getText().toString();
-			final String filePath = getString(R.string.files_file_path, partition, fileName);
+			final String filePath = mFileDestination.getText().toString();
 			mViewModel.upload(filePath, getFileContent());
 		});
 
@@ -199,7 +206,9 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 
 	@Override
 	protected void onFileSelected(@NonNull final String fileName, final int fileSize) {
+		final String partition = mFsUtils.getPartitionString();
 		mFileName.setText(fileName);
+		mFileDestination.setText(getString(R.string.files_file_path, partition, fileName));
 		mFileSize.setText(getString(R.string.files_upload_size_value, fileSize));
 	}
 

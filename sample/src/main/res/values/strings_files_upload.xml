@@ -24,6 +24,7 @@
 <resources>
 	<string name="files_upload_title">Upload</string>
 	<string name="files_upload_file_name">File Name:</string>
+	<string name="files_upload_file_path">Destination:</string>
 	<string name="files_upload_size">File Size:</string>
 	<string name="files_upload_size_value">%d bytes</string>
 	<string name="files_upload_status">State:</string>
