@@ -24,6 +24,7 @@ package io.runtime.mcumgr.sample.dialog;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -50,6 +51,7 @@ public class GenerateFileDialogFragment extends DialogFragment {
 		mImm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@NonNull
 	@Override
 	public Dialog onCreateDialog(final Bundle savedInstanceState) {
@@ -60,15 +62,24 @@ public class GenerateFileDialogFragment extends DialogFragment {
 		final AlertDialog dialog = new AlertDialog.Builder(requireContext())
 				.setTitle(R.string.files_upload_generate_title)
 				.setView(view)
-				.setPositiveButton(R.string.files_action_generate, (di, which) -> {
-					final int size = Integer.parseInt(fileSize.getText().toString());
-
-					final FilesUploadFragment parent = (FilesUploadFragment) getParentFragment();
-					parent.onGenerateFileRequested(size);
-				})
+				// Setting the positive button listener here would cause the dialog to dismiss.
+				// We have to validate the value before.
+				.setPositiveButton(R.string.files_action_generate, null)
 				.setNegativeButton(android.R.string.cancel, null)
 				.create();
 		dialog.setOnShowListener(d -> mImm.showSoftInput(fileSize, InputMethodManager.SHOW_IMPLICIT));
+		dialog.show();
+		dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+			try {
+				final int size = Integer.parseInt(fileSize.getText().toString());
+
+				final FilesUploadFragment parent = (FilesUploadFragment) getParentFragment();
+				parent.onGenerateFileRequested(size);
+				dismiss();
+			} catch (final NumberFormatException e) {
+				fileSize.setError(getString(R.string.files_upload_generate_error));
+			}
+		});
 		return dialog;
 	}
 }

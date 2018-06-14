@@ -30,6 +30,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -43,8 +44,8 @@ import io.runtime.mcumgr.sample.utils.FsUtils;
 
 public class PartitionDialogFragment extends DialogFragment implements Injectable {
 
-    @Inject
-    FsUtils mFsUtils;
+	@Inject
+	FsUtils mFsUtils;
 
 	private InputMethodManager mImm;
 
@@ -70,10 +71,9 @@ public class PartitionDialogFragment extends DialogFragment implements Injectabl
 		final AlertDialog dialog = new AlertDialog.Builder(requireContext())
 				.setTitle(R.string.files_settings_title)
 				.setView(view)
-				.setPositiveButton(R.string.files_settings_action_save, (di, which) -> {
-					final String newPartition = partition.getText().toString().trim();
-					mFsUtils.setPartition(newPartition);
-				})
+				// Setting the positive button listener here would cause the dialog to dismiss.
+				// We have to validate the value before.
+				.setPositiveButton(R.string.files_settings_action_save, null)
 				.setNegativeButton(android.R.string.cancel, null)
 				// Setting the neutral button listener here would cause the dialog to dismiss.
 				.setNeutralButton(R.string.files_settings_action_restore, null)
@@ -85,9 +85,18 @@ public class PartitionDialogFragment extends DialogFragment implements Injectabl
 		// This can be done only after the dialog was shown.
 		dialog.show();
 		dialog.getButton(DialogInterface.BUTTON_NEUTRAL).setOnClickListener(v -> {
-		    final String defaultPartition = mFsUtils.getDefaultPartition();
+			final String defaultPartition = mFsUtils.getDefaultPartition();
 			partition.setText(defaultPartition);
 			partition.setSelection(defaultPartition.length());
+		});
+		dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+			final String newPartition = partition.getText().toString().trim();
+			if (!TextUtils.isEmpty(newPartition)) {
+				mFsUtils.setPartition(newPartition);
+				dismiss();
+			} else {
+				partition.setError(getString(R.string.files_settings_error));
+			}
 		});
 		return dialog;
 	}
