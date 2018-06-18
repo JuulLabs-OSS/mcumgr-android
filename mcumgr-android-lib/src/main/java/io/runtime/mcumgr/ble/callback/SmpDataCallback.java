@@ -36,7 +36,7 @@ public abstract class SmpDataCallback<T extends McuMgrResponse>
         implements ProfileDataCallback, SmpCallback<T> {
     private final Class<T> responseType;
 
-    SmpDataCallback(@NonNull Class<T> responseType) {
+    protected SmpDataCallback(@NonNull Class<T> responseType) {
         this.responseType = responseType;
     }
 

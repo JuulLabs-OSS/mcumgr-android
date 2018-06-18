@@ -37,7 +37,7 @@ import java.util.UUID;
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.ble.callback.OneTimeSmpDataCallback;
+import io.runtime.mcumgr.ble.callback.SmpDataCallback;
 import io.runtime.mcumgr.ble.callback.SmpMerger;
 import io.runtime.mcumgr.ble.callback.SmpResponse;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
@@ -169,10 +169,10 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
 
         // Send the request and wait for a notification in a synchronous way
         try {
-            final SmpResponse<T> smpResponse = setNotificationCallback(mSmpCharacteristic)
+            final SmpResponse<T> smpResponse = waitForNotification(mSmpCharacteristic)
                     .merge(mSMPMerger)
-                    .awaitAfter(Request.newWriteRequest(mSmpCharacteristic, payload),
-                            new SmpResponse<>(responseType), 1000);
+                    .trigger(writeCharacteristic(mSmpCharacteristic, payload))
+                    .await(new SmpResponse<>(responseType), 1000);
             if (smpResponse.isValid()) {
                 //noinspection ConstantConditions
                 return smpResponse.getResponse();
@@ -182,12 +182,12 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             }
         } catch (RequestFailedException e) {
             throw new McuMgrException(GattError.parse(e.getStatus()));
-        } catch (DeviceDisconnectedException e) {
-            // When connection failed, fail the request
-            throw new McuMgrException("Device has disconnected");
         } catch (InterruptedException e) {
             // Device must have disconnected moment before the request was made
             throw new McuMgrException("Request timed out");
+        } catch (DeviceDisconnectedException e) {
+            // When connection failed, fail the request
+            throw new McuMgrException("Device has disconnected");
         } catch (BluetoothDisabledException e) {
             // When Bluetooth was disabled, fail the request
             throw new McuMgrException("Bluetooth adapter disabled");
@@ -214,9 +214,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                     return;
                 }
 
-                setNotificationCallback(mSmpCharacteristic)
+                waitForNotification(mSmpCharacteristic)
                         .merge(mSMPMerger)
-                        .with(new OneTimeSmpDataCallback<T>(responseType) {
+                        .with(new SmpDataCallback<T>(responseType) {
                             @Override
                             public void onResponseReceived(@NonNull BluetoothDevice device,
                                                            @NonNull T response) {
@@ -233,30 +233,29 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                                 callback.onError(new McuMgrException("Error building " +
                                         "McuMgrResponse from response data: " + data));
                             }
-
-                            @Override
-                            public void onTimeoutOccurred(@NonNull BluetoothDevice device) {
-                                callback.onError(new McuMgrException("Request timed out"));
-                            }
-
-                            @Override
-                            public void onDeviceDisconnected(@NonNull BluetoothDevice device) {
-                                callback.onError(new McuMgrException("Device has disconnected"));
-                            }
-
-                            @Override
-                            public void onBluetoothDisabled(@NonNull final BluetoothDevice device) {
-                                callback.onError(new McuMgrException("Bluetooth adapter disabled"));
-                            }
-                        }, 1000);
-                writeCharacteristic(mSmpCharacteristic, payload)
+                        })
+                        .trigger(writeCharacteristic(mSmpCharacteristic, payload))
                         .fail(new FailCallback() {
                             @Override
                             public void onRequestFailed(@NonNull BluetoothDevice device,
                                                         int status) {
-                                callback.onError(new McuMgrException(GattError.parse(status)));
+                                switch (status) {
+                                    case REASON_TIMEOUT:
+                                        callback.onError(new McuMgrException("Request timed out"));
+                                        break;
+                                    case REASON_DEVICE_DISCONNECTED:
+                                        callback.onError(new McuMgrException("Device has disconnected"));
+                                        break;
+                                    case REASON_BLUETOOTH_DISABLED:
+                                        callback.onError(new McuMgrException("Bluetooth adapter disabled"));
+                                        break;
+                                    default:
+                                        callback.onError(new McuMgrException(GattError.parse(status)));
+                                        break;
+                                }
                             }
-                        });
+                        })
+                        .enqueue(1000);
             }
         }).fail(new FailCallback() {
             @Override
@@ -308,7 +307,7 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
 
         // Determines whether the device supports the SMP Service
         @Override
-        protected boolean isRequiredServiceSupported(BluetoothGatt gatt) {
+        protected boolean isRequiredServiceSupported(@NonNull BluetoothGatt gatt) {
             mSmpService = gatt.getService(SMP_SERVICE_UUID);
             if (mSmpService == null) {
                 Log.e(TAG, "Device does not support SMP service");
@@ -338,8 +337,8 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         // called.
         @Override
         protected void initialize() {
-            requestMtu(515);
-            enableNotifications(mSmpCharacteristic);
+            requestMtu(515).enqueue();
+            enableNotifications(mSmpCharacteristic).enqueue();
         }
 
         // Called when the device has disconnected. This method nulls the services and
