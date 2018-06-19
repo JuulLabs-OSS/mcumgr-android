@@ -127,6 +127,7 @@ public class ScannerLiveData extends LiveData<ScannerLiveData> {
 	 */
 	public void clear() {
 		mDevices.clear();
+		mUpdatedDeviceIndex = null;
 		postValue(this);
 	}
 
