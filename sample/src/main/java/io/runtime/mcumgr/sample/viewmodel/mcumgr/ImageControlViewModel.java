@@ -47,7 +47,7 @@ public class ImageControlViewModel extends McuMgrViewModel {
 	private final MutableLiveData<Boolean> mEraseAvailableLiveData = new MutableLiveData<>();
 	private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
 
-	private byte[] mSlot1Hash;
+	private byte[] mHash;
 
 	@Inject
 	ImageControlViewModel(final ImageManager manager,
@@ -90,7 +90,13 @@ public class ImageControlViewModel extends McuMgrViewModel {
 				// Save the hash of the image flashed to slot 1.
 				final boolean hasSlot1 = response.images != null && response.images.length > 1;
 				if (hasSlot1) {
-					mSlot1Hash = response.images[1].hash;
+					if (response.images[0].confirmed) {
+						// New image is in slot 1.
+						mHash = response.images[1].hash;
+					} else {
+						// It's a test mode. The new image temporarily is in slot 0.
+						mHash = response.images[0].hash;
+					}
 				}
 				postReady(response);
 			}
@@ -106,7 +112,7 @@ public class ImageControlViewModel extends McuMgrViewModel {
 	public void test() {
 		setBusy();
 		mErrorLiveData.setValue(null);
-		mManager.test(mSlot1Hash, new McuMgrCallback<McuMgrImageStateResponse>() {
+		mManager.test(mHash, new McuMgrCallback<McuMgrImageStateResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrImageStateResponse response) {
 				postReady(response);
@@ -136,7 +142,7 @@ public class ImageControlViewModel extends McuMgrViewModel {
 	public void confirm() {
 		setBusy();
 		mErrorLiveData.setValue(null);
-		mManager.confirm(mSlot1Hash, new McuMgrCallback<McuMgrImageStateResponse>() {
+		mManager.confirm(mHash, new McuMgrCallback<McuMgrImageStateResponse>() {
 			@Override
 			public void onResponse(@NonNull final McuMgrImageStateResponse response) {
 				postReady(response);
