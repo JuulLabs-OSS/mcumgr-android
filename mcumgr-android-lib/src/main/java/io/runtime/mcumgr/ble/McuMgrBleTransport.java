@@ -265,12 +265,13 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                         break;
                 }
             }
-        });
+        })
+        .enqueue();
     }
 
     @Override
     public void release() {
-        disconnect();
+        disconnect().enqueue();
     }
 
     @Override
