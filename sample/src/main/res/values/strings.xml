@@ -34,8 +34,9 @@
 
     <string name="mcumgr_guide_title">CAN\'T SEE YOUR DEVICE?</string>
     <string name="mcumgr_guide_info">1. Make sure the device is <b>turned on</b> and is connected
-        to a power source.\n\n2. Make sure the firmware with <b>SMP server</b> is flashed and that
-        it is advertising with 8D53DC1D–1DB7–4CD3–868B–8A527460AA84 UUID.</string>
+        to a power source.\n\n2. Make sure the firmware with <b>SMP server</b> is flashed and the
+        device is advertising.\n\n3. Check the filter settings. By default, the scanner displays only
+        devices that advertise SMP service UUID (8D53DC1D–1DB7–4CD3–868B–8A527460AA84).</string>
     <string name="mcumgr_guide_location_info">3. Location is turned off. Some Android phones
         require it enabled in order to scan for Bluetooth LE devices. If you are sure your
         device is advertising and it doesn\'t show up here, click the button below to
