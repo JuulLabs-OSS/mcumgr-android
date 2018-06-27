@@ -25,7 +25,7 @@
 		android:layout_centerVertical="true"
 		android:background="@drawable/ic_device_bg"
 		android:scaleType="center"
-		android:src="@drawable/ic_device_zephyr"/>
+		android:src="@drawable/ic_device_other"/>
 
 	<TextView
 		android:id="@+id/device_name"

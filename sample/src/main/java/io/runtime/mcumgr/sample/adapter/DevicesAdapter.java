@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -66,10 +67,19 @@ public class DevicesAdapter extends RecyclerView.Adapter<DevicesAdapter.ViewHold
 		final DiscoveredBluetoothDevice device = mDevices.get(position);
 		final String deviceName = device.getName();
 
-		if (!TextUtils.isEmpty(deviceName))
+		if (!TextUtils.isEmpty(deviceName)) {
 			holder.deviceName.setText(deviceName);
-		else
+			// Set device icon. This is just guessing, based on the device name.
+			if (deviceName.toLowerCase(Locale.US).contains("zephyr"))
+				holder.icon.setImageResource(R.drawable.ic_device_zephyr);
+			else if (deviceName.toLowerCase(Locale.US).contains("nimble"))
+				holder.icon.setImageResource(R.drawable.ic_device_mynewt);
+			else
+				holder.icon.setImageResource(R.drawable.ic_device_other);
+		} else {
 			holder.deviceName.setText(R.string.unknown_device);
+			holder.icon.setImageResource(R.drawable.ic_device_other);
+		}
 		holder.deviceAddress.setText(device.getAddress());
 		final int rssiPercent = (int) (100.0f * (127.0f + device.getRssi()) / (127.0f + 20.0f));
 		holder.rssi.setImageLevel(rssiPercent);
@@ -90,6 +100,7 @@ public class DevicesAdapter extends RecyclerView.Adapter<DevicesAdapter.ViewHold
 	}
 
 	final class ViewHolder extends RecyclerView.ViewHolder {
+		@BindView(R.id.icon) ImageView icon;
 		@BindView(R.id.device_address) TextView deviceAddress;
 		@BindView(R.id.device_name) TextView deviceName;
 		@BindView(R.id.rssi) ImageView rssi;
