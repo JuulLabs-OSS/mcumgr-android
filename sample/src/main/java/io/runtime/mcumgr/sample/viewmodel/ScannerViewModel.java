@@ -13,37 +13,50 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.location.LocationManager;
-import android.os.ParcelUuid;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.sample.utils.Utils;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
 import no.nordicsemi.android.support.v18.scanner.ScanCallback;
-import no.nordicsemi.android.support.v18.scanner.ScanFilter;
 import no.nordicsemi.android.support.v18.scanner.ScanResult;
 import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 
 public class ScannerViewModel extends AndroidViewModel {
+	private static final String PREFS_FILTER_UUID_REQUIRED = "filter_uuid";
+	private static final String PREFS_FILTER_NEARBY_ONLY = "filter_nearby";
 
-	/** MutableLiveData containing the scanner state to notify MainActivity. */
-	private final ScannerLiveData mScannerLiveData;
+	/** MutableLiveData containing the list of devices. */
+	private final DevicesLiveData mDevicesLiveData;
+	/** MutableLiveData containing the scanner state. */
+    private final ScannerStateLiveData mScannerStateLiveData;
 
-	public ScannerLiveData getScannerState() {
-		return mScannerLiveData;
+	private final SharedPreferences mPreferences;
+
+	public DevicesLiveData getDevices() {
+		return mDevicesLiveData;
 	}
 
-	@Inject
-	public ScannerViewModel(final Application application) {
-		super(application);
+    public ScannerStateLiveData getScannerState() {
+        return mScannerStateLiveData;
+    }
 
-		mScannerLiveData = new ScannerLiveData(Utils.isBleEnabled(), Utils.isLocationEnabled(application));
-		registerBroadcastReceivers(application);
+	@Inject
+	public ScannerViewModel(final Application application, final SharedPreferences preferences) {
+		super(application);
+		mPreferences = preferences;
+
+		final boolean filterUuidRequired = isUuidFilterEnabled();
+		final boolean filerNearbyOnly = isNearbyFilterEnabled();
+
+        mScannerStateLiveData = new ScannerStateLiveData(Utils.isBleEnabled(),
+                Utils.isLocationEnabled(application));
+        mDevicesLiveData = new DevicesLiveData(filterUuidRequired, filerNearbyOnly);
+        registerBroadcastReceivers(application);
 	}
 
 	@Override
@@ -56,40 +69,78 @@ public class ScannerViewModel extends AndroidViewModel {
 		}
 	}
 
-	public void refresh() {
-		mScannerLiveData.refresh();
+	public boolean isUuidFilterEnabled() {
+		return mPreferences.getBoolean(PREFS_FILTER_UUID_REQUIRED, true);
+	}
+
+	public boolean isNearbyFilterEnabled() {
+		return mPreferences.getBoolean(PREFS_FILTER_NEARBY_ONLY, false);
 	}
 
 	/**
-	 * Start scanning for Bluetooth devices.
+	 * Forces the observers to be notified. This method is used to refresh the screen after the
+	 * location permission has been granted. In result, the observer in
+	 * {@link io.runtime.mcumgr.sample.ScannerActivity} will try to start scanning.
+	 */
+	public void refresh() {
+		mScannerStateLiveData.refresh();
+	}
+
+	/**
+	 * Updates the device filter. Devices that once passed the filter will still be shown
+	 * even if they move away from the phone, or change the advertising packet. This is to
+	 * avoid removing devices from the list.
+	 *
+	 * @param uuidRequired if true, the list will display only devices with SMP UUID
+	 *                     in the advertising packet.
+	 */
+	public void filterByUuid(final boolean uuidRequired) {
+		mPreferences.edit().putBoolean(PREFS_FILTER_UUID_REQUIRED, uuidRequired).apply();
+		if (!mDevicesLiveData.filterByUuid(uuidRequired))
+			mScannerStateLiveData.clearRecords();
+	}
+
+	/**
+	 * Updates the device filter. Devices that once passed the filter will still be shown
+	 * even if they move away from the phone, or change the advertising packet. This is to
+	 * avoid removing devices from the list.
+	 *
+	 * @param nearbyOnly if true, the list will show only devices with high RSSI.
+	 */
+	public void filterByDistance(final boolean nearbyOnly) {
+		mPreferences.edit().putBoolean(PREFS_FILTER_NEARBY_ONLY, nearbyOnly).apply();
+		if (!mDevicesLiveData.filterByDistance(nearbyOnly))
+			mScannerStateLiveData.clearRecords();
+	}
+
+	/**
+	 * Start scanning for Bluetooth LE devices.
 	 */
 	public void startScan() {
-		if (mScannerLiveData.isScanning()) {
+		if (mScannerStateLiveData.isScanning()) {
 			return;
 		}
 
 		// Scanning settings
 		final ScanSettings settings = new ScanSettings.Builder()
 				.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+				.setLegacy(false)
+				.setReportDelay(500)
+				.setUseHardwareBatchingIfSupported(false)
 				.build();
 
-		// Let's use the filter to scan only for devices with SMP server UUID in the adv packets
-		final ParcelUuid uuid = new ParcelUuid(McuMgrBleTransport.SMP_SERVICE_UUID);
-		final List<ScanFilter> filters = new ArrayList<>();
-		filters.add(new ScanFilter.Builder().setServiceUuid(uuid).build());
-
 		final BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
-		scanner.startScan(filters, settings, scanCallback);
-		mScannerLiveData.scanningStarted();
+		scanner.startScan(null, settings, scanCallback);
+        mScannerStateLiveData.scanningStarted();
 	}
 
 	/**
-	 * stop scanning for bluetooth devices.
+	 * Stop scanning for Bluetooth LE devices.
 	 */
 	public void stopScan() {
 		final BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
 		scanner.stopScan(scanCallback);
-		mScannerLiveData.scanningStopped();
+        mScannerStateLiveData.scanningStopped();
 	}
 
 	private final ScanCallback scanCallback = new ScanCallback() {
@@ -99,18 +150,32 @@ public class ScannerViewModel extends AndroidViewModel {
 			if (Utils.isLocationRequired(getApplication()) && !Utils.isLocationEnabled(getApplication()))
 				Utils.markLocationNotRequired(getApplication());
 
-			mScannerLiveData.deviceDiscovered(result);
+			if (mDevicesLiveData.deviceDiscovered(result)) {
+				mDevicesLiveData.applyFilter();
+				mScannerStateLiveData.recordFound();
+			}
 		}
 
 		@Override
 		public void onBatchScanResults(final List<ScanResult> results) {
-			// Batch scan is disabled (report delay = 0)
+			// If the packet has been obtained while Location was disabled, mark Location as not required
+			if (Utils.isLocationRequired(getApplication()) && !Utils.isLocationEnabled(getApplication()))
+				Utils.markLocationNotRequired(getApplication());
+
+			boolean atLeastOneMatchedFilter = false;
+			for (final ScanResult result : results)
+				atLeastOneMatchedFilter = mDevicesLiveData.deviceDiscovered(result) || atLeastOneMatchedFilter;
+			if (atLeastOneMatchedFilter) {
+				mDevicesLiveData.applyFilter();
+				mScannerStateLiveData.recordFound();
+			}
 		}
 
 		@Override
 		public void onScanFailed(final int errorCode) {
 			// TODO This should be handled
-			mScannerLiveData.scanningStopped();
+            stopScan();
+            mScannerStateLiveData.scanningStopped();
 		}
 	};
 
@@ -131,7 +196,7 @@ public class ScannerViewModel extends AndroidViewModel {
 		@Override
 		public void onReceive(final Context context, final Intent intent) {
 			final boolean enabled = Utils.isLocationEnabled(context);
-			mScannerLiveData.setLocationEnabled(enabled);
+            mScannerStateLiveData.setLocationEnabled(enabled);
 		}
 	};
 
@@ -146,13 +211,14 @@ public class ScannerViewModel extends AndroidViewModel {
 
 			switch (state) {
 				case BluetoothAdapter.STATE_ON:
-					mScannerLiveData.bluetoothEnabled();
+                    mScannerStateLiveData.bluetoothEnabled();
 					break;
 				case BluetoothAdapter.STATE_TURNING_OFF:
 				case BluetoothAdapter.STATE_OFF:
 					if (previousState != BluetoothAdapter.STATE_TURNING_OFF && previousState != BluetoothAdapter.STATE_OFF) {
 						stopScan();
-						mScannerLiveData.bluetoothDisabled();
+						mDevicesLiveData.bluetoothDisabled();
+                        mScannerStateLiveData.bluetoothDisabled();
 					}
 					break;
 			}

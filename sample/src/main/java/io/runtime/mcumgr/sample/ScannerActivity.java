@@ -23,6 +23,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -34,7 +36,7 @@ import butterknife.OnClick;
 import io.runtime.mcumgr.sample.adapter.DevicesAdapter;
 import io.runtime.mcumgr.sample.di.Injectable;
 import io.runtime.mcumgr.sample.utils.Utils;
-import io.runtime.mcumgr.sample.viewmodel.ScannerLiveData;
+import io.runtime.mcumgr.sample.viewmodel.ScannerStateLiveData;
 import io.runtime.mcumgr.sample.viewmodel.ScannerViewModel;
 import io.runtime.mcumgr.sample.viewmodel.ViewModelFactory;
 
@@ -86,7 +88,7 @@ public class ScannerActivity extends AppCompatActivity
 		recyclerView.addItemDecoration(dividerItemDecoration);
 		((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 		final DevicesAdapter adapter =
-				new DevicesAdapter(this, mScannerViewModel.getScannerState());
+				new DevicesAdapter(this, mScannerViewModel.getDevices());
 		adapter.setOnItemClickListener(this);
 		recyclerView.setAdapter(adapter);
 	}
@@ -94,13 +96,37 @@ public class ScannerActivity extends AppCompatActivity
 	@Override
 	protected void onRestart() {
 		super.onRestart();
-		mScannerViewModel.getScannerState().clear();
+		mScannerViewModel.getDevices().clear();
+		mScannerViewModel.getScannerState().clearRecords();
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
 		stopScan();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(final Menu menu) {
+		getMenuInflater().inflate(R.menu.filter, menu);
+		menu.findItem(R.id.filter_uuid).setChecked(mScannerViewModel.isUuidFilterEnabled());
+        menu.findItem(R.id.filter_nearby).setChecked(mScannerViewModel.isNearbyFilterEnabled());
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(final MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.filter_uuid:
+				item.setChecked(!item.isChecked());
+				mScannerViewModel.filterByUuid(item.isChecked());
+				return true;
+			case R.id.filter_nearby:
+				item.setChecked(!item.isChecked());
+				mScannerViewModel.filterByDistance(item.isChecked());
+				return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
@@ -153,7 +179,7 @@ public class ScannerActivity extends AppCompatActivity
 	/**
 	 * Start scanning for Bluetooth devices or displays a message based on the scanner state.
 	 */
-	private void startScan(final ScannerLiveData state) {
+	private void startScan(final ScannerStateLiveData state) {
 		// First, check the Location permission.
 		// This is required on Marshmallow onwards in order to scan for Bluetooth LE devices.
 		if (Utils.isLocationPermissionsGranted(this)) {
@@ -167,7 +193,7 @@ public class ScannerActivity extends AppCompatActivity
 				mScannerViewModel.startScan();
 				mScanningView.setVisibility(View.VISIBLE);
 
-				if (state.isEmpty()) {
+				if (!state.hasRecords()) {
 					mEmptyView.setVisibility(View.VISIBLE);
 
 					if (!Utils.isLocationRequired(this) ||

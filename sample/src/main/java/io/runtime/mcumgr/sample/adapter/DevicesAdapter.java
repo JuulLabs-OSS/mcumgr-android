@@ -7,8 +7,8 @@
 package io.runtime.mcumgr.sample.adapter;
 
 import android.bluetooth.BluetoothDevice;
-import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -24,33 +24,42 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.ScannerActivity;
-import io.runtime.mcumgr.sample.viewmodel.ScannerLiveData;
+import io.runtime.mcumgr.sample.viewmodel.DevicesLiveData;
 
 @SuppressWarnings("unused")
 public class DevicesAdapter extends RecyclerView.Adapter<DevicesAdapter.ViewHolder> {
 	private final ScannerActivity mContext;
-	private final List<DiscoveredBluetoothDevice> mDevices;
+	private List<DiscoveredBluetoothDevice> mDevices;
 	private OnItemClickListener mOnItemClickListener;
 
 	@FunctionalInterface
 	public interface OnItemClickListener {
+		/**
+		 * Callback called when the device row has been clicked.
+		 *
+		 * @param device the Bluetooth device under the clicked row.
+		 */
 		void onItemClick(final BluetoothDevice device);
 	}
 
-	public void setOnItemClickListener(final Context context) {
-		mOnItemClickListener = (OnItemClickListener) context;
+	/**
+	 * Sets the listener that will be called when user clicks on a device row.
+	 *
+	 * @param listener the listener.
+	 */
+	public void setOnItemClickListener(final OnItemClickListener listener) {
+		mOnItemClickListener = listener;
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	public DevicesAdapter(final ScannerActivity activity, final ScannerLiveData scannerLiveData) {
+	public DevicesAdapter(final ScannerActivity activity, final DevicesLiveData devicesLiveData) {
 		mContext = activity;
-		mDevices = scannerLiveData.getDevices();
-		scannerLiveData.observe(activity, devices -> {
-			final Integer i = devices.getUpdatedDeviceIndex();
-			if (i != null)
-				notifyItemChanged(i);
-			else
-				notifyDataSetChanged();
+		setHasStableIds(true);
+		devicesLiveData.observe(activity, devices -> {
+			DiffUtil.DiffResult result = DiffUtil.calculateDiff(
+					new DeviceDiffCallback(mDevices, devices), false);
+			mDevices = devices;
+			result.dispatchUpdatesTo(this);
 		});
 	}
 
@@ -87,16 +96,12 @@ public class DevicesAdapter extends RecyclerView.Adapter<DevicesAdapter.ViewHold
 
 	@Override
 	public long getItemId(final int position) {
-		return position;
+		return mDevices.get(position).hashCode();
 	}
 
 	@Override
 	public int getItemCount() {
-		return mDevices.size();
-	}
-
-	public boolean isEmpty() {
-		return getItemCount() == 0;
+		return mDevices != null ? mDevices.size() : 0;
 	}
 
 	final class ViewHolder extends RecyclerView.ViewHolder {
