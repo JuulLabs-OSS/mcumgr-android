@@ -18,7 +18,7 @@
             4 action buttons don't fit on the screen on narrow phones.
             Default width would be 4 * 88 dip = 352. For narrower phones, use narrower buttons.
         -->
-        <item name="android:minWidth">48dip</item>
+        <item name="android:minWidth">56dip</item>
     </style>
 
     <!-- Base application theme. -->
