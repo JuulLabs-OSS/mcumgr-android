@@ -29,7 +29,7 @@ android {
 
 dependencies {
     // Import the BLE Library
-    api 'no.nordicsemi.android:ble:2.0-alpha3'
+    api 'no.nordicsemi.android:ble:2.0-alpha4'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
