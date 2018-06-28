@@ -7,6 +7,7 @@
 
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
@@ -20,7 +21,7 @@
 		android:layout_height="wrap_content"
 		android:layout_gravity="center_horizontal"
 		android:padding="@dimen/activity_horizontal_margin"
-		android:src="@drawable/ic_bluetooth_disabled"/>
+		app:srcCompat="@drawable/ic_bluetooth_disabled"/>
 
 	<TextView
 		style="@style/Widget.ScannerSubtitle"
