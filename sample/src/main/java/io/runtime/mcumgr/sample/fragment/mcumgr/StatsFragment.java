@@ -92,8 +92,9 @@ public class StatsFragment extends Fragment implements Injectable {
 	private void printStats(@NonNull final List<McuMgrStatResponse> responses) {
 		final SpannableStringBuilder builder = new SpannableStringBuilder();
 		for (final McuMgrStatResponse response : responses) {
+			final int start = builder.length();
 			builder.append(getString(R.string.stats_module, response.name)).append("\n");
-			builder.setSpan(new StyleSpan(Typeface.BOLD), 0, response.name.length(),
+			builder.setSpan(new StyleSpan(Typeface.BOLD), start, start + response.name.length(),
 					Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
 			for (final Map.Entry<String, Integer> entry : response.fields.entrySet()) {
