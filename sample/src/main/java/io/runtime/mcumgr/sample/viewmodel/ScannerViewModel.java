@@ -20,9 +20,11 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import io.runtime.mcumgr.sample.utils.FilterUtils;
 import io.runtime.mcumgr.sample.utils.Utils;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
 import no.nordicsemi.android.support.v18.scanner.ScanCallback;
+import no.nordicsemi.android.support.v18.scanner.ScanRecord;
 import no.nordicsemi.android.support.v18.scanner.ScanResult;
 import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 
@@ -96,7 +98,9 @@ public class ScannerViewModel extends AndroidViewModel {
 	 */
 	public void filterByUuid(final boolean uuidRequired) {
 		mPreferences.edit().putBoolean(PREFS_FILTER_UUID_REQUIRED, uuidRequired).apply();
-		if (!mDevicesLiveData.filterByUuid(uuidRequired))
+		if (mDevicesLiveData.filterByUuid(uuidRequired))
+			mScannerStateLiveData.recordFound();
+		else
 			mScannerStateLiveData.clearRecords();
 	}
 
@@ -109,7 +113,9 @@ public class ScannerViewModel extends AndroidViewModel {
 	 */
 	public void filterByDistance(final boolean nearbyOnly) {
 		mPreferences.edit().putBoolean(PREFS_FILTER_NEARBY_ONLY, nearbyOnly).apply();
-		if (!mDevicesLiveData.filterByDistance(nearbyOnly))
+		if (mDevicesLiveData.filterByDistance(nearbyOnly))
+			mScannerStateLiveData.recordFound();
+		else
 			mScannerStateLiveData.clearRecords();
 	}
 
@@ -146,11 +152,13 @@ public class ScannerViewModel extends AndroidViewModel {
 	private final ScanCallback scanCallback = new ScanCallback() {
 		@Override
 		public void onScanResult(final int callbackType, final ScanResult result) {
+			// This callback will be called only if the scan report delay is not set or is set to 0.
+
 			// If the packet has been obtained while Location was disabled, mark Location as not required
 			if (Utils.isLocationRequired(getApplication()) && !Utils.isLocationEnabled(getApplication()))
 				Utils.markLocationNotRequired(getApplication());
 
-			if (mDevicesLiveData.deviceDiscovered(result)) {
+			if (!isNoise(result) && mDevicesLiveData.deviceDiscovered(result)) {
 				mDevicesLiveData.applyFilter();
 				mScannerStateLiveData.recordFound();
 			}
@@ -158,13 +166,17 @@ public class ScannerViewModel extends AndroidViewModel {
 
 		@Override
 		public void onBatchScanResults(final List<ScanResult> results) {
+			// This callback will be called only if the report delay set above is greater then 0.
+
 			// If the packet has been obtained while Location was disabled, mark Location as not required
 			if (Utils.isLocationRequired(getApplication()) && !Utils.isLocationEnabled(getApplication()))
 				Utils.markLocationNotRequired(getApplication());
 
 			boolean atLeastOneMatchedFilter = false;
 			for (final ScanResult result : results)
-				atLeastOneMatchedFilter = mDevicesLiveData.deviceDiscovered(result) || atLeastOneMatchedFilter;
+				atLeastOneMatchedFilter =
+						(!isNoise(result) && mDevicesLiveData.deviceDiscovered(result))
+						|| atLeastOneMatchedFilter;
 			if (atLeastOneMatchedFilter) {
 				mDevicesLiveData.applyFilter();
 				mScannerStateLiveData.recordFound();
@@ -224,4 +236,46 @@ public class ScannerViewModel extends AndroidViewModel {
 			}
 		}
 	};
+
+	/**
+	 * This method returns true if the scan result may be considered as noise.
+	 * This is to make the device list on the scanner screen shorter.
+	 * <p>
+	 * This implementation considers as noise devices that:
+	 * <ul>
+	 *     <li>Are not connectable (Android Oreo or newer only),</li>
+	 *     <li>Are far away (RSSI < -80),</li>
+	 *     <li>Advertise as beacons (iBeacons, Nordic Beacons, Microsoft Advertising Beacons,
+	 *     Eddystone,</li>
+	 *     <li>Advertise with AirDrop footprint,</li>
+	 *     <li>Advertise as Bluetooth Mesh devices.</li>
+	 * </ul>
+	 * Noise devices will no the shown on the scanner screen even with all filters disabled.
+	 *
+	 * @param result the scan result.
+	 * @return true, if the device may be dismissed, false otherwise.
+	 */
+	@SuppressWarnings({"BooleanMethodIsAlwaysInverted", "RedundantIfStatement"})
+	private boolean isNoise(final ScanResult result) {
+		// Do not show non-connectable devices.
+		// Only Android Oreo or newer can say if a device is connectable. On older Android versions
+		// the Support Scanner Library assumes all devices are connectable (compatibility mode).
+		if (!result.isConnectable())
+			return true;
+
+		// Very distant devices are noise.
+		if (result.getRssi() < -80)
+			return true;
+
+		if (FilterUtils.isBeacon(result))
+			return true;
+
+		if (FilterUtils.isAirDrop(result))
+			return true;
+
+		if (FilterUtils.isMeshDevice(result))
+			return true;
+
+		return false;
+	}
 }
