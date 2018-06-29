@@ -40,8 +40,8 @@ public class EchoFragment extends Fragment implements Injectable {
 	Button mSendAction;
 	@BindView(R.id.echo_value)
 	EditText mValue;
-	@BindView(R.id.divider)
-	View mDivider;
+	@BindView(R.id.echo_content)
+	View mContent;
 	@BindView(R.id.echo_request)
 	TextView mRequest;
 	@BindView(R.id.echo_response)
@@ -81,7 +81,7 @@ public class EchoFragment extends Fragment implements Injectable {
 
 		mViewModel.getBusyState().observe(this, busy -> mSendAction.setEnabled(!busy));
 		mViewModel.getRequest().observe(this, text -> {
-			mDivider.setVisibility(View.VISIBLE);
+			mContent.setVisibility(View.VISIBLE);
 			print(mRequest, text);
 			if (mResponse.getVisibility() == View.VISIBLE) {
 				mResponse.setVisibility(View.INVISIBLE);

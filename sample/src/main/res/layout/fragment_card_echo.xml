@@ -40,18 +40,6 @@
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
 
-		<View
-			android:id="@+id/divider"
-			android:layout_width="0dp"
-			android:layout_height="1dp"
-			android:layout_marginTop="16dp"
-			android:background="@color/divider"
-			android:visibility="gone"
-			app:layout_constraintEnd_toEndOf="parent"
-			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/echo_value"
-			tools:visibility="visible"/>
-
 		<Button
 			android:id="@+id/action_send"
 			style="@style/Widget.AppCompat.Button.Colored"
@@ -62,35 +50,53 @@
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
 
-		<TextView
-			android:id="@+id/echo_request"
+		<LinearLayout
+			android:id="@+id/echo_content"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
-			android:layout_marginEnd="16dp"
 			android:layout_marginTop="16dp"
-			android:background="@drawable/echo_request"
-			android:freezesText="true"
-			android:textColor="@color/white"
+			android:orientation="vertical"
 			android:visibility="gone"
 			app:layout_constraintEnd_toEndOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/divider"
-			tools:text="Some text"
-			tools:visibility="visible"/>
-
-		<TextView
-			android:id="@+id/echo_response"
-			android:layout_width="0dp"
-			android:layout_height="wrap_content"
-			android:layout_marginStart="16dp"
-			android:background="@drawable/echo_response"
-			android:freezesText="true"
-			android:textColor="@color/white"
-			android:visibility="gone"
-			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/echo_request"
-			tools:text="Some text"
-			tools:visibility="visible"/>
+			app:layout_constraintTop_toBottomOf="@+id/echo_value"
+			tools:visibility="visible">
+
+			<View
+				android:id="@+id/divider"
+				android:layout_width="match_parent"
+				android:layout_height="1dp"
+				android:background="@color/divider"/>
+
+			<TextView
+				android:id="@+id/echo_request"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="end"
+				android:layout_marginEnd="16dp"
+				android:layout_marginStart="16dp"
+				android:layout_marginTop="16dp"
+				android:background="@drawable/echo_request"
+				android:freezesText="true"
+				android:textColor="@color/white"
+				android:visibility="gone"
+				tools:text="Some text is very, very, very long. Some text is very, very, very long."
+				tools:visibility="visible"/>
+
+			<TextView
+				android:id="@+id/echo_response"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="16dp"
+				android:layout_marginStart="16dp"
+				android:layout_marginTop="8dp"
+				android:background="@drawable/echo_response"
+				android:freezesText="true"
+				android:textColor="@color/white"
+				android:visibility="gone"
+				tools:text="Some text"
+				tools:visibility="visible"/>
+		</LinearLayout>
 
 	</android.support.constraint.ConstraintLayout>
 </android.support.v7.widget.CardView>
