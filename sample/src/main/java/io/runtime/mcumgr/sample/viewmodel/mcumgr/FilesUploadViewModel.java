@@ -22,7 +22,19 @@ public class FilesUploadViewModel extends McuMgrViewModel implements FsManager.F
 		IDLE,
 		UPLOADING,
 		PAUSED,
-		COMPLETE
+		COMPLETE;
+
+		public boolean inProgress() {
+			return this != IDLE && this != COMPLETE;
+		}
+
+		public boolean canPauseOrResume() {
+			return this == UPLOADING || this == PAUSED;
+		}
+
+		public boolean canCancel() {
+			return this == UPLOADING || this == PAUSED;
+		}
 	}
 
 	private final FsManager mManager;

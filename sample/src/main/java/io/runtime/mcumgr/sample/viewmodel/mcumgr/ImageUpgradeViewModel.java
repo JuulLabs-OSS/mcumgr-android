@@ -28,14 +28,26 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 		TESTING,
 		CONFIRMING,
 		RESETTING,
-		COMPLETE
+		COMPLETE;
+
+		public boolean inProgress() {
+			return this != IDLE && this != COMPLETE;
+		}
+
+		public boolean canPauseOrResume() {
+			return this == UPLOADING || this == PAUSED;
+		}
+
+		public boolean canCancel() {
+			return this == UPLOADING || this == PAUSED;
+		}
 	}
 
 	private final FirmwareUpgradeManager mManager;
 
 	private final MutableLiveData<State> mStateLiveData = new MutableLiveData<>();
 	private final MutableLiveData<Integer> mProgressLiveData = new MutableLiveData<>();
-	private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
+	private final SingleLiveEvent<String> mErrorLiveData = new SingleLiveEvent<>();
 	private final SingleLiveEvent<Void> mCancelledEvent = new SingleLiveEvent<>();
 
 	@Inject

@@ -91,47 +91,38 @@ public class ImageUpgradeFragment extends FileBrowserFragment implements Injecta
 		super.onActivityCreated(savedInstanceState);
 
 		mViewModel.getState().observe(this, state -> {
+			mStartAction.setEnabled(isFileLoaded());
+			mCancelAction.setEnabled(state.canCancel());
+			mPauseResumeAction.setEnabled(state.canPauseOrResume());
+			mPauseResumeAction.setText(state == ImageUpgradeViewModel.State.PAUSED ?
+					R.string.image_action_resume : R.string.image_action_pause);
+
+			mSelectFileAction.setVisibility(state.inProgress() ? View.GONE : View.VISIBLE);
+			mStartAction.setVisibility(state.inProgress() ? View.GONE : View.VISIBLE);
+			mCancelAction.setVisibility(state.inProgress() ? View.VISIBLE : View.GONE);
+			mPauseResumeAction.setVisibility(state.inProgress() ? View.VISIBLE : View.GONE);
+			// Update status
 			switch (state) {
 				case VALIDATING:
-					mSelectFileAction.setVisibility(View.GONE);
-					mStartAction.setVisibility(View.GONE);
-					mCancelAction.setVisibility(View.VISIBLE);
-					mPauseResumeAction.setVisibility(View.VISIBLE);
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
 					mStatus.setText(R.string.image_upgrade_status_validating);
 					break;
 				case UPLOADING:
-					mCancelAction.setEnabled(true);
-					mPauseResumeAction.setEnabled(true);
-					mPauseResumeAction.setText(R.string.image_action_pause);
 					mStatus.setText(R.string.image_upgrade_status_uploading);
 					break;
 				case PAUSED:
-					mPauseResumeAction.setText(R.string.image_action_resume);
+					mStatus.setText(R.string.image_upgrade_status_paused);
 					break;
 				case TESTING:
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
 					mStatus.setText(R.string.image_upgrade_status_testing);
 					break;
 				case CONFIRMING:
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
 					mStatus.setText(R.string.image_upgrade_status_confirming);
 					break;
 				case RESETTING:
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
 					mStatus.setText(R.string.image_upgrade_status_resetting);
 					break;
 				case COMPLETE:
 					clearFileContent();
-					mSelectFileAction.setVisibility(View.VISIBLE);
-					mStartAction.setVisibility(View.VISIBLE);
-					mStartAction.setEnabled(false);
-					mCancelAction.setVisibility(View.GONE);
-					mPauseResumeAction.setVisibility(View.GONE);
 					mStatus.setText(R.string.image_upgrade_status_completed);
 					break;
 			}

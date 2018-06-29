@@ -98,28 +98,27 @@ public class FilesUploadFragment extends FileBrowserFragment implements Injectab
 			}
 		});
 		mViewModel.getState().observe(this, state -> {
+			mUploadAction.setEnabled(isFileLoaded());
+			mCancelAction.setEnabled(state.canCancel());
+			mPauseResumeAction.setEnabled(state.canPauseOrResume());
+			mPauseResumeAction.setText(state == FilesUploadViewModel.State.PAUSED ?
+					R.string.image_action_resume : R.string.image_action_pause);
+
+			mSelectFileAction.setVisibility(state.inProgress() ? View.GONE : View.VISIBLE);
+			mUploadAction.setVisibility(state.inProgress() ? View.GONE : View.VISIBLE);
+			mCancelAction.setVisibility(state.inProgress() ? View.VISIBLE : View.GONE);
+			mPauseResumeAction.setVisibility(state.inProgress() ? View.VISIBLE : View.GONE);
+			// Update status
 			switch (state) {
 				case UPLOADING:
-					mGenerateFileAction.setVisibility(View.GONE);
-					mSelectFileAction.setVisibility(View.GONE);
-					mUploadAction.setVisibility(View.GONE);
-					mCancelAction.setVisibility(View.VISIBLE);
-					mPauseResumeAction.setVisibility(View.VISIBLE);
-					mPauseResumeAction.setText(R.string.files_action_pause);
 					mStatus.setText(R.string.files_upload_status_uploading);
 					break;
 				case PAUSED:
-					mPauseResumeAction.setText(R.string.files_action_resume);
+					mStatus.setText(R.string.files_upload_status_paused);
 					break;
 				case COMPLETE:
 					clearFileContent();
-					mGenerateFileAction.setVisibility(View.VISIBLE);
-					mSelectFileAction.setVisibility(View.VISIBLE);
-					mUploadAction.setVisibility(View.VISIBLE);
-					mUploadAction.setEnabled(false);
-					mCancelAction.setVisibility(View.GONE);
-					mPauseResumeAction.setVisibility(View.GONE);
-					mStatus.setText(R.string.files_upload_status_completed);
+					mStatus.setText(R.string.image_upgrade_status_completed);
 					break;
 			}
 		});

@@ -110,32 +110,29 @@ public class ImageUploadFragment extends FileBrowserFragment implements Injectab
 		super.onActivityCreated(savedInstanceState);
 
 		mViewModel.getState().observe(this, state -> {
+			mUploadAction.setEnabled(isFileLoaded());
+			mCancelAction.setEnabled(state.canCancel());
+			mPauseResumeAction.setEnabled(state.canPauseOrResume());
+			mPauseResumeAction.setText(state == ImageUploadViewModel.State.PAUSED ?
+					R.string.image_action_resume : R.string.image_action_pause);
+
+			mSelectFileAction.setVisibility(state.inProgress() ? View.GONE : View.VISIBLE);
+			mUploadAction.setVisibility(state.inProgress() ? View.GONE : View.VISIBLE);
+			mCancelAction.setVisibility(state.inProgress() ? View.VISIBLE : View.GONE);
+			mPauseResumeAction.setVisibility(state.inProgress() ? View.VISIBLE : View.GONE);
+			// Update status
 			switch (state) {
 				case VALIDATING:
-					mSelectFileAction.setVisibility(View.GONE);
-					mUploadAction.setVisibility(View.GONE);
-					mCancelAction.setVisibility(View.VISIBLE);
-					mPauseResumeAction.setVisibility(View.VISIBLE);
-					mCancelAction.setEnabled(false);
-					mPauseResumeAction.setEnabled(false);
 					mStatus.setText(R.string.image_upload_status_validating);
 					break;
 				case UPLOADING:
-					mCancelAction.setEnabled(true);
-					mPauseResumeAction.setEnabled(true);
-					mPauseResumeAction.setText(R.string.image_action_pause);
 					mStatus.setText(R.string.image_upload_status_uploading);
 					break;
 				case PAUSED:
-					mPauseResumeAction.setText(R.string.image_action_resume);
+					mStatus.setText(R.string.image_upload_status_paused);
 					break;
 				case COMPLETE:
 					clearFileContent();
-					mSelectFileAction.setVisibility(View.VISIBLE);
-					mUploadAction.setVisibility(View.VISIBLE);
-					mUploadAction.setEnabled(false);
-					mCancelAction.setVisibility(View.GONE);
-					mPauseResumeAction.setVisibility(View.GONE);
 					mStatus.setText(R.string.image_upload_status_completed);
 					break;
 			}
