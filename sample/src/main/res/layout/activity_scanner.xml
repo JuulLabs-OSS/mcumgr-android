@@ -28,13 +28,14 @@
 			app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
 		<ProgressBar
-			android:id="@+id/state_scanning"
+			android:id="@+id/progress_bar"
 			style="?android:attr/progressBarStyleHorizontal"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_marginBottom="-7dp"
 			android:layout_marginTop="-8dp"
 			android:indeterminate="true"
+			android:indeterminateTintMode="src_in"
 			android:indeterminateTint="@android:color/white"
 			android:visibility="invisible"
 			app:layout_constraintEnd_toEndOf="parent"

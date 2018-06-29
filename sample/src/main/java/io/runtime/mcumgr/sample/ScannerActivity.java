@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 
 import javax.inject.Inject;
 
@@ -47,8 +48,8 @@ public class ScannerActivity extends AppCompatActivity
 	@Inject
 	ViewModelFactory mViewModelFactory;
 
-	@BindView(R.id.state_scanning)
-	View mScanningView;
+	@BindView(R.id.progress_bar)
+	ProgressBar mScanningProgressBar;
 	@BindView(R.id.no_devices)
 	View mEmptyView;
 	@BindView(R.id.no_location_permission)
@@ -191,7 +192,7 @@ public class ScannerActivity extends AppCompatActivity
 
 				// We are now OK to start scanning
 				mScannerViewModel.startScan();
-				mScanningView.setVisibility(View.VISIBLE);
+				mScanningProgressBar.setVisibility(View.VISIBLE);
 
 				if (!state.hasRecords()) {
 					mEmptyView.setVisibility(View.VISIBLE);
@@ -207,13 +208,13 @@ public class ScannerActivity extends AppCompatActivity
 				}
 			} else {
 				mNoBluetoothView.setVisibility(View.VISIBLE);
-				mScanningView.setVisibility(View.INVISIBLE);
+				mScanningProgressBar.setVisibility(View.INVISIBLE);
 				mEmptyView.setVisibility(View.GONE);
 			}
 		} else {
 			mNoLocationPermissionView.setVisibility(View.VISIBLE);
 			mNoBluetoothView.setVisibility(View.GONE);
-			mScanningView.setVisibility(View.INVISIBLE);
+			mScanningProgressBar.setVisibility(View.INVISIBLE);
 			mEmptyView.setVisibility(View.GONE);
 
 			final boolean deniedForever = Utils.isLocationPermissionDeniedForever(this);
