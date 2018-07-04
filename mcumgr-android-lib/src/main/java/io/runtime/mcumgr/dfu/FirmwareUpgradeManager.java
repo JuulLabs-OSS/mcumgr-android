@@ -338,6 +338,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     // Check for an error return code
                     if (!response.isSuccess()) {
                         fail(new McuMgrErrorException(response.getRc()));
+                        return;
                     }
 
                     McuMgrImageStateResponse.ImageSlot[] images = response.images;
@@ -416,6 +417,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             // Check for an error return code
             if (!response.isSuccess()) {
                 fail(new McuMgrErrorException(response.getRc()));
+                return;
             }
             if (response.images.length != 2) {
                 fail(new McuMgrException("Test response does not contain enough info"));
@@ -499,6 +501,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     // Check for an error return code
                     if (!response.isSuccess()) {
                         fail(new McuMgrErrorException(response.getRc()));
+                        return;
                     }
                     if (response.images.length == 0) {
                         fail(new McuMgrException("Confirm response does not contain enough info"));
