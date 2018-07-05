@@ -309,7 +309,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
     private synchronized void fail(McuMgrException error) {
         cancelPrivate();
-        mInternalCallback.onFail(mState, error);
+        mInternalCallback.onUploadFailed(mState, error);
     }
 
     private synchronized void cancelPrivate() {
@@ -571,22 +571,22 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private ImageManager.ImageUploadCallback mImageUploadCallback =
             new ImageManager.ImageUploadCallback() {
         @Override
-        public void onProgressChange(int bytesSent, int imageSize, long timestamp) {
+        public void onProgressChanged(int bytesSent, int imageSize, long timestamp) {
             mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
         }
 
         @Override
-        public void onUploadFail(@NonNull McuMgrException error) {
-            mInternalCallback.onFail(mState, error);
+        public void onUploadFailed(@NonNull McuMgrException error) {
+            mInternalCallback.onUploadFailed(mState, error);
         }
 
         @Override
-        public void onUploadCancel() {
-            mInternalCallback.onCancel(mState);
+        public void onUploadCanceled() {
+            mInternalCallback.onUploadCanceled(mState);
         }
 
         @Override
-        public void onUploadFinish() {
+        public void onUploadFinished() {
             // When upload is complete, send test on confirm commands, depending on the mode.
             switch (mMode) {
                 case TEST_ONLY:
@@ -660,30 +660,30 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onFail(final State state, final McuMgrException error) {
+        public void onUploadFailed(final State state, final McuMgrException error) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onFail(state, error);
+                        mCallback.onUploadFailed(state, error);
                     }
                 });
             } else {
-                mCallback.onFail(state, error);
+                mCallback.onUploadFailed(state, error);
             }
         }
 
         @Override
-        public void onCancel(final State state) {
+        public void onUploadCanceled(final State state) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onCancel(state);
+                        mCallback.onUploadCanceled(state);
                     }
                 });
             } else {
-                mCallback.onCancel(state);
+                mCallback.onUploadCanceled(state);
             }
         }
 

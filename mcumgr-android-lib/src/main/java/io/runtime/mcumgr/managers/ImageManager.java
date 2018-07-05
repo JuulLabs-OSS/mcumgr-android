@@ -389,7 +389,7 @@ public class ImageManager extends McuManager {
         } else if (mUploadState == STATE_PAUSED) {
             Log.d(TAG, "Upload canceled!");
             resetUpload();
-            mUploadCallback.onUploadCancel();
+            mUploadCallback.onUploadCanceled();
             mUploadCallback = null;
         }
         mUploadState = STATE_NONE;
@@ -426,7 +426,7 @@ public class ImageManager extends McuManager {
 
     private synchronized void failUpload(McuMgrException error) {
         if (mUploadCallback != null) {
-            mUploadCallback.onUploadFail(error);
+            mUploadCallback.onUploadFailed(error);
         }
         cancelUpload();
     }
@@ -486,13 +486,13 @@ public class ImageManager extends McuManager {
                     mUploadOffset = response.off;
 
                     // Call the progress callback.
-                    mUploadCallback.onProgressChange(mUploadOffset, mImageData.length,
+                    mUploadCallback.onProgressChanged(mUploadOffset, mImageData.length,
                             System.currentTimeMillis());
 
                     if (mUploadState == STATE_NONE) {
                         Log.d(TAG, "Upload canceled!");
                         resetUpload();
-                        mUploadCallback.onUploadCancel();
+                        mUploadCallback.onUploadCanceled();
                         mUploadCallback = null;
                         return;
                     }
@@ -501,7 +501,7 @@ public class ImageManager extends McuManager {
                     if (mUploadOffset == mImageData.length) {
                         Log.d(TAG, "Upload finished!");
                         resetUpload();
-                        mUploadCallback.onUploadFinish();
+                        mUploadCallback.onUploadFinished();
                         mUploadCallback = null;
                         return;
                     }
@@ -575,23 +575,23 @@ public class ImageManager extends McuManager {
          * @param imageSize the size of the image in bytes.
          * @param timestamp the timestamp of when the response was received.
          */
-        void onProgressChange(int bytesSent, int imageSize, long timestamp);
+        void onProgressChanged(int bytesSent, int imageSize, long timestamp);
 
         /**
          * Called when the upload has failed.
          *
          * @param error the error. See the cause for more info.
          */
-        void onUploadFail(@NonNull McuMgrException error);
+        void onUploadFailed(@NonNull McuMgrException error);
 
         /**
          * Called when the upload has been canceled.
          */
-        void onUploadCancel();
+        void onUploadCanceled();
 
         /**
          * Called when the upload has finished successfully.
          */
-        void onUploadFinish();
+        void onUploadFinished();
     }
 }

@@ -149,7 +149,7 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 	}
 
 	@Override
-	public void onCancel(final FirmwareUpgradeManager.State state) {
+	public void onUploadCanceled(final FirmwareUpgradeManager.State state) {
 		mProgressLiveData.postValue(0);
 		mStateLiveData.postValue(State.IDLE);
 		mCancelledEvent.post();
@@ -157,7 +157,7 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 	}
 
 	@Override
-	public void onFail(final FirmwareUpgradeManager.State state, final McuMgrException error) {
+	public void onUploadFailed(final FirmwareUpgradeManager.State state, final McuMgrException error) {
 		mProgressLiveData.postValue(0);
 		mErrorLiveData.postValue(error.getMessage());
 		postReady();

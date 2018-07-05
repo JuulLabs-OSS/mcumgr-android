@@ -43,7 +43,7 @@ public interface FirmwareUpgradeCallback {
      * @param state the state the upgrade failed in.
      * @param error the error.
      */
-    void onFail(FirmwareUpgradeManager.State state, McuMgrException error);
+    void onUploadFailed(FirmwareUpgradeManager.State state, McuMgrException error);
 
     /**
      * Called when the firmware upgrade has been canceled using the
@@ -51,7 +51,7 @@ public interface FirmwareUpgradeCallback {
      *
      * @param state the state the upgrade was cancelled in.
      */
-    void onCancel(FirmwareUpgradeManager.State state);
+    void onUploadCanceled(FirmwareUpgradeManager.State state);
 
     /**
      * Called when the {@link FirmwareUpgradeManager.State#UPLOAD} state progress has changed.
