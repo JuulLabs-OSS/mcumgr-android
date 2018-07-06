@@ -337,7 +337,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
                     // Check for an error return code
                     if (!response.isSuccess()) {
-                        fail(new McuMgrErrorException(response.getRc()));
+                        fail(new McuMgrErrorException(response.getReturnCode()));
                         return;
                     }
 
@@ -416,7 +416,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             Log.v(TAG, "Test response: " + response.toString());
             // Check for an error return code
             if (!response.isSuccess()) {
-                fail(new McuMgrErrorException(response.getRc()));
+                fail(new McuMgrErrorException(response.getReturnCode()));
                 return;
             }
             if (response.images.length != 2) {
@@ -479,7 +479,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             Log.v(TAG, "Reset request sent. Waiting for reset");
             // Check for an error return code
             if (!response.isSuccess()) {
-                fail(new McuMgrErrorException(response.getRc()));
+                fail(new McuMgrErrorException(response.getReturnCode()));
             }
         }
 
@@ -500,7 +500,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     Log.v(TAG, "Confirm response: " + response.toString());
                     // Check for an error return code
                     if (!response.isSuccess()) {
-                        fail(new McuMgrErrorException(response.getRc()));
+                        fail(new McuMgrErrorException(response.getReturnCode()));
                         return;
                     }
                     if (response.images.length == 0) {
