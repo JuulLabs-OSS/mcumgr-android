@@ -208,7 +208,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         mHash = McuMgrImage.getHash(imageData);
 
         // Begin the upload
-        mInternalCallback.onStart(this);
+        mInternalCallback.onUpgradeStarted(this);
         validate();
     }
 
@@ -304,12 +304,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private synchronized void success() {
         mState = State.NONE;
         mPaused = false;
-        mInternalCallback.onSuccess();
+        mInternalCallback.onUpgradeCompleted();
     }
 
     private synchronized void fail(McuMgrException error) {
         cancelPrivate();
-        mInternalCallback.onUploadFailed(mState, error);
+        mInternalCallback.onUpgradeFailed(mState, error);
     }
 
     private synchronized void cancelPrivate() {
@@ -577,12 +577,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
         @Override
         public void onUploadFailed(@NonNull McuMgrException error) {
-            mInternalCallback.onUploadFailed(mState, error);
+            mInternalCallback.onUpgradeFailed(mState, error);
         }
 
         @Override
         public void onUploadCanceled() {
-            mInternalCallback.onUploadCanceled(mState);
+            mInternalCallback.onUpgradeCanceled(mState);
         }
 
         @Override
@@ -618,16 +618,16 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onStart(final FirmwareUpgradeController controller) {
+        public void onUpgradeStarted(final FirmwareUpgradeController controller) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onStart(controller);
+                        mCallback.onUpgradeStarted(controller);
                     }
                 });
             } else {
-                mCallback.onStart(controller);
+                mCallback.onUpgradeStarted(controller);
             }
         }
 
@@ -646,44 +646,44 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onSuccess() {
+        public void onUpgradeCompleted() {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onSuccess();
+                        mCallback.onUpgradeCompleted();
                     }
                 });
             } else {
-                mCallback.onSuccess();
+                mCallback.onUpgradeCompleted();
             }
         }
 
         @Override
-        public void onUploadFailed(final State state, final McuMgrException error) {
+        public void onUpgradeFailed(final State state, final McuMgrException error) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onUploadFailed(state, error);
+                        mCallback.onUpgradeFailed(state, error);
                     }
                 });
             } else {
-                mCallback.onUploadFailed(state, error);
+                mCallback.onUpgradeFailed(state, error);
             }
         }
 
         @Override
-        public void onUploadCanceled(final State state) {
+        public void onUpgradeCanceled(final State state) {
             if (mUiThreadCallbacks) {
                 getMainThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mCallback.onUploadCanceled(state);
+                        mCallback.onUpgradeCanceled(state);
                     }
                 });
             } else {
-                mCallback.onUploadCanceled(state);
+                mCallback.onUpgradeCanceled(state);
             }
         }
 
