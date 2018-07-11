@@ -12,6 +12,9 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import io.runtime.mcumgr.McuManager;
@@ -44,6 +47,7 @@ public class ImageManager extends McuManager {
     private final static String TAG = "ImageManager";
 
     private final static int IMG_HASH_LEN = 32;
+    private final static int TRUNCATED_HASH_LEN = 3;
 
     // Image manager command IDs
     private final static int ID_STATE = 0;
@@ -105,6 +109,7 @@ public class ImageManager extends McuManager {
      * @see #upload(byte[], ImageUploadCallback)
      */
     public void upload(byte[] data, int offset, @NonNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
+        Log.e(TAG, "upload at " + offset);
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
         int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
@@ -122,6 +127,23 @@ public class ImageManager extends McuManager {
         if (offset == 0) {
             // Only send the length of the image in the first packet of the upload
             payloadMap.put("len", data.length);
+
+            /*
+             * Feature in Apache Mynewt: Device keeps track of unfinished uploads based on the
+             * SHA256 hash over the image data. When an upload request is received which contains
+             * the same hash of a partially finished upload, the device will send the offset to
+             * continue from.
+             */
+            try {
+                // Calculate the SHA-256 over the image data
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hash = digest.digest(data);
+                // Truncate the hash to 8 bytes to save on space.
+                byte[] truncatedHash = Arrays.copyOf(hash, TRUNCATED_HASH_LEN);
+                payloadMap.put("sha", truncatedHash);
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
         }
 
         // Send the request
@@ -162,6 +184,23 @@ public class ImageManager extends McuManager {
         if (offset == 0) {
             // Only send the length of the image in the first packet of the upload
             payloadMap.put("len", data.length);
+
+            /*
+             * Feature in Apache Mynewt: Device keeps track of unfinished uploads based on the
+             * SHA256 hash over the image data. When an upload request is received which contains
+             * the same hash of a partially finished upload, the device will send the offset to
+             * continue from.
+             */
+            try {
+                // Calculate the SHA-256 over the image data
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hash = digest.digest(data);
+                // Truncate the hash to 8 bytes to save on space.
+                byte[] truncatedHash = Arrays.copyOf(hash, TRUNCATED_HASH_LEN);
+                payloadMap.put("sha", truncatedHash);
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
         }
 
         // Send the request
@@ -485,6 +524,7 @@ public class ImageManager extends McuManager {
             new McuMgrCallback<McuMgrImageUploadResponse>() {
                 @Override
                 public void onResponse(@NonNull McuMgrImageUploadResponse response) {
+                    Log.e(TAG, response.toString());
                     // Check for a McuManager error.
                     if (response.rc != 0) {
                         // TODO when the image in slot 1 is confirmed, this will return ENOMEM (2).
@@ -523,6 +563,7 @@ public class ImageManager extends McuManager {
 
                 @Override
                 public void onError(@NonNull McuMgrException error) {
+                    Log.e(TAG, "onError: " + error.getMessage());
                     // Check if the exception is due to an insufficient MTU.
                     if (error instanceof InsufficientMtuException) {
                         InsufficientMtuException mtuErr = (InsufficientMtuException) error;
@@ -534,6 +575,7 @@ public class ImageManager extends McuManager {
                         boolean isMtuSet = setUploadMtu(mtu);
 
                         if (isMtuSet) {
+                            Log.e(TAG, "Upload MTU is too large for transport. MTU reset to " + mtu);
                             // If the MTU has been set successfully, restart the upload.
                             restartUpload();
                             return;
@@ -551,6 +593,7 @@ public class ImageManager extends McuManager {
         overheadTestMap.put("off", offset);
         if (offset == 0) {
             overheadTestMap.put("len", data.length);
+            overheadTestMap.put("sha", new byte[TRUNCATED_HASH_LEN]);
         }
         try {
             if (getScheme().isCoap()) {
