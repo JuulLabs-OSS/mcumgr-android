@@ -109,7 +109,6 @@ public class ImageManager extends McuManager {
      * @see #upload(byte[], ImageUploadCallback)
      */
     public void upload(byte[] data, int offset, @NonNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
-        Log.e(TAG, "upload at " + offset);
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
         int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
@@ -138,7 +137,7 @@ public class ImageManager extends McuManager {
                 // Calculate the SHA-256 over the image data
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] hash = digest.digest(data);
-                // Truncate the hash to 8 bytes to save on space.
+                // Truncate the hash to save space.
                 byte[] truncatedHash = Arrays.copyOf(hash, TRUNCATED_HASH_LEN);
                 payloadMap.put("sha", truncatedHash);
             } catch (NoSuchAlgorithmException e) {
@@ -195,7 +194,7 @@ public class ImageManager extends McuManager {
                 // Calculate the SHA-256 over the image data
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] hash = digest.digest(data);
-                // Truncate the hash to 8 bytes to save on space.
+                // Truncate the hash to save space.
                 byte[] truncatedHash = Arrays.copyOf(hash, TRUNCATED_HASH_LEN);
                 payloadMap.put("sha", truncatedHash);
             } catch (NoSuchAlgorithmException e) {
