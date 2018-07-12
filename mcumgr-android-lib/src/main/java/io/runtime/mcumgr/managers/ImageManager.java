@@ -523,7 +523,6 @@ public class ImageManager extends McuManager {
             new McuMgrCallback<McuMgrImageUploadResponse>() {
                 @Override
                 public void onResponse(@NonNull McuMgrImageUploadResponse response) {
-                    Log.e(TAG, response.toString());
                     // Check for a McuManager error.
                     if (response.rc != 0) {
                         // TODO when the image in slot 1 is confirmed, this will return ENOMEM (2).
