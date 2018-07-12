@@ -572,7 +572,6 @@ public class ImageManager extends McuManager {
                         boolean isMtuSet = setUploadMtu(mtu);
 
                         if (isMtuSet) {
-                            Log.e(TAG, "Upload MTU is too large for transport. MTU reset to " + mtu);
                             // If the MTU has been set successfully, restart the upload.
                             restartUpload();
                             return;
