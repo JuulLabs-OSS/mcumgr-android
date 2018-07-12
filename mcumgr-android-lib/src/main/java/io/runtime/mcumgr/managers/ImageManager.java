@@ -561,7 +561,6 @@ public class ImageManager extends McuManager {
 
                 @Override
                 public void onError(@NonNull McuMgrException error) {
-                    Log.e(TAG, "onError: " + error.getMessage());
                     // Check if the exception is due to an insufficient MTU.
                     if (error instanceof InsufficientMtuException) {
                         InsufficientMtuException mtuErr = (InsufficientMtuException) error;
