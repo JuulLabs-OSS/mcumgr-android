@@ -291,7 +291,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private synchronized void confirm() {
         setState(State.CONFIRM);
         if (!mPaused) {
-            mImageManager.confirm(mHash, mConfirmCallback);
+            mImageManager.confirm(null, mConfirmCallback);
         }
     }
 
@@ -300,12 +300,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         if (!mPaused) {
             mDefaultManager.getTransporter().addObserver(mResetObserver);
             mDefaultManager.reset(mResetCallback);
-        }
-    }
-
-    private synchronized void verifyBoot() {
-        if (!mPaused) {
-            mImageManager.list(mVerifyBootCallback);
         }
     }
 
@@ -480,7 +474,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             switch (mMode) {
                 case TEST_AND_CONFIRM:
                     // The device reconnected after testing.
-                    verifyBoot();
+                    confirm();
                     break;
                 case TEST_ONLY:
                 case CONFIRM_ONLY:
@@ -513,45 +507,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     };
 
     /**
-     * State: RESET.
-     * Callback to verify that the reset has caused the device to successfully boot into the
-     * uploaded image (i.e. that the image was swapped into slot 0 and is active).
-     */
-    private McuMgrCallback<McuMgrImageStateResponse> mVerifyBootCallback =
-            new McuMgrCallback<McuMgrImageStateResponse>() {
-        @Override
-        public void onResponse(@NonNull McuMgrImageStateResponse response) {
-            Log.v(TAG, "Verify boot response: " + response.toString());
-            // Check for an error return code
-            if (!response.isSuccess()) {
-                fail(new McuMgrErrorException(response.getReturnCode()));
-                return;
-            }
-            if (response.images.length == 0) {
-                fail(new McuMgrException("Verify boot response does not contain enough info"));
-                return;
-            }
-            if (!Arrays.equals(mHash, response.images[0].hash)) {
-                fail(new McuMgrException("Device failed to boot upgrade image."));
-                return;
-            }
-            switch (mMode) {
-                case TEST_AND_CONFIRM:
-                    // The device reconnected after testing.
-                    confirm();
-                    break;
-                case TEST_ONLY:
-                case CONFIRM_ONLY:
-            }
-        }
-
-        @Override
-        public void onError(@NonNull McuMgrException e) {
-            fail(e);
-        }
-    };
-
-    /**
      * State: CONFIRM.
      * Callback for the confirm command.
      */
@@ -569,10 +524,15 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                         fail(new McuMgrException("Confirm response does not contain enough info"));
                         return;
                     }
+                    if (!Arrays.equals(mHash, response.images[0].hash)) {
+                        fail(new McuMgrException("Device failed to boot into new image"));
+                        return;
+                    }
                     if (!response.images[0].confirmed) {
                         fail(new McuMgrException("Image is not in a confirmed state."));
                         return;
                     }
+
                     // Confirm command has been sent.
                     switch (mMode) {
                         case CONFIRM_ONLY:
