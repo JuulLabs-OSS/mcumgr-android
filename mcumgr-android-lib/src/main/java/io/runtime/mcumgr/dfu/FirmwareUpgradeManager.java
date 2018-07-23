@@ -442,7 +442,6 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 return;
             }
             if (!response.images[1].pending) {
-                Log.e(TAG, "Tested image is not in a pending state.");
                 fail(new McuMgrException("Tested image is not in a pending state."));
                 return;
             }
@@ -526,8 +525,11 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                         return;
                     }
                     if (!response.images[0].confirmed) {
-                        Log.e(TAG, "Image is not in a confirmed state.");
                         fail(new McuMgrException("Image is not in a confirmed state."));
+                        return;
+                    }
+                    if (!Arrays.equals(mHash, response.images[0].hash)) {
+                        fail(new McuMgrException("Image in slot 0 does not match upgrade image. Image failed to boot."));
                         return;
                     }
                     // Confirm command has been sent.
