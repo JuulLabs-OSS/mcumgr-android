@@ -27,7 +27,7 @@ implementation 'com.github.runtimeco:mcumgr-android:0.6.1'
 
 # Introduction
 
-McuManager is a application layer protocol used to manage and monitor microcontrollers running Apache Mynewt and Zephyr. More specifically, McuManagr implements over-the-air (OTA) firmware upgrades, log and stat collection, and file-system and configuration management. 
+McuManager is an application layer protocol used to manage and monitor microcontrollers running Apache Mynewt and Zephyr. More specifically, McuManagr implements over-the-air (OTA) firmware upgrades, log and stat collection, and file-system and configuration management. 
 
 ## Javadoc
 
