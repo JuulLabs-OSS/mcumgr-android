@@ -540,7 +540,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                                 return;
                             }
                             // Check that the upgrade image has been confirmed
-                            if (!response.images[1].confirmed) {
+                            if (!response.images[1].pending) {
                                 fail(new McuMgrException("Image is not in a confirmed state."));
                                 return;
                             }
