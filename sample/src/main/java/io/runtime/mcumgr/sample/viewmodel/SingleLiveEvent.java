@@ -36,7 +36,7 @@ public class SingleLiveEvent<T> extends MutableLiveData<T> {
     public void observe(@NonNull final LifecycleOwner owner, @NonNull final Observer<T> observer) {
 
         if (hasActiveObservers()) {
-            Log.w(TAG, "Multiple observers registered but only one will be notified of changes.");
+            Timber.w("Multiple observers registered but only one will be notified of changes.");
         }
 
         // Observe the internal MutableLiveData

@@ -6,8 +6,6 @@
 
 package io.runtime.mcumgr.response;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.IOException;
@@ -18,6 +16,7 @@ import io.runtime.mcumgr.McuMgrHeader;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.exception.McuMgrCoapException;
 import io.runtime.mcumgr.util.CBOR;
+import timber.log.Timber;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -72,7 +71,7 @@ public class McuMgrResponse {
         try {
             return CBOR.toString(mPayload);
         } catch (IOException e) {
-            Log.e(TAG, "Failed to parse response", e);
+            Timber.e("Failed to parse response", e);
         }
         return null;
     }
@@ -93,7 +92,7 @@ public class McuMgrResponse {
      */
     public int getReturnCodeValue() {
         if (mReturnCode == null) {
-            Log.w(TAG, "Response does not contain a McuMgr return code.");
+            Timber.w("Response does not contain a McuMgr return code.");
             return 0;
         } else {
             return mReturnCode.value();
@@ -241,7 +240,7 @@ public class McuMgrResponse {
                                                                  Class<T> type) throws IOException, McuMgrCoapException {
         // If the code class indicates a CoAP error response, throw a McuMgrCoapException
         if (codeClass == 4 || codeClass == 5) {
-            Log.e(TAG, "Received CoAP Error response, throwing McuMgrCoapException");
+            Timber.e("Received CoAP Error response, throwing McuMgrCoapException");
             throw new McuMgrCoapException(bytes, codeClass, codeDetail);
         }
 
