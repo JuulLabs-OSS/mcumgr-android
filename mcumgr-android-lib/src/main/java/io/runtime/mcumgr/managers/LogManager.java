@@ -32,7 +32,6 @@ import timber.log.Timber;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class LogManager extends McuManager {
-    private final static String TAG = "LogManager";
 
     // Command IDs
     private final static int ID_READ = 0;
@@ -238,7 +237,7 @@ public class LogManager extends McuManager {
             }
             return logStates;
         } catch (McuMgrException e) {
-            Timber.e("Transport error while getting available logs", e);
+            Timber.e(e, "Transport error while getting available logs");
         }
         return logStates;
     }
@@ -311,9 +310,9 @@ public class LogManager extends McuManager {
             Timber.v("Show logs response: %s", CBOR.toString(response.getPayload()));
             return response;
         } catch (McuMgrException e) {
-            Timber.e("Requesting next set of logs failed", e);
+            Timber.e(e, "Requesting next set of logs failed");
         } catch (IOException e) {
-            Timber.e("Parsing response failed", e);
+            Timber.e(e, "Parsing response failed");
         }
 
         return null;

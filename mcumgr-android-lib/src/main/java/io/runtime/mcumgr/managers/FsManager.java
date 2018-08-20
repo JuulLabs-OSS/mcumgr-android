@@ -26,7 +26,6 @@ import timber.log.Timber;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class FsManager extends McuManager {
-    private final static String TAG = "FsManager";
 
     private final static int ID_FILE = 0;
 
@@ -510,7 +509,7 @@ public class FsManager extends McuManager {
                 return cborData.length + 8 + 2 + 3;
             }
         } catch (IOException e) {
-            Timber.e("Error while calculating packet overhead", e);
+            Timber.e(e, "Error while calculating packet overhead");
         }
         return -1;
     }

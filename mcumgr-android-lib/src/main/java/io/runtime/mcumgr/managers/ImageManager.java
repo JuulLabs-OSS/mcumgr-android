@@ -44,7 +44,6 @@ import timber.log.Timber;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ImageManager extends McuManager {
-    private final static String TAG = "ImageManager";
 
     private final static int IMG_HASH_LEN = 32;
     private final static int TRUNCATED_HASH_LEN = 3;
@@ -604,7 +603,7 @@ public class ImageManager extends McuManager {
                 return cborData.length + 8 + 2 + 3;
             }
         } catch (IOException e) {
-            Timber.e("Error while calculating packet overhead", e);
+            Timber.e(e, "Error while calculating packet overhead");
         }
         return -1;
     }

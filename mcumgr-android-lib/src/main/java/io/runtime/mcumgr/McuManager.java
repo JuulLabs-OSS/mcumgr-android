@@ -29,7 +29,6 @@ import timber.log.Timber;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class McuManager {
-    private static final String TAG = McuManager.class.getSimpleName();
 
     // Transport constants
     private final static int DEFAULT_MTU = 515;
@@ -365,7 +364,7 @@ public abstract class McuManager {
         try {
             return mcumgrFormat.parse(dateString);
         } catch (ParseException e) {
-            Timber.e("Converting string to Date failed", e);
+            Timber.e(e, "Converting string to Date failed");
             return null;
         }
     }

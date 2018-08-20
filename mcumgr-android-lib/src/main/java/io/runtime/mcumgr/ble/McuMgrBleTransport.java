@@ -48,7 +48,6 @@ import timber.log.Timber;
  * to perform your BLE actions by calling {@link BleManager#enqueue(Request)}.
  */
 public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implements McuMgrTransport {
-    private final static String TAG = "McuMgrBleTransport";
 
     public final static UUID SMP_SERVICE_UUID =
             UUID.fromString("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");

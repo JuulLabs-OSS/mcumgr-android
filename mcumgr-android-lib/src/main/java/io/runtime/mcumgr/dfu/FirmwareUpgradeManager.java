@@ -46,7 +46,6 @@ import timber.log.Timber;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class FirmwareUpgradeManager implements FirmwareUpgradeController {
-    private final static String TAG = "FirmwareUpgradeManager";
 
     public enum Mode {
         /**

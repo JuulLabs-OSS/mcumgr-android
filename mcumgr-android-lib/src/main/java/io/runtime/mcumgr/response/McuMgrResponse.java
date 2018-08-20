@@ -21,7 +21,6 @@ import timber.log.Timber;
 @SuppressWarnings({"WeakerAccess", "unused"})
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class McuMgrResponse {
-    private final static String TAG = "McuMgrResponse";
 
     /**
      * The raw return code found in most McuMgr response payloads. If a rc value is not explicitly
@@ -71,7 +70,7 @@ public class McuMgrResponse {
         try {
             return CBOR.toString(mPayload);
         } catch (IOException e) {
-            Timber.e("Failed to parse response", e);
+            Timber.e(e, "Failed to parse response");
         }
         return null;
     }
