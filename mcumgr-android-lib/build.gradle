@@ -6,28 +6,23 @@
  */
 
 apply plugin: 'com.android.library'
-// apply plugin: 'com.github.dcendents.android-maven'
-// group='com.github.runtimeco'
-
-ext {
-    mcuMgrVersion = "0.6.2"
-}
 
 android {
     compileSdkVersion 28
-    buildToolsVersion '27.0.3'
+
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 28
-        versionCode 1
-        versionName mcuMgrVersion
-
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
             consumerProguardFiles 'proguard-rules.pro'
         }
+    }
+
+    // TODO replace with https://issuetracker.google.com/issues/72050365 once released.
+    libraryVariants.all {
+        it.generateBuildConfig.enabled = false
     }
 }
 
@@ -49,27 +44,4 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
-// build a jar with source files
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-
-task javadoc(type: Javadoc) {
-    failOnError  false
-    source = android.sourceSets.main.java.sourceFiles
-    configurations.implementation.setCanBeResolved(true)
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    classpath += configurations.implementation
-}
-
-// build a jar with javadoc
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
+apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
