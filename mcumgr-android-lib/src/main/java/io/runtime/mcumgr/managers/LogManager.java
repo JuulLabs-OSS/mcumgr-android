@@ -300,7 +300,7 @@ public class LogManager extends McuManager {
      * @return The show response.
      */
     public McuMgrLogResponse showNext(State state) {
-        Timber.d("Show logs: name=%s, nextIndex=", state.getName(), state.getNextIndex());
+        Timber.d("Show logs: name=%s, nextIndex=%s", state.getName(), state.getNextIndex());
         try {
             McuMgrLogResponse response = show(state.getName(), state.getNextIndex(), null);
             if (response == null) {

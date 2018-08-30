@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import io.runtime.mcumgr.response.McuMgrResponse;
@@ -53,7 +54,7 @@ public class McuMgrLogResponse extends McuMgrResponse {
                     return null;
                 }
             } else {
-                return new String(msg, StandardCharsets.UTF_8);
+                return new String(msg, Charset.forName("UTF-8"));
             }
         }
     }
