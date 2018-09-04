@@ -6,7 +6,7 @@
 
 package io.runtime.mcumgr.exception;
 
-import android.support.annotation.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import io.runtime.mcumgr.McuMgrErrorCode;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
@@ -18,15 +18,15 @@ import io.runtime.mcumgr.response.McuMgrResponse;
  * {@link McuMgrErrorCode} that caused the failure.
  */
 public class McuMgrErrorException extends McuMgrException {
-    @NonNull
+    @NotNull
     private McuMgrErrorCode mCode;
 
-    public McuMgrErrorException(@NonNull McuMgrErrorCode code) {
+    public McuMgrErrorException(@NotNull McuMgrErrorCode code) {
         super("Mcu Mgr Error: " + code);
         mCode = code;
     }
 
-    public McuMgrErrorException(@NonNull McuMgrResponse response) {
+    public McuMgrErrorException(@NotNull McuMgrResponse response) {
         this(McuMgrErrorCode.valueOf(response.rc));
     }
 
@@ -35,7 +35,7 @@ public class McuMgrErrorException extends McuMgrException {
      *
      * @return The McuManager response code which caused this exception to be thrown.
      */
-    @NonNull
+    @NotNull
     public McuMgrErrorCode getCode() {
         return mCode;
     }

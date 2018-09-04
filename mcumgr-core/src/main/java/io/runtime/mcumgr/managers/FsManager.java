@@ -7,7 +7,7 @@
 
 package io.runtime.mcumgr.managers;
 
-import android.support.annotation.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -50,8 +50,8 @@ public class FsManager extends McuManager {
      * @param callback the asynchronous callback.
      * @see #upload(String, byte[], FileUploadCallback)
      */
-    public void download(@NonNull String name, int offset,
-                         @NonNull McuMgrCallback<McuMgrFsDownloadResponse> callback) {
+    public void download(@NotNull String name, int offset,
+                         @NotNull McuMgrCallback<McuMgrFsDownloadResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("name", name);
         payloadMap.put("off", offset);
@@ -70,8 +70,8 @@ public class FsManager extends McuManager {
      * @return The upload response.
      * @see #upload(String, byte[], FileUploadCallback)
      */
-    @NonNull
-    public McuMgrFsDownloadResponse download(@NonNull String name, int offset)
+    @NotNull
+    public McuMgrFsDownloadResponse download(@NotNull String name, int offset)
             throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("name", name);
@@ -96,8 +96,8 @@ public class FsManager extends McuManager {
      * @param callback the asynchronous callback.
      * @see #upload(String, byte[], FileUploadCallback)
      */
-    public void upload(@NonNull String name, @NonNull byte[] data, int offset,
-                       @NonNull McuMgrCallback<McuMgrFsUploadResponse> callback) {
+    public void upload(@NotNull String name, @NotNull byte[] data, int offset,
+                       @NotNull McuMgrCallback<McuMgrFsUploadResponse> callback) {
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
         int dataLength = Math.min(mMtu - calculatePacketOverhead(name, data, offset),
@@ -139,8 +139,8 @@ public class FsManager extends McuManager {
      * @return The upload response.
      * @see #upload(String, byte[], FileUploadCallback)
      */
-    @NonNull
-    public McuMgrFsUploadResponse upload(@NonNull String name, @NonNull byte[] data, int offset)
+    @NotNull
+    public McuMgrFsUploadResponse upload(@NotNull String name, @NotNull byte[] data, int offset)
             throws McuMgrException {
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
@@ -174,7 +174,7 @@ public class FsManager extends McuManager {
      * @param name     the file name.
      * @param callback the file download callback.
      */
-    public synchronized void download(@NonNull String name, @NonNull FileDownloadCallback callback) {
+    public synchronized void download(@NotNull String name, @NotNull FileDownloadCallback callback) {
         if (mTransferState == STATE_NONE) {
             mTransferState = STATE_DOWNLOADING;
         } else {
@@ -196,8 +196,8 @@ public class FsManager extends McuManager {
      * @param data     the file data to upload.
      * @param callback the file upload callback.
      */
-    public synchronized void upload(@NonNull String name, @NonNull byte[] data,
-                       @NonNull FileUploadCallback callback) {
+    public synchronized void upload(@NotNull String name, @NotNull byte[] data,
+                       @NotNull FileUploadCallback callback) {
         if (mTransferState == STATE_NONE) {
             mTransferState = STATE_UPLOADING;
         } else {
@@ -362,7 +362,7 @@ public class FsManager extends McuManager {
     private final McuMgrCallback<McuMgrFsUploadResponse> mUploadCallbackImpl =
             new McuMgrCallback<McuMgrFsUploadResponse>() {
                 @Override
-                public void onResponse(@NonNull McuMgrFsUploadResponse response) {
+                public void onResponse(@NotNull McuMgrFsUploadResponse response) {
                     // Check for a McuManager error
                     if (response.rc != 0) {
                         Timber.e("Upload failed due to McuManager error: %s",  response.rc);
@@ -400,7 +400,7 @@ public class FsManager extends McuManager {
                 }
 
                 @Override
-                public void onError(@NonNull McuMgrException error) {
+                public void onError(@NotNull McuMgrException error) {
                     // Check if the exception is due to an insufficient MTU.
                     if (error instanceof InsufficientMtuException) {
                         InsufficientMtuException mtuErr = (InsufficientMtuException) error;
@@ -431,7 +431,7 @@ public class FsManager extends McuManager {
     private final McuMgrCallback<McuMgrFsDownloadResponse> mDownloadCallbackImpl =
             new McuMgrCallback<McuMgrFsDownloadResponse>() {
                 @Override
-                public void onResponse(@NonNull McuMgrFsDownloadResponse response) {
+                public void onResponse(@NotNull McuMgrFsDownloadResponse response) {
                     // Check for a McuManager error.
                     if (response.rc != 0) {
                         Timber.e("Download failed due to McuManager error: %s", response.rc);
@@ -480,7 +480,7 @@ public class FsManager extends McuManager {
                 }
 
                 @Override
-                public void onError(@NonNull McuMgrException error) {
+                public void onError(@NotNull McuMgrException error) {
                     // Check if the exception is due to an insufficient MTU.
                     if (error instanceof InsufficientMtuException) {
                         InsufficientMtuException mtuErr = (InsufficientMtuException) error;
@@ -503,7 +503,7 @@ public class FsManager extends McuManager {
             };
 
     // TODO more precise overhead calculations
-    private int calculatePacketOverhead(@NonNull String name, @NonNull byte[] data, int offset) {
+    private int calculatePacketOverhead(@NotNull String name, @NotNull byte[] data, int offset) {
         HashMap<String, Object> overheadTestMap = new HashMap<>();
         overheadTestMap.put("name", name);
         overheadTestMap.put("data", new byte[0]);
@@ -582,7 +582,7 @@ public class FsManager extends McuManager {
          *
          * @param error the error. See the cause for more info.
          */
-        void onDownloadFailed(@NonNull McuMgrException error);
+        void onDownloadFailed(@NotNull McuMgrException error);
 
         /**
          * Called when the download has been canceled.
@@ -595,6 +595,6 @@ public class FsManager extends McuManager {
          * @param name file name.
          * @param data file data.
          */
-        void onDownloadFinished(@NonNull String name, @NonNull byte[] data);
+        void onDownloadFinished(@NotNull String name, @NotNull byte[] data);
     }
 }

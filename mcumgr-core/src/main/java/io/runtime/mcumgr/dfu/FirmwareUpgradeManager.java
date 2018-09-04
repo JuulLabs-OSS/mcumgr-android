@@ -9,8 +9,9 @@ package io.runtime.mcumgr.dfu;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.Executor;
@@ -128,7 +129,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      *
      * @param transport the transporter to use.
      */
-    public FirmwareUpgradeManager(@NonNull McuMgrTransport transport) {
+    public FirmwareUpgradeManager(@NotNull McuMgrTransport transport) {
         this(transport, null);
     }
 
@@ -138,7 +139,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      * @param transport the transporter to use.
      * @param callback  the callback.
      */
-    public FirmwareUpgradeManager(@NonNull McuMgrTransport transport,
+    public FirmwareUpgradeManager(@NotNull McuMgrTransport transport,
                                   @Nullable FirmwareUpgradeCallback callback) {
         mState = State.NONE;
         mImageManager = new ImageManager(transport);
@@ -173,7 +174,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      * @see Mode#CONFIRM_ONLY CONFIRM_ONLY
      * @see Mode#TEST_AND_CONFIRM TEST_AND_CONFIRM
      */
-    public void setMode(@NonNull Mode mode) {
+    public void setMode(@NotNull Mode mode) {
         if (mState != State.NONE) {
             Timber.i("Firmware upgrade is already in progress");
             return;
@@ -199,7 +200,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      * The manager will try to connect to the SMP server on the new firmware and confirm
      * the upload.
      */
-    public synchronized void start(@NonNull byte[] imageData) throws McuMgrException {
+    public synchronized void start(@NotNull byte[] imageData) throws McuMgrException {
         if (mState != State.NONE) {
             Timber.i("Firmware upgrade is already in progress");
             return;
@@ -344,7 +345,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private McuMgrCallback<McuMgrImageStateResponse> mImageValidateCallback =
             new McuMgrCallback<McuMgrImageStateResponse>() {
                 @Override
-                public void onResponse(@NonNull final McuMgrImageStateResponse response) {
+                public void onResponse(@NotNull final McuMgrImageStateResponse response) {
                     Timber.v("Validation response: %s", response.toString());
 
                     // Check for an error return code
@@ -445,7 +446,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 }
 
                 @Override
-                public void onError(@NonNull McuMgrException e) {
+                public void onError(@NotNull McuMgrException e) {
                     fail(e);
                 }
             };
@@ -456,7 +457,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrCallback<McuMgrImageStateResponse> mTestCallback = new McuMgrCallback<McuMgrImageStateResponse>() {
         @Override
-        public void onResponse(@NonNull McuMgrImageStateResponse response) {
+        public void onResponse(@NotNull McuMgrImageStateResponse response) {
             Timber.v("Test response: %s", response.toString());
             // Check for an error return code
             if (!response.isSuccess()) {
@@ -476,7 +477,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onError(@NonNull McuMgrException e) {
+        public void onError(@NotNull McuMgrException e) {
             fail(e);
         }
     };
@@ -529,7 +530,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrCallback<McuMgrResponse> mResetCallback = new McuMgrCallback<McuMgrResponse>() {
         @Override
-        public void onResponse(@NonNull McuMgrResponse response) {
+        public void onResponse(@NotNull McuMgrResponse response) {
             // Reset command has been sent.
             Timber.v("Reset request sent. Waiting for reset...");
             // Check for an error return code
@@ -539,7 +540,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onError(@NonNull McuMgrException e) {
+        public void onError(@NotNull McuMgrException e) {
             fail(e);
         }
     };
@@ -551,7 +552,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private McuMgrCallback<McuMgrImageStateResponse> mConfirmCallback =
             new McuMgrCallback<McuMgrImageStateResponse>() {
                 @Override
-                public void onResponse(@NonNull McuMgrImageStateResponse response) {
+                public void onResponse(@NotNull McuMgrImageStateResponse response) {
                     Timber.v("Confirm response: %s", response.toString());
                     // Check for an error return code
                     if (!response.isSuccess()) {
@@ -596,7 +597,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 }
 
                 @Override
-                public void onError(@NonNull McuMgrException e) {
+                public void onError(@NotNull McuMgrException e) {
                     fail(e);
                 }
             };
@@ -667,7 +668,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         }
 
         @Override
-        public void onUploadFailed(@NonNull McuMgrException error) {
+        public void onUploadFailed(@NotNull McuMgrException error) {
             fail(error);
         }
 
@@ -818,7 +819,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         private Handler mainThreadHandler = new Handler(Looper.getMainLooper());
 
         @Override
-        public void execute(@NonNull Runnable command) {
+        public void execute(@NotNull Runnable command) {
             mainThreadHandler.post(command);
         }
     }

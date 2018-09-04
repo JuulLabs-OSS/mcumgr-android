@@ -7,7 +7,8 @@
 
 package io.runtime.mcumgr;
 
-import android.support.annotation.NonNull;
+
+import org.jetbrains.annotations.NotNull;
 
 import io.runtime.mcumgr.util.ByteUtil;
 import io.runtime.mcumgr.util.Endian;
@@ -121,7 +122,7 @@ public class McuMgrHeader {
      * @param id       the sub-command ID for certain groups.
      * @return The built newt manager header.
      */
-    @NonNull
+    @NotNull
     public static byte[] build(int op, int flags, int len, int group, int sequence, int id) {
         return new byte[]{
                 (byte) op,

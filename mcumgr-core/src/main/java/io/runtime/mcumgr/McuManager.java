@@ -7,8 +7,8 @@
 
 package io.runtime.mcumgr;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -66,7 +66,7 @@ public abstract class McuManager {
     /**
      * Handles sending the McuManager command data over the transport specified by its scheme.
      */
-    @NonNull
+    @NotNull
     private final McuMgrTransport mTransporter;
 
     /**
@@ -80,7 +80,7 @@ public abstract class McuManager {
      * @param groupId     the group ID of this Mcu Manager instance.
      * @param transporter the transporter to use to send commands.
      */
-    protected McuManager(int groupId, @NonNull McuMgrTransport transporter) {
+    protected McuManager(int groupId, @NotNull McuMgrTransport transporter) {
         mGroupId = groupId;
         mTransporter = transporter;
     }
@@ -99,7 +99,7 @@ public abstract class McuManager {
      *
      * @return The transporter's scheme.
      */
-    @NonNull
+    @NotNull
     public McuMgrScheme getScheme() {
         return mTransporter.getScheme();
     }
@@ -109,7 +109,7 @@ public abstract class McuManager {
      *
      * @return Transporter for this new manager instance.
      */
-    @NonNull
+    @NotNull
     public McuMgrTransport getTransporter() {
         return mTransporter;
     }
@@ -160,8 +160,8 @@ public abstract class McuManager {
      */
     public <T extends McuMgrResponse> void send(int op, int commandId,
                                                 @Nullable Map<String, Object> payloadMap,
-                                                @NonNull Class<T> respType,
-                                                @NonNull McuMgrCallback<T> callback) {
+                                                @NotNull Class<T> respType,
+                                                @NotNull McuMgrCallback<T> callback) {
         send(op, 0, 0, commandId, payloadMap, respType, callback);
     }
 
@@ -180,10 +180,10 @@ public abstract class McuManager {
      * @return The McuMgrResponse or null if an error occurred.
      * @throws McuMgrException on transport error. See exception cause for more info.
      */
-    @NonNull
+    @NotNull
     public <T extends McuMgrResponse> T send(int op, int commandId,
                                              @Nullable Map<String, Object> payloadMap,
-                                             @NonNull Class<T> respType)
+                                             @NotNull Class<T> respType)
             throws McuMgrException {
         return send(op, 0, 0, commandId, respType, payloadMap);
     }
@@ -205,8 +205,8 @@ public abstract class McuManager {
      */
     public <T extends McuMgrResponse> void send(int op, int flags, int sequenceNum, int commandId,
                                                 @Nullable Map<String, Object> payloadMap,
-                                                @NonNull Class<T> respType,
-                                                @NonNull McuMgrCallback<T> callback) {
+                                                @NotNull Class<T> respType,
+                                                @NotNull McuMgrCallback<T> callback) {
         try {
             byte[] packet = buildPacket(getScheme(), op, flags, mGroupId, sequenceNum,
                     commandId, payloadMap);
@@ -233,9 +233,9 @@ public abstract class McuManager {
      * @return The Mcu Manager response.
      * @throws McuMgrException on transport error. See exception cause for more info.
      */
-    @NonNull
+    @NotNull
     public <T extends McuMgrResponse> T send(int op, int flags, int sequenceNum,
-                                             int commandId, @NonNull Class<T> respType,
+                                             int commandId, @NotNull Class<T> respType,
                                              @Nullable Map<String, Object> payloadMap)
             throws McuMgrException {
         byte[] packet = buildPacket(getScheme(), op, flags, mGroupId, sequenceNum,
@@ -251,8 +251,8 @@ public abstract class McuManager {
      * @param callback the response callback.
      * @param <T>      the response type.
      */
-    public <T extends McuMgrResponse> void send(@NonNull byte[] data, @NonNull Class<T> respType,
-                                                @NonNull McuMgrCallback<T> callback) {
+    public <T extends McuMgrResponse> void send(@NotNull byte[] data, @NotNull Class<T> respType,
+                                                @NotNull McuMgrCallback<T> callback) {
         mTransporter.send(data, respType, callback);
     }
 
@@ -265,8 +265,8 @@ public abstract class McuManager {
      * @return The Mcu Manager response.
      * @throws McuMgrException when an error occurs while sending the data.
      */
-    @NonNull
-    public <T extends McuMgrResponse> T send(@NonNull byte[] data, @NonNull Class<T> respType)
+    @NotNull
+    public <T extends McuMgrResponse> T send(@NotNull byte[] data, @NotNull Class<T> respType)
             throws McuMgrException {
         return mTransporter.send(data, respType);
     }
@@ -337,7 +337,7 @@ public abstract class McuManager {
      * @param timeZone the timezone of the given date. If null, the timezone on the device will be used.
      * @return A formatted string of the provided date and timezone.
      */
-    @NonNull
+    @NotNull
     public static String dateToString(@Nullable Date date, @Nullable TimeZone timeZone) {
         if (date == null) {
             date = new Date();

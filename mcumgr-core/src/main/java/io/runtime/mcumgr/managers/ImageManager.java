@@ -7,8 +7,8 @@
 
 package io.runtime.mcumgr.managers;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -62,7 +62,7 @@ public class ImageManager extends McuManager {
      *
      * @param transport the transport to use to send commands.
      */
-    public ImageManager(@NonNull McuMgrTransport transport) {
+    public ImageManager(@NotNull McuMgrTransport transport) {
         super(GROUP_IMAGE, transport);
     }
 
@@ -73,7 +73,7 @@ public class ImageManager extends McuManager {
      *
      * @param callback the asynchronous callback.
      */
-    public void list(@NonNull McuMgrCallback<McuMgrImageStateResponse> callback) {
+    public void list(@NotNull McuMgrCallback<McuMgrImageStateResponse> callback) {
         send(OP_READ, ID_STATE, null, McuMgrImageStateResponse.class, callback);
     }
 
@@ -85,7 +85,7 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    @NonNull
+    @NotNull
     public McuMgrImageStateResponse list() throws McuMgrException {
         return send(OP_READ, ID_STATE, null, McuMgrImageStateResponse.class);
     }
@@ -107,7 +107,7 @@ public class ImageManager extends McuManager {
      * @param callback the asynchronous callback.
      * @see #upload(byte[], ImageUploadCallback)
      */
-    public void upload(byte[] data, int offset, @NonNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
+    public void upload(byte[] data, int offset, @NotNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
         // Get the length of data (in bytes) to put into the upload packet. This calculated as:
         // min(MTU - packetOverhead, imageLength - uploadOffset)
         int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
@@ -214,7 +214,7 @@ public class ImageManager extends McuManager {
      * @param hash     the hash of the image to test.
      * @param callback the asynchronous callback.
      */
-    public void test(@NonNull byte[] hash, @NonNull McuMgrCallback<McuMgrImageStateResponse> callback) {
+    public void test(@NotNull byte[] hash, @NotNull McuMgrCallback<McuMgrImageStateResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("hash", hash);
         payloadMap.put("confirm", false);
@@ -231,8 +231,8 @@ public class ImageManager extends McuManager {
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
      */
-    @NonNull
-    public McuMgrImageStateResponse test(@NonNull byte[] hash) throws McuMgrException {
+    @NotNull
+    public McuMgrImageStateResponse test(@NotNull byte[] hash) throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("hash", hash);
         payloadMap.put("confirm", false);
@@ -249,7 +249,7 @@ public class ImageManager extends McuManager {
      *                 permanent.
      * @param callback the asynchronous callback.
      */
-    public void confirm(@Nullable byte[] hash, @NonNull McuMgrCallback<McuMgrImageStateResponse> callback) {
+    public void confirm(@Nullable byte[] hash, @NotNull McuMgrCallback<McuMgrImageStateResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("confirm", true);
         if (hash != null) {
@@ -287,7 +287,7 @@ public class ImageManager extends McuManager {
      * @param callback the image upload callback.
      * @return True, if the upload has stared, false otherwise.
      */
-    public synchronized boolean upload(@NonNull byte[] data, @NonNull ImageUploadCallback callback) {
+    public synchronized boolean upload(@NotNull byte[] data, @NotNull ImageUploadCallback callback) {
         if (mUploadState == STATE_NONE) {
             mUploadState = STATE_UPLOADING;
         } else {
@@ -521,7 +521,7 @@ public class ImageManager extends McuManager {
     private final McuMgrCallback<McuMgrImageUploadResponse> mUploadCallbackImpl =
             new McuMgrCallback<McuMgrImageUploadResponse>() {
                 @Override
-                public void onResponse(@NonNull McuMgrImageUploadResponse response) {
+                public void onResponse(@NotNull McuMgrImageUploadResponse response) {
                     // Check for a McuManager error.
                     if (response.rc != 0) {
                         // TODO when the image in slot 1 is confirmed, this will return ENOMEM (2).
@@ -559,7 +559,7 @@ public class ImageManager extends McuManager {
                 }
 
                 @Override
-                public void onError(@NonNull McuMgrException error) {
+                public void onError(@NotNull McuMgrException error) {
                     // Check if the exception is due to an insufficient MTU.
                     if (error instanceof InsufficientMtuException) {
                         InsufficientMtuException mtuErr = (InsufficientMtuException) error;
@@ -582,7 +582,7 @@ public class ImageManager extends McuManager {
             };
 
     // TODO more precise overhead calculations
-    private int calculatePacketOverhead(@NonNull byte[] data, int offset) {
+    private int calculatePacketOverhead(@NotNull byte[] data, int offset) {
         HashMap<String, Object> overheadTestMap = new HashMap<>();
         overheadTestMap.put("data", new byte[0]);
         overheadTestMap.put("off", offset);
@@ -631,7 +631,7 @@ public class ImageManager extends McuManager {
          *
          * @param error the error. See the cause for more info.
          */
-        void onUploadFailed(@NonNull McuMgrException error);
+        void onUploadFailed(@NotNull McuMgrException error);
 
         /**
          * Called when the upload has been canceled.

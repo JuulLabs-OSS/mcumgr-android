@@ -7,7 +7,8 @@
 
 package io.runtime.mcumgr;
 
-import android.support.annotation.NonNull;
+
+import org.jetbrains.annotations.NotNull;
 
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
@@ -21,12 +22,12 @@ public interface McuMgrCallback<T extends McuMgrResponse> {
      *
      * @param response the response.
      */
-    void onResponse(@NonNull T response);
+    void onResponse(@NotNull T response);
 
     /**
      * Mcu Manager has encountered a transport error while sending the command.
      *
      * @param error the error.
      */
-    void onError(@NonNull McuMgrException error);
+    void onError(@NotNull McuMgrException error);
 }

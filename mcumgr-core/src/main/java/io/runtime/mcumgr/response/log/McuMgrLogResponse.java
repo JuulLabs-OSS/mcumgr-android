@@ -6,13 +6,13 @@
 
 package io.runtime.mcumgr.response.log;
 
-import android.support.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.util.CBOR;

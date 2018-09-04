@@ -7,7 +7,7 @@
 
 package io.runtime.mcumgr;
 
-import android.support.annotation.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
@@ -37,7 +37,7 @@ public interface McuMgrTransport {
      *
      * @return The transport's scheme.
      */
-    @NonNull
+    @NotNull
     McuMgrScheme getScheme();
 
     /**
@@ -51,8 +51,8 @@ public interface McuMgrTransport {
      * @throws McuMgrException thrown on error. Set the cause of the error if caused by a different
      *                         type of exception.
      */
-    @NonNull
-    <T extends McuMgrResponse> T send(@NonNull byte[] payload, @NonNull Class<T> responseType)
+    @NotNull
+    <T extends McuMgrResponse> T send(@NotNull byte[] payload, @NotNull Class<T> responseType)
             throws McuMgrException;
 
     /**
@@ -65,8 +65,8 @@ public interface McuMgrTransport {
      * @param callback     the callback to call on response or error.
      * @param <T>          the response type.
      */
-    <T extends McuMgrResponse> void send(@NonNull byte[] payload, @NonNull Class<T> responseType,
-                                         @NonNull McuMgrCallback<T> callback);
+    <T extends McuMgrResponse> void send(@NotNull byte[] payload, @NotNull Class<T> responseType,
+                                         @NotNull McuMgrCallback<T> callback);
 
     /**
      * Releases the transport connection. When the connection is already closed this method does
@@ -80,12 +80,12 @@ public interface McuMgrTransport {
      *
      * @param observer the observer.
      */
-    void addObserver(@NonNull ConnectionObserver observer);
+    void addObserver(@NotNull ConnectionObserver observer);
 
     /**
      * Removes previously registered observer.
      *
      * @param observer the observer.
      */
-    void removeObserver(@NonNull ConnectionObserver observer);
+    void removeObserver(@NotNull ConnectionObserver observer);
 }

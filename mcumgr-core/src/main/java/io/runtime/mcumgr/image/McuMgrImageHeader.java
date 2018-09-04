@@ -6,7 +6,8 @@
 
 package io.runtime.mcumgr.image;
 
-import android.support.annotation.NonNull;
+
+import org.jetbrains.annotations.NotNull;
 
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.util.ByteUtil;
@@ -37,11 +38,11 @@ public class McuMgrImageHeader {
 
     private McuMgrImageHeader() {}
 
-    public static McuMgrImageHeader fromBytes(@NonNull byte[] b) throws McuMgrException {
+    public static McuMgrImageHeader fromBytes(@NotNull byte[] b) throws McuMgrException {
         return fromBytes(b, 0);
     }
 
-    public static McuMgrImageHeader fromBytes(@NonNull byte[] b, int offset) throws McuMgrException {
+    public static McuMgrImageHeader fromBytes(@NotNull byte[] b, int offset) throws McuMgrException {
         if (b.length - offset < getSize()) {
             throw new McuMgrException("The byte array is too short to be a McuMgrImageHeader");
         }

@@ -6,7 +6,8 @@
 
 package io.runtime.mcumgr;
 
-import android.support.annotation.NonNull;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Almost all requests are responded to with an Mcu Manager return code in the response payload.
@@ -72,7 +73,7 @@ public enum McuMgrErrorCode {
         return super.toString() + " (" + mCode + ")";
     }
 
-    @NonNull
+    @NotNull
     public static McuMgrErrorCode valueOf(int error) {
         switch (error) {
             case 0:

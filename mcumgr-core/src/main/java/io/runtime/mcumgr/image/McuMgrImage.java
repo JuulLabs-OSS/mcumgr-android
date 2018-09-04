@@ -6,7 +6,8 @@
 
 package io.runtime.mcumgr.image;
 
-import android.support.annotation.NonNull;
+
+import org.jetbrains.annotations.NotNull;
 
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.image.tlv.McuMgrImageTlv;
@@ -28,7 +29,7 @@ public class McuMgrImage {
     private final byte[] mData;
     private final byte[] mHash;
 
-    public McuMgrImage(@NonNull byte[] data) throws McuMgrException {
+    public McuMgrImage(@NotNull byte[] data) throws McuMgrException {
         mData = data;
         mHeader = McuMgrImageHeader.fromBytes(data);
         mTlv = McuMgrImageTlv.fromBytes(data, mHeader);
@@ -54,7 +55,7 @@ public class McuMgrImage {
         return mHash;
     }
 
-    public static byte[] getHash(@NonNull byte[] data) throws McuMgrException {
+    public static byte[] getHash(@NotNull byte[] data) throws McuMgrException {
         return new McuMgrImage(data).getHash();
     }
 }
