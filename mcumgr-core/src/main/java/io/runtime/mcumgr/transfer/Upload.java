@@ -8,22 +8,32 @@ import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.UploadResponse;
 
 public class Upload extends Transfer {
-    private Uploader uploader;
-    private UploadCallback callback;
-    private McuMgrCallback<UploadResponse> writeCallback;
-    Upload(byte[] data,
-           @NotNull Uploader uploader,
-           @Nullable UploadCallback callback,
-           @NotNull McuMgrCallback<UploadResponse> writeCallback) {
+
+    @NotNull
+    private Uploader mUploader;
+
+    @Nullable
+    private UploadCallback mUploadCallback;
+
+    @NotNull
+    private McuMgrCallback<UploadResponse> mWriteCallback;
+
+    public Upload(byte[] data,
+                  @NotNull Uploader uploader,
+                  @Nullable UploadCallback callback,
+                  @NotNull McuMgrCallback<UploadResponse> writeCallback) {
         super(data, 0);
-        this.uploader = uploader;
-        this.callback = callback;
-        this.writeCallback = writeCallback;
+        mUploader = uploader;
+        mUploadCallback = callback;
+        mWriteCallback = writeCallback;
     }
 
     @Override
-    public void next(int offset) {
-        uploader.write(mData, offset, writeCallback);
+    public void send(int offset) {
+        if (mData == null) {
+            throw new NullPointerException("Upload data cannot be null!");
+        }
+        mUploader.write(mData, offset, mWriteCallback);
     }
 
     @Override
@@ -33,21 +43,29 @@ public class Upload extends Transfer {
 
     @Override
     public void onProgressChanged(int current, int total, long timestamp) {
-        callback.onProgressChanged(current, total, timestamp);
+        if (mUploadCallback != null) {
+            mUploadCallback.onProgressChanged(current, total, timestamp);
+        }
     }
 
     @Override
     public void onFailed(McuMgrException e) {
-        callback.onUploadFailed(e);
+        if (mUploadCallback != null) {
+            mUploadCallback.onUploadFailed(e);
+        }
     }
 
     @Override
     public void onFinished() {
-        callback.onUploadFinished();
+        if (mUploadCallback != null) {
+            mUploadCallback.onUploadFinished();
+        }
     }
 
     @Override
     public void onCanceled() {
-        callback.onUploadCanceled();
+        if (mUploadCallback != null) {
+            mUploadCallback.onUploadCanceled();
+        }
     }
 }

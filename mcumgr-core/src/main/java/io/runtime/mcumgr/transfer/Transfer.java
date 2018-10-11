@@ -6,6 +6,7 @@ public abstract class Transfer implements TransferCallback {
 
     @Nullable
     byte[] mData;
+
     int mOffset;
 
     Transfer(@Nullable byte[] data, int offset) {
@@ -15,10 +16,10 @@ public abstract class Transfer implements TransferCallback {
 
     public abstract void reset();
 
-    public abstract void next(int offset);
+    public abstract void send(int offset);
 
-    public void next() {
-        next(mOffset);
+    public void sendNext() {
+        send(mOffset);
     }
 
     @Nullable

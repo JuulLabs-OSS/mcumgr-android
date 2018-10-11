@@ -8,24 +8,33 @@ import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.DownloadResponse;
 
 public class Download extends Transfer {
-    private String name;
-    private McuMgrCallback<DownloadResponse> readCallback;
-    private Downloader downloader;
-    private DownloadCallback callback;
-    public Download(@NotNull String name,
+
+    @Nullable
+    private String mName;
+
+    @NotNull
+    private McuMgrCallback<DownloadResponse> mReadCallback;
+
+    @NotNull
+    private Downloader mDownloader;
+
+    @Nullable
+    private DownloadCallback mDownloadCallback;
+
+    public Download(@Nullable String name,
                     @NotNull Downloader downloader,
                     @Nullable DownloadCallback callback,
                     @NotNull McuMgrCallback<DownloadResponse> readCallback) {
         super(null, 0);
-        this.name = name;
-        this.downloader = downloader;
-        this.readCallback = readCallback;
-        this.callback = callback;
+        this.mName = name;
+        this.mDownloader = downloader;
+        this.mReadCallback = readCallback;
+        this.mDownloadCallback = callback;
     }
 
     @Override
-    public void next(int offset) {
-        downloader.read(offset, readCallback);
+    public void send(int offset) {
+        mDownloader.read(offset, mReadCallback);
     }
 
     @Override
@@ -36,21 +45,32 @@ public class Download extends Transfer {
 
     @Override
     public void onProgressChanged(int current, int total, long timestamp) {
-        callback.onProgressChanged(current, total, timestamp);
+        if (mDownloadCallback != null) {
+            mDownloadCallback.onProgressChanged(current, total, timestamp);
+        }
     }
 
     @Override
     public void onFailed(McuMgrException e) {
-        callback.onDownloadFailed(e);
+        if (mDownloadCallback != null) {
+            mDownloadCallback.onDownloadFailed(e);
+        }
     }
 
     @Override
     public void onFinished() {
-        callback.onDownloadFinished(name, mData);
+        if (mData == null) {
+            throw new NullPointerException("Downloaded data cannot be null!");
+        }
+        if (mDownloadCallback != null) {
+            mDownloadCallback.onDownloadFinished(mName, mData);
+        }
     }
 
     @Override
     public void onCanceled() {
-        callback.onDownloadCanceled();
+        if (mDownloadCallback != null) {
+            mDownloadCallback.onDownloadCanceled();
+        }
     }
 }

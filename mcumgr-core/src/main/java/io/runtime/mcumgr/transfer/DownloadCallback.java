@@ -1,6 +1,7 @@
 package io.runtime.mcumgr.transfer;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import io.runtime.mcumgr.exception.McuMgrException;
 
@@ -32,5 +33,5 @@ public interface DownloadCallback {
      * @param name download name.
      * @param data downloaded mData.
      */
-    void onDownloadFinished(@NotNull String name, @NotNull byte[] data);
+    void onDownloadFinished(@Nullable String name, @NotNull byte[] data);
 }

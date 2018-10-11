@@ -28,25 +28,25 @@ public class TransferManager extends McuManager implements TransferController {
         super(groupId, transporter);
     }
 
-    public synchronized boolean startUpload(@NotNull byte[] data,
+    protected synchronized boolean startUpload(@NotNull byte[] data,
                                             @NotNull Uploader uploader,
                                             @Nullable UploadCallback callback) {
         return startTransfer(new Upload(data, uploader, callback, mUploadCallback));
     }
 
-    public synchronized boolean startDownload(@NotNull String name,
+    protected synchronized boolean startDownload(@NotNull String name,
                                               @NotNull Downloader downloader,
                                               @Nullable DownloadCallback callback) {
         return startTransfer(new Download(name, downloader, callback, mDownloadCallback));
     }
 
-    public synchronized boolean startTransfer(Transfer transfer) {
+    private synchronized boolean startTransfer(Transfer transfer) {
         if (mTransferState != TransferState.NONE) {
             return false;
         }
         mTransferState = TransferState.TRANSFER;
         mTransfer = transfer;
-        mTransfer.next();
+        mTransfer.sendNext();
         return true;
     }
 
@@ -61,7 +61,7 @@ public class TransferManager extends McuManager implements TransferController {
     public synchronized void resume() {
         if (mTransferState.isPaused()) {
             mTransferState = TransferState.TRANSFER;
-            mTransfer.next();
+            mTransfer.sendNext();
         }
     }
 
@@ -144,7 +144,7 @@ public class TransferManager extends McuManager implements TransferController {
             }
 
             // Send the next packet of upload mData from the mOffset provided in the response.
-            mTransfer.next();
+            mTransfer.sendNext();
         }
 
         @Override
@@ -212,7 +212,7 @@ public class TransferManager extends McuManager implements TransferController {
             }
 
             // Send the next packet of upload mData from the mOffset provided in the response.
-            mTransfer.next();
+            mTransfer.sendNext();
         }
 
         @Override
