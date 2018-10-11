@@ -3,8 +3,10 @@ package io.runtime.mcumgr.transfer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrErrorCode;
+import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.response.UploadResponse;
 
 public class Upload extends Transfer {
@@ -15,25 +17,28 @@ public class Upload extends Transfer {
     @Nullable
     private UploadCallback mUploadCallback;
 
-    @NotNull
-    private McuMgrCallback<UploadResponse> mWriteCallback;
-
     public Upload(byte[] data,
                   @NotNull Uploader uploader,
-                  @Nullable UploadCallback callback,
-                  @NotNull McuMgrCallback<UploadResponse> writeCallback) {
+                  @Nullable UploadCallback callback) {
         super(data, 0);
         mUploader = uploader;
         mUploadCallback = callback;
-        mWriteCallback = writeCallback;
     }
 
     @Override
-    public void send(int offset) {
+    public McuMgrResponse send(int offset) throws McuMgrException {
         if (mData == null) {
             throw new NullPointerException("Upload data cannot be null!");
         }
-        mUploader.write(mData, offset, mWriteCallback);
+        UploadResponse response = mUploader.write(mData, offset);
+        // Check for a McuManager error.
+        if (response.rc != 0) {
+            throw new McuMgrErrorException(McuMgrErrorCode.valueOf(response.rc));
+        }
+
+        mOffset = response.off;
+
+        return response;
     }
 
     @Override

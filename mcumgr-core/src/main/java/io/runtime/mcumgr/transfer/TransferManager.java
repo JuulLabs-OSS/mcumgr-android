@@ -1,5 +1,7 @@
 package io.runtime.mcumgr.transfer;
 
+import android.os.ConditionVariable;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,8 @@ public class TransferManager extends McuManager implements TransferController {
 
     private TransferState mTransferState;
     private Transfer mTransfer;
+    private TransferRunnable mTransferRunnable = new TransferRunnable();
+    private ConditionVariable mPauseLock = new ConditionVariable();
 
     /**
      * Construct a McuManager instance.
@@ -29,15 +33,15 @@ public class TransferManager extends McuManager implements TransferController {
     }
 
     protected synchronized boolean startUpload(@NotNull byte[] data,
-                                            @NotNull Uploader uploader,
-                                            @Nullable UploadCallback callback) {
-        return startTransfer(new Upload(data, uploader, callback, mUploadCallback));
+                                                @NotNull Uploader uploader,
+                                                @Nullable UploadCallback callback) {
+        return startTransfer(new Upload(data, uploader, callback));
     }
 
     protected synchronized boolean startDownload(@NotNull String name,
                                               @NotNull Downloader downloader,
                                               @Nullable DownloadCallback callback) {
-        return startTransfer(new Download(name, downloader, callback, mDownloadCallback));
+        return startTransfer(new Download(name, downloader, callback));
     }
 
     private synchronized boolean startTransfer(Transfer transfer) {
@@ -46,8 +50,57 @@ public class TransferManager extends McuManager implements TransferController {
         }
         mTransferState = TransferState.TRANSFER;
         mTransfer = transfer;
-        mTransfer.sendNext();
+        new Thread(mTransferRunnable).start();
         return true;
+    }
+
+    private class TransferRunnable implements Runnable {
+        @Override
+        public void run() {
+            while (!mTransfer.isFinished()) {
+                try {
+                    mTransfer.sendNext();
+
+                    // Check if upload hasn't been cancelled.
+                    if (mTransferState == TransferState.NONE) {
+                        mTransfer.onCanceled();
+                        endTransfer();
+                        return;
+                    }
+                    if (mTransfer.getData() == null) {
+                        throw new NullPointerException("Transfer data is null!");
+                    }
+
+                    // Call the progress callback.
+                    mTransfer.onProgressChanged(mTransfer.getOffset(), mTransfer.getData().length,
+                            System.currentTimeMillis());
+
+                } catch (McuMgrException e) {
+                    // Check if the exception is due to an insufficient MTU.
+                    if (e instanceof InsufficientMtuException) {
+                        InsufficientMtuException mtuErr = (InsufficientMtuException) e;
+
+                        // Set the MTU to the value specified in the error response.
+                        int mtu = mtuErr.getMtu();
+                        if (mMtu == mtu) {
+                            mtu -= 1;
+                        }
+                        boolean isMtuSet = setUploadMtu(mtu);
+
+                        if (isMtuSet) {
+                            // If the MTU has been set successfully, restart the upload.
+                            restartTransfer();
+                            return;
+                        }
+                    }
+                    // If the exception is not due to insufficient MTU fail the upload.
+                    failTransfer(e);
+                }
+            }
+
+            // Finish the transfer.
+            finishTransfer();
+        }
     }
 
     @Override
@@ -105,6 +158,12 @@ public class TransferManager extends McuManager implements TransferController {
     private synchronized void resetTransfer() {
         mTransferState = TransferState.NONE;
         mTransfer.reset();
+    }
+
+    private synchronized void finishTransfer() {
+        mTransferState = TransferState.NONE;
+        mTransfer.onFinished();
+        endTransfer();
     }
 
     private synchronized void endTransfer() {

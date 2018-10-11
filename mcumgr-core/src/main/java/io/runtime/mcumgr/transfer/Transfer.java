@@ -2,11 +2,13 @@ package io.runtime.mcumgr.transfer;
 
 import org.jetbrains.annotations.Nullable;
 
+import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.response.McuMgrResponse;
+
 public abstract class Transfer implements TransferCallback {
 
     @Nullable
     byte[] mData;
-
     int mOffset;
 
     Transfer(@Nullable byte[] data, int offset) {
@@ -16,10 +18,10 @@ public abstract class Transfer implements TransferCallback {
 
     public abstract void reset();
 
-    public abstract void send(int offset);
+    public abstract McuMgrResponse send(int offset) throws McuMgrException;
 
-    public void sendNext() {
-        send(mOffset);
+    public McuMgrResponse sendNext() throws McuMgrException {
+        return send(mOffset);
     }
 
     @Nullable

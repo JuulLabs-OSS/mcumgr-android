@@ -3,17 +3,16 @@ package io.runtime.mcumgr.transfer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrErrorCode;
+import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.DownloadResponse;
+import io.runtime.mcumgr.response.McuMgrResponse;
 
 public class Download extends Transfer {
 
     @Nullable
     private String mName;
-
-    @NotNull
-    private McuMgrCallback<DownloadResponse> mReadCallback;
 
     @NotNull
     private Downloader mDownloader;
@@ -23,18 +22,39 @@ public class Download extends Transfer {
 
     public Download(@Nullable String name,
                     @NotNull Downloader downloader,
-                    @Nullable DownloadCallback callback,
-                    @NotNull McuMgrCallback<DownloadResponse> readCallback) {
+                    @Nullable DownloadCallback callback) {
         super(null, 0);
-        this.mName = name;
-        this.mDownloader = downloader;
-        this.mReadCallback = readCallback;
-        this.mDownloadCallback = callback;
+        mName = name;
+        mDownloader = downloader;
+        mDownloadCallback = callback;
     }
 
     @Override
-    public void send(int offset) {
-        mDownloader.read(offset, mReadCallback);
+    public McuMgrResponse send(int offset) throws McuMgrException {
+        DownloadResponse response = mDownloader.read(offset);
+        // Check for a McuManager error.
+        if (response.rc != 0) {
+            throw new McuMgrErrorException(McuMgrErrorCode.valueOf(response.rc));
+        }
+
+        // The first packet contains the file length.
+        if (response.off == 0) {
+            mData = new byte[response.len];
+        }
+
+        // Validate response body
+        if (response.data == null) {
+            throw new McuMgrException("Download response data is null.");
+        }
+        if (mData == null) {
+            throw new McuMgrException("Download data is null.");
+        }
+
+        // Copy received mData to the buffer.
+        System.arraycopy(response.data, 0, mData, response.off, response.data.length);
+        mOffset = response.off + response.data.length;
+
+        return response;
     }
 
     @Override

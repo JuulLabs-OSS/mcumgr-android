@@ -1,9 +1,8 @@
 package io.runtime.mcumgr.transfer;
 
-import org.jetbrains.annotations.NotNull;
-
-import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.response.DownloadResponse;
 
 public interface Downloader {
-    void read(int offset, @NotNull McuMgrCallback callback);
+    DownloadResponse read(int offset) throws McuMgrException;
 }
