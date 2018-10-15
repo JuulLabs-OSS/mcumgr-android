@@ -13,7 +13,7 @@ public interface DownloadCallback {
      * @param total     the total size of the download in bytes.
      * @param timestamp the timestamp of when the response was received.
      */
-    void onProgressChanged(int current, int total, long timestamp);
+    void onDownloadProgressChanged(int current, int total, long timestamp);
 
     /**
      * Called when the download has failed.
@@ -30,8 +30,7 @@ public interface DownloadCallback {
     /**
      * Called when the download has finished successfully.
      *
-     * @param name download name.
-     * @param data downloaded mData.
+     * @param data downloaded data.
      */
-    void onDownloadFinished(@Nullable String name, @NotNull byte[] data);
+    void onDownloadCompleted(@NotNull byte[] data);
 }

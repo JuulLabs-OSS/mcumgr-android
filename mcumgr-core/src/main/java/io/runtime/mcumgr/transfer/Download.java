@@ -1,6 +1,8 @@
 package io.runtime.mcumgr.transfer;
 
 
+import org.jetbrains.annotations.Nullable;
+
 import io.runtime.mcumgr.McuMgrErrorCode;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
@@ -9,8 +11,16 @@ import io.runtime.mcumgr.response.McuMgrResponse;
 
 public abstract class Download extends Transfer {
 
+    @Nullable
+    private DownloadCallback mCallback;
+
     protected Download() {
+        this(null);
+    }
+
+    protected Download(@Nullable DownloadCallback callback) {
         super(null, 0);
+        mCallback = callback;
     }
 
     protected abstract DownloadResponse read(int offset) throws McuMgrException;
@@ -47,5 +57,36 @@ public abstract class Download extends Transfer {
     public void reset() {
         mOffset = 0;
         mData = null;
+    }
+
+    @Override
+    public void onProgressChanged(int current, int total, long timestamp) {
+        if (mCallback != null) {
+            mCallback.onDownloadProgressChanged(current, total, timestamp);
+        }
+    }
+
+    @Override
+    public void onFailed(McuMgrException e) {
+        if (mCallback != null) {
+            mCallback.onDownloadFailed(e);
+        }
+    }
+
+    @Override
+    public void onCompleted() {
+        if (mCallback != null) {
+            if (mData == null) {
+                throw new NullPointerException("Transfer data cannot be null.");
+            }
+            mCallback.onDownloadCompleted(mData);
+        }
+    }
+
+    @Override
+    public void onCanceled() {
+        if (mCallback != null) {
+            mCallback.onDownloadCanceled();
+        }
     }
 }

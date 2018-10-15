@@ -431,7 +431,7 @@ public class ImageManager extends TransferManager {
      * @return The object used to control this download.
      * @see TransferController
      */
-    public TransferController coreDownload(@NotNull CoreDownloadCallback callback) {
+    public TransferController coreDownload(@NotNull DownloadCallback callback) {
         return startDownload(new CoreDownload(callback));
     }
 
@@ -440,73 +440,14 @@ public class ImageManager extends TransferManager {
      */
     public class CoreDownload extends Download {
 
-        @NotNull
-        private CoreDownloadCallback mCallback;
-
-        public CoreDownload(@NotNull CoreDownloadCallback callback) {
-            mCallback = callback;
+        protected CoreDownload(@NotNull DownloadCallback callback) {
+            super(callback);
         }
 
         @Override
         public DownloadResponse read(int offset) throws McuMgrException {
             return coreLoad(offset);
         }
-
-        @Override
-        public void onProgressChanged(int current, int total, long timestamp) {
-            mCallback.onDownloadProgressChanged(current, total, timestamp);
-        }
-
-        @Override
-        public void onFailed(McuMgrException e) {
-            mCallback.onDownloadFailed(e);
-        }
-
-        @Override
-        public void onCompleted() {
-            byte[] data = getData();
-            if (data == null) {
-                throw new NullPointerException("Download data cannot be null.");
-            }
-            mCallback.onDownloadCompleted(data);
-        }
-
-        @Override
-        public void onCanceled() {
-            mCallback.onDownloadCanceled();
-        }
-    }
-
-    /**
-     * Callback for core downloads.
-     */
-    public interface CoreDownloadCallback {
-
-        /**
-         * Called when the progress of the download has changed.
-         * @param current The number of bytes downloaded.
-         * @param total The total number of bytes to download.
-         * @param timestamp Timestamp of the received response (ms).
-         */
-        void onDownloadProgressChanged(int current, int total, long timestamp);
-
-        /**
-         * Called when the download has completed successfully.
-         * @param data The downloaded data.
-         */
-        void onDownloadCompleted(@NotNull byte[] data);
-
-        /**
-         * Called when the download has failed.
-         * @param e The cause of the failure.
-         */
-        void onDownloadFailed(@NotNull McuMgrException e);
-
-        /**
-         * Called when the download has been canceled.
-         */
-        void onDownloadCanceled();
-
     }
 
     //******************************************************************

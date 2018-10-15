@@ -11,7 +11,7 @@ import io.runtime.mcumgr.exception.InsufficientMtuException;
 
 public class TransferManager extends McuManager {
 
-    private ExecutorService mExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mExecutor;
 
     /**
      * Construct a McuManager instance.
@@ -37,7 +37,7 @@ public class TransferManager extends McuManager {
          * Wrap the callable in the in an runnable which catches InsufficientMtuException and
          * retries the transfer once.
          */
-        mExecutor.execute(new Runnable() {
+        getTransferExecutor().execute(new Runnable() {
             // Whether to retry with a new MTU due to an MTU exception.
             private boolean mRetry = true;
             @Override
@@ -69,5 +69,13 @@ public class TransferManager extends McuManager {
             }
         });
         return transferCallable;
+    }
+
+    @NotNull
+    private synchronized ExecutorService getTransferExecutor() {
+        if (mExecutor == null) {
+            mExecutor = Executors.newSingleThreadExecutor();
+        }
+        return mExecutor;
     }
 }

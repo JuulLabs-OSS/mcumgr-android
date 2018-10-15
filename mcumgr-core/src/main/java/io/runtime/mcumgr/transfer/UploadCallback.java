@@ -12,7 +12,7 @@ public interface UploadCallback {
      * @param total the size of the image in bytes.
      * @param timestamp the timestamp of when the response was received.
      */
-    void onProgressChanged(int current, int total, long timestamp);
+    void onUploadProgressChanged(int current, int total, long timestamp);
 
     /**
      * Called when the upload has failed.
@@ -29,5 +29,5 @@ public interface UploadCallback {
     /**
      * Called when the upload has finished successfully.
      */
-    void onUploadFinished();
+    void onUploadCompleted();
 }

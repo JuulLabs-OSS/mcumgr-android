@@ -11,8 +11,15 @@ import io.runtime.mcumgr.response.UploadResponse;
 
 public abstract class Upload extends Transfer {
 
-    protected Upload(byte[] data) {
+    private UploadCallback mCallback;
+
+    protected Upload(@NotNull byte[] data) {
+        this(data, null);
+    }
+
+    protected Upload(@NotNull byte[] data, @Nullable UploadCallback callback) {
         super(data, 0);
+        mCallback = callback;
     }
 
     protected abstract UploadResponse write(@NotNull byte[] data, int offset) throws McuMgrException;
@@ -36,5 +43,33 @@ public abstract class Upload extends Transfer {
     @Override
     public void reset() {
         mOffset = 0;
+    }
+
+    @Override
+    public void onProgressChanged(int current, int total, long timestamp) {
+        if (mCallback != null) {
+            mCallback.onUploadProgressChanged(current, total, timestamp);
+        }
+    }
+
+    @Override
+    public void onFailed(McuMgrException e) {
+        if (mCallback != null) {
+            mCallback.onUploadFailed(e);
+        }
+    }
+
+    @Override
+    public void onCompleted() {
+        if (mCallback != null) {
+            mCallback.onUploadCompleted();
+        }
+    }
+
+    @Override
+    public void onCanceled() {
+        if (mCallback != null) {
+            mCallback.onUploadCanceled();
+        }
     }
 }
