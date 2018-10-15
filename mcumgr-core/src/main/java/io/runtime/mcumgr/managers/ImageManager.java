@@ -431,15 +431,19 @@ public class ImageManager extends TransferManager {
      * @return The object used to control this download.
      * @see TransferController
      */
-    public TransferController coreDownload(@Nullable DownloadCallback callback) {
+    public TransferController coreDownload(@NotNull CoreDownloadCallback callback) {
         return startDownload(new CoreDownload(callback));
     }
 
+    /**
+     * Core Download.
+     */
     public class CoreDownload extends Download {
 
-        private DownloadCallback mCallback;
+        @NotNull
+        private CoreDownloadCallback mCallback;
 
-        public CoreDownload(@Nullable DownloadCallback callback) {
+        public CoreDownload(@NotNull CoreDownloadCallback callback) {
             mCallback = callback;
         }
 
@@ -450,35 +454,59 @@ public class ImageManager extends TransferManager {
 
         @Override
         public void onProgressChanged(int current, int total, long timestamp) {
-            if (mCallback != null) {
-                mCallback.onProgressChanged(current, total, timestamp);
-            }
+            mCallback.onDownloadProgressChanged(current, total, timestamp);
         }
 
         @Override
         public void onFailed(McuMgrException e) {
-            if (mCallback != null) {
-                mCallback.onDownloadFailed(e);
-            }
+            mCallback.onDownloadFailed(e);
         }
 
         @Override
         public void onCompleted() {
-            if (mCallback != null) {
-                byte[] data = getData();
-                if (data == null) {
-                    throw new NullPointerException("Download data cannot be null.");
-                }
-                mCallback.onDownloadFinished(null, data);
+            byte[] data = getData();
+            if (data == null) {
+                throw new NullPointerException("Download data cannot be null.");
             }
+            mCallback.onDownloadCompleted(data);
         }
 
         @Override
         public void onCanceled() {
-            if (mCallback != null) {
-                mCallback.onDownloadCanceled();
-            }
+            mCallback.onDownloadCanceled();
         }
+    }
+
+    /**
+     * Callback for core downloads.
+     */
+    public interface CoreDownloadCallback {
+
+        /**
+         * Called when the progress of the download has changed.
+         * @param current The number of bytes downloaded.
+         * @param total The total number of bytes to download.
+         * @param timestamp Timestamp of the received response (ms).
+         */
+        void onDownloadProgressChanged(int current, int total, long timestamp);
+
+        /**
+         * Called when the download has completed successfully.
+         * @param data The downloaded data.
+         */
+        void onDownloadCompleted(@NotNull byte[] data);
+
+        /**
+         * Called when the download has failed.
+         * @param e The cause of the failure.
+         */
+        void onDownloadFailed(@NotNull McuMgrException e);
+
+        /**
+         * Called when the download has been canceled.
+         */
+        void onDownloadCanceled();
+
     }
 
     //******************************************************************
