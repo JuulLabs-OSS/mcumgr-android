@@ -12,6 +12,6 @@ public interface TransferCallback {
      */
     void onProgressChanged(int current, int total, long timestamp);
     void onFailed(McuMgrException e);
-    void onFinished();
+    void onCompleted();
     void onCanceled();
 }

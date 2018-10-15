@@ -18,7 +18,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import io.runtime.mcumgr.McuManager;
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrErrorCode;
 import io.runtime.mcumgr.McuMgrTransport;
@@ -26,10 +25,15 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.response.DownloadResponse;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.response.img.McuMgrCoreLoadResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageUploadResponse;
+import io.runtime.mcumgr.transfer.Download;
+import io.runtime.mcumgr.transfer.DownloadCallback;
+import io.runtime.mcumgr.transfer.TransferController;
+import io.runtime.mcumgr.transfer.TransferManager;
 import io.runtime.mcumgr.util.CBOR;
 
 /**
@@ -44,7 +48,7 @@ import io.runtime.mcumgr.util.CBOR;
  * @see FirmwareUpgradeManager
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class ImageManager extends McuManager {
+public class ImageManager extends TransferManager {
 
     private final static Logger LOG = LoggerFactory.getLogger(ImageManager.class);
 
@@ -412,6 +416,69 @@ public class ImageManager extends McuManager {
     @NotNull
     public McuMgrResponse coreErase() throws McuMgrException {
         return send(OP_WRITE, ID_CORELOAD, null, McuMgrResponse.class);
+    }
+
+    //******************************************************************
+    // Core Download
+    //******************************************************************
+
+    /**
+     * Start core download.
+     * <p>
+     * Multiple calls will queue multiple downloads, executed sequentially.
+     *
+     * @param callback Receives callbacks from the download.
+     * @return The object used to control this download.
+     * @see TransferController
+     */
+    public TransferController coreDownload(@Nullable DownloadCallback callback) {
+        return startDownload(new CoreDownload(callback));
+    }
+
+    public class CoreDownload extends Download {
+
+        private DownloadCallback mCallback;
+
+        public CoreDownload(@Nullable DownloadCallback callback) {
+            mCallback = callback;
+        }
+
+        @Override
+        public DownloadResponse read(int offset) throws McuMgrException {
+            return coreLoad(offset);
+        }
+
+        @Override
+        public void onProgressChanged(int current, int total, long timestamp) {
+            if (mCallback != null) {
+                mCallback.onProgressChanged(current, total, timestamp);
+            }
+        }
+
+        @Override
+        public void onFailed(McuMgrException e) {
+            if (mCallback != null) {
+                mCallback.onDownloadFailed(e);
+            }
+        }
+
+        @Override
+        public void onCompleted() {
+            if (mCallback != null) {
+                byte[] data = getData();
+                if (data == null) {
+                    throw new NullPointerException("Download data cannot be null.");
+                }
+                mCallback.onDownloadFinished(null, data);
+            }
+        }
+
+        @Override
+        public void onCanceled() {
+            if (mCallback != null) {
+                mCallback.onDownloadCanceled();
+            }
+        }
     }
 
     //******************************************************************
