@@ -27,6 +27,7 @@ import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.DownloadResponse;
 import io.runtime.mcumgr.response.McuMgrResponse;
+import io.runtime.mcumgr.response.UploadResponse;
 import io.runtime.mcumgr.response.img.McuMgrCoreLoadResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageUploadResponse;
@@ -34,6 +35,8 @@ import io.runtime.mcumgr.transfer.Download;
 import io.runtime.mcumgr.transfer.DownloadCallback;
 import io.runtime.mcumgr.transfer.TransferController;
 import io.runtime.mcumgr.transfer.TransferManager;
+import io.runtime.mcumgr.transfer.Upload;
+import io.runtime.mcumgr.transfer.UploadCallback;
 import io.runtime.mcumgr.util.CBOR;
 
 /**
@@ -116,43 +119,7 @@ public class ImageManager extends TransferManager {
      */
     public void upload(@NotNull byte[] data, int offset,
                        @NotNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
-        // Get the length of data (in bytes) to put into the upload packet. This calculated as:
-        // min(MTU - packetOverhead, imageLength - uploadOffset)
-        int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
-                data.length - offset);
-
-        // Copy the data from the image into a buffer.
-        byte[] sendBuffer = new byte[dataLength];
-        System.arraycopy(data, offset, sendBuffer, 0, dataLength);
-
-        // Create the map of key-values for the McuManager payload
-        HashMap<String, Object> payloadMap = new HashMap<>();
-        // Put the data and offset
-        payloadMap.put("data", sendBuffer);
-        payloadMap.put("off", offset);
-        if (offset == 0) {
-            // Only send the length of the image in the first packet of the upload
-            payloadMap.put("len", data.length);
-
-            /*
-             * Feature in Apache Mynewt: Device keeps track of unfinished uploads based on the
-             * SHA256 hash over the image data. When an upload request is received which contains
-             * the same hash of a partially finished upload, the device will send the offset to
-             * continue from.
-             */
-            try {
-                // Calculate the SHA-256 over the image data
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] hash = digest.digest(data);
-                // Truncate the hash to save space.
-                byte[] truncatedHash = Arrays.copyOf(hash, TRUNCATED_HASH_LEN);
-                payloadMap.put("sha", truncatedHash);
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // Send the request
+        HashMap<String, Object> payloadMap = buildUploadPayload(data, offset);
         send(OP_WRITE, ID_UPLOAD, payloadMap, McuMgrImageUploadResponse.class, callback);
     }
 
@@ -174,18 +141,21 @@ public class ImageManager extends TransferManager {
      */
     @NotNull
     public McuMgrImageUploadResponse upload(@NotNull byte[] data, int offset) throws McuMgrException {
-        // Get the length of data (in bytes) to put into the upload packet. This calculated as:
-        // min(MTU - packetOverhead, imageLength - uploadOffset)
-        int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset),
-                data.length - offset);
+        HashMap<String, Object> payloadMap = buildUploadPayload(data, offset);
+        return send(OP_WRITE, ID_UPLOAD, payloadMap, McuMgrImageUploadResponse.class);
+    }
 
-        // Copy the data from the image into a buffer.
+    /*
+     * Build the upload payload.
+     */
+    private HashMap<String, Object> buildUploadPayload(@NotNull byte[] data, int offset) {
+        // Get chunk of image data to send
+        int dataLength = Math.min(mMtu - calculatePacketOverhead(data, offset), data.length - offset);
         byte[] sendBuffer = new byte[dataLength];
         System.arraycopy(data, offset, sendBuffer, 0, dataLength);
 
         // Create the map of key-values for the McuManager payload
         HashMap<String, Object> payloadMap = new HashMap<>();
-        // Put the data and offset
         payloadMap.put("data", sendBuffer);
         payloadMap.put("off", offset);
         if (offset == 0) {
@@ -196,10 +166,9 @@ public class ImageManager extends TransferManager {
              * Feature in Apache Mynewt: Device keeps track of unfinished uploads based on the
              * SHA256 hash over the image data. When an upload request is received which contains
              * the same hash of a partially finished upload, the device will send the offset to
-             * continue from.
+             * continue from. The hash is truncated to save packet
              */
             try {
-                // Calculate the SHA-256 over the image data
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] hash = digest.digest(data);
                 // Truncate the hash to save space.
@@ -209,9 +178,7 @@ public class ImageManager extends TransferManager {
                 e.printStackTrace();
             }
         }
-
-        // Send the request
-        return send(OP_WRITE, ID_UPLOAD, payloadMap, McuMgrImageUploadResponse.class);
+        return payloadMap;
     }
 
     /**
@@ -439,7 +406,6 @@ public class ImageManager extends TransferManager {
      * Core Download.
      */
     public class CoreDownload extends Download {
-
         protected CoreDownload(@NotNull DownloadCallback callback) {
             super(callback);
         }
@@ -448,7 +414,38 @@ public class ImageManager extends TransferManager {
         public DownloadResponse read(int offset) throws McuMgrException {
             return coreLoad(offset);
         }
+    }
 
+    //******************************************************************
+    // Image Upload v2
+    //******************************************************************
+
+    /**
+     * Start image upload.
+     * <p>
+     * Multiple calls will queue multiple uploads, executed sequentially.
+     *
+     * @param imageData The image data to upload.
+     * @param callback Receives callbacks from the upload.
+     * @return The object used to control this upload.
+     * @see TransferController
+     */
+    public TransferController imageUpload(@NotNull byte[] imageData, @NotNull UploadCallback callback) {
+        return startUpload(new ImageUpload(imageData, callback));
+    }
+
+    /**
+     * Image Upload.
+     */
+    public class ImageUpload extends Upload {
+        protected ImageUpload(@NotNull byte[] imageData, @NotNull UploadCallback callback) {
+            super(imageData, callback);
+        }
+
+        @Override
+        protected UploadResponse write(@NotNull byte[] data, int offset) throws McuMgrException {
+            return upload(data, offset);
+        }
     }
 
     //******************************************************************
