@@ -9,9 +9,14 @@ import io.runtime.mcumgr.util.ByteUtil;
 import io.runtime.mcumgr.util.Endian;
 
 /**
- * Tlv Entry. Member variables use higher byte width primitives to ensure we don't have
- * negative values.
+ * Core dump type length value entry. These entries contain an additional 32-bit unsigned integer
+ * value, off, which marks the memory offset of entries with type {@link CoreDump#TLV_TYPE_MEM}.
+ * For other types this value should be set to zero and can be ignored.
+ *
+ * Member variables for type, length, and off use higher bit width primitives to ensure we don't
+ * overflow Java's signed integer types.
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class CoreDumpTlvEntry {
 
     private static final int MIN_SIZE = 8;

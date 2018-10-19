@@ -5,6 +5,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/**
+ * A core dump collected from a device. Use the {@link #fromBytes(byte[])} method to parse the file
+ * into this object.
+ */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class CoreDump {
 
@@ -22,16 +26,25 @@ public class CoreDump {
         mTlv = tlv;
     }
 
+    /**
+     * Parse a core dump file from a byte array.
+     *
+     * @param data The core dump.
+     * @return the parsed core dump.
+     * @throws IOException if the core dump is invalid.
+     */
     @NotNull
-    public CoreDumpHeader getHeader() {
-        return mHeader;
+    public static CoreDump fromBytes(@NotNull byte[] data) throws IOException {
+        CoreDumpHeader header = CoreDumpHeader.fromBytes(data);
+        CoreDumpTlv tlv = CoreDumpTlv.fromBytes(data);
+        return new CoreDump(header, tlv);
     }
 
-    @NotNull
-    public CoreDumpTlv getTlv() {
-        return mTlv;
-    }
-
+    /**
+     * Get the image hash from the core dump TLV.
+     *
+     * @return the image hash, or null if not found in the TLV.
+     */
     @Nullable
     public byte[] getImageHash() {
         CoreDumpTlvEntry entry = mTlv.getEntryOfType(TLV_TYPE_IMAGE);
@@ -41,6 +54,11 @@ public class CoreDump {
         return entry.getValue();
     }
 
+    /**
+     * Get the registers from the core dump TLV.
+     *
+     * @return the registers, or null if not found in the TLV.
+     */
     @Nullable
     public byte[] getRegisters() {
         CoreDumpTlvEntry entry = mTlv.getEntryOfType(TLV_TYPE_REG);
@@ -51,9 +69,12 @@ public class CoreDump {
     }
 
     @NotNull
-    public static CoreDump fromBytes(@NotNull byte[] data) throws IOException {
-        CoreDumpHeader header = CoreDumpHeader.fromBytes(data);
-        CoreDumpTlv tlv = CoreDumpTlv.fromBytes(data);
-        return new CoreDump(header, tlv);
+    public CoreDumpHeader getHeader() {
+        return mHeader;
+    }
+
+    @NotNull
+    public CoreDumpTlv getTlv() {
+        return mTlv;
     }
 }
