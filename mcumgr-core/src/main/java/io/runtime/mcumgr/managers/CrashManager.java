@@ -11,6 +11,7 @@ import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.response.config.McuMgrConfigReadResponse;
 
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class CrashManager extends McuManager {
 
     /**

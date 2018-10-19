@@ -256,30 +256,6 @@ public class ImageManager extends TransferManager {
     }
 
     /**
-     * Begin an image upload.
-     * <p>
-     * Only one upload can occur per ImageManager.
-     *
-     * @param data     the image data to upload to slot 1.
-     * @param callback the image upload callback.
-     * @return True, if the upload has stared, false otherwise.
-     */
-    public synchronized boolean upload(@NotNull byte[] data, @NotNull ImageUploadCallback callback) {
-        if (mUploadState == STATE_NONE) {
-            mUploadState = STATE_UPLOADING;
-        } else {
-            LOG.debug("An image upload is already in progress");
-            return false;
-        }
-
-        mUploadCallback = callback;
-        mImageData = data;
-
-        sendNext(0);
-        return true;
-    }
-
-    /**
      * Erase the image in slot 1 (asynchronous).
      *
      * @param callback the asynchronous callback.
@@ -321,6 +297,10 @@ public class ImageManager extends TransferManager {
 
     /**
      * Core list (asynchronous).
+     * <p>
+     * A core dump is available for download if the {@link McuMgrErrorCode} is
+     * {@link McuMgrErrorCode#OK}. If no core is available for download, the response will contain
+     * a return code of {@link McuMgrErrorCode#NO_ENTRY}.
      *
      * @param callback the asynchronous callback.
      */
@@ -330,6 +310,10 @@ public class ImageManager extends TransferManager {
 
     /**
      * Core list (synchronous).
+     * <p>
+     * A core dump is available for download if the {@link McuMgrErrorCode} is
+     * {@link McuMgrErrorCode#OK}. If no core is available for download, the response will contain
+     * a return code of {@link McuMgrErrorCode#NO_ENTRY}.
      *
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
@@ -366,7 +350,7 @@ public class ImageManager extends TransferManager {
     }
 
     /**
-     * Core erase (asynchronous).
+     * Erase a core dump from the device (asynchronous).
      *
      * @param callback the asynchronous callback.
      */
@@ -375,7 +359,7 @@ public class ImageManager extends TransferManager {
     }
 
     /**
-     * Core erase (synchronous).
+     * Erase a core dump from the device (synchronous).
      *
      * @return The response.
      * @throws McuMgrException Transport error. See cause.
@@ -426,7 +410,7 @@ public class ImageManager extends TransferManager {
      * Multiple calls will queue multiple uploads, executed sequentially.
      *
      * @param imageData The image data to upload.
-     * @param callback Receives callbacks from the upload.
+     * @param callback  Receives callbacks from the upload.
      * @return The object used to control this upload.
      * @see TransferController
      */
@@ -462,6 +446,31 @@ public class ImageManager extends TransferManager {
     private int mUploadOffset = 0;
     private byte[] mImageData;
     private ImageUploadCallback mUploadCallback;
+
+
+    /**
+     * Begin an image upload.
+     * <p>
+     * Only one upload can occur per ImageManager.
+     *
+     * @param data     the image data to upload to slot 1.
+     * @param callback the image upload callback.
+     * @return True, if the upload has stared, false otherwise.
+     */
+    public synchronized boolean upload(@NotNull byte[] data, @NotNull ImageUploadCallback callback) {
+        if (mUploadState == STATE_NONE) {
+            mUploadState = STATE_UPLOADING;
+        } else {
+            LOG.debug("An image upload is already in progress");
+            return false;
+        }
+
+        mUploadCallback = callback;
+        mImageData = data;
+
+        sendNext(0);
+        return true;
+    }
 
     /**
      * Get the current upload state ({@link ImageManager#STATE_NONE},
