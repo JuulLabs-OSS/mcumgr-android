@@ -448,6 +448,7 @@ public class ImageManager extends TransferManager {
         public DownloadResponse read(int offset) throws McuMgrException {
             return coreLoad(offset);
         }
+
     }
 
     //******************************************************************
