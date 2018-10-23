@@ -23,23 +23,43 @@ public class TransferManager extends McuManager {
         super(groupId, transporter);
     }
 
+    /**
+     * Start an upload.
+     * <p>
+     * If there is an active transfer being executed on this manager, the transfer will be queued.
+     *
+     * @param upload The upload to start.
+     * @return The controller used to pause, resume, or cancel the upload.
+     */
     public TransferController startUpload(@NotNull Upload upload) {
         return startTransfer(upload);
     }
 
+    /**
+     * Start an download.
+     * <p>
+     * If there is an active transfer being executed on this manager, the download will be queued.
+     *
+     * @param download The upload to start.
+     * @return The controller used to pause, resume, or cancel the download.
+     */
     public TransferController startDownload(@NotNull Download download) {
         return startTransfer(download);
     }
 
     private synchronized TransferController startTransfer(@NotNull final Transfer transfer) {
+
         final TransferCallable transferCallable = new TransferCallable(transfer);
+
         /*
          * Wrap the callable in the in an runnable which catches InsufficientMtuException and
          * retries the transfer once.
          */
         getTransferExecutor().execute(new Runnable() {
+
             // Whether to retry with a new MTU due to an MTU exception.
             private boolean mRetry = true;
+
             @Override
             public void run() {
                 try {
@@ -60,7 +80,7 @@ public class TransferManager extends McuManager {
                     if (isMtuSet) {
                         // If the MTU has been set successfully, restart the upload.
                         transferCallable.getTransfer().reset();
-                        // Rerun the transfer
+                        mRetry = false;
                         run();
                     } else {
                         transferCallable.getTransfer().onFailed(e);
