@@ -103,6 +103,17 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         setGattCallbacks(new McuMgrBleCallbacksStub());
     }
 
+    /**
+     * Returns the device set in the constructor.
+     *
+     * @return The device to connect to and communicate with.
+     */
+    @NonNull
+    @Override
+    public BluetoothDevice getBluetoothDevice() {
+        return mDevice;
+    }
+
     @NonNull
     @Override
     protected BleManagerGattCallback getGattCallback() {
