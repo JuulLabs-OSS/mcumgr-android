@@ -22,6 +22,7 @@ import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State;
 import io.runtime.mcumgr.transfer.TransferController;
+import io.runtime.mcumgr.transfer.UploadCallback;
 
 // TODO Add retries for each step
 
@@ -143,7 +144,7 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
      * @param callback  the callback.
      */
     public FirmwareUpgradeManagerV2(@NotNull McuMgrTransport transport,
-                                  @Nullable FirmwareUpgradeCallback callback) {
+                                    @Nullable FirmwareUpgradeCallback callback) {
         mState = State.NONE;
         mImageManager = new ImageManager(transport);
         mDefaultManager = new DefaultManager(transport);
@@ -227,7 +228,7 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
             mState = State.NONE;
             mPaused = false;
         } else if (mState == State.UPLOAD) {
-            mImageManager.cancelUpload();
+            mUploadController.cancel();
             mPaused = false;
         }
     }
@@ -238,7 +239,7 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
             LOG.info("Pausing upgrade.");
             mPaused = true;
             if (mState == State.UPLOAD) {
-                mImageManager.pauseUpload();
+                mUploadController.pause();
             }
         }
     }
@@ -284,7 +285,7 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
     private synchronized void upload() {
         setState(State.UPLOAD);
         if (!mPaused) {
-            mImageManager.upload(mImageData, mImageUploadCallback);
+            mUploadController = mImageManager.imageUpload(mImageData, mImageUploadCallback);
         }
     }
 
@@ -662,37 +663,37 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
     /**
      * Image upload callback. Forwards upload callbacks to the FirmwareUpgradeCallback.
      */
-    private ImageManager.ImageUploadCallback mImageUploadCallback =
-            new ImageManager.ImageUploadCallback() {
-                @Override
-                public void onProgressChanged(int bytesSent, int imageSize, long timestamp) {
-                    mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
-                }
+    private UploadCallback mImageUploadCallback = new UploadCallback() {
 
-                @Override
-                public void onUploadFailed(@NotNull McuMgrException error) {
-                    fail(error);
-                }
+        @Override
+        public void onUploadProgressChanged(int current, int total, long timestamp) {
+            mInternalCallback.onUploadProgressChanged(current, total, timestamp);
+        }
 
-                @Override
-                public void onUploadCanceled() {
-                    cancelled(State.UPLOAD);
-                }
+        @Override
+        public void onUploadFailed(@NotNull McuMgrException error) {
+            fail(error);
+        }
 
-                @Override
-                public void onUploadFinished() {
-                    // When upload is complete, send test on confirm commands, depending on the mode.
-                    switch (mMode) {
-                        case TEST_ONLY:
-                        case TEST_AND_CONFIRM:
-                            test();
-                            break;
-                        case CONFIRM_ONLY:
-                            confirm();
-                            break;
-                    }
-                }
-            };
+        @Override
+        public void onUploadCanceled() {
+            cancelled(State.UPLOAD);
+        }
+
+        @Override
+        public void onUploadCompleted() {
+            // When upload is complete, send test on confirm commands, depending on the mode.
+            switch (mMode) {
+                case TEST_ONLY:
+                case TEST_AND_CONFIRM:
+                    test();
+                    break;
+                case CONFIRM_ONLY:
+                    confirm();
+                    break;
+            }
+        }
+    };
 
     //******************************************************************
     // Main Thread Executor
