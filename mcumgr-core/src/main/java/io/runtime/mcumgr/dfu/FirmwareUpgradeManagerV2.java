@@ -641,7 +641,7 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
                 validate();
                 break;
             case UPLOAD:
-                mImageManager.continueUpload();
+                mUploadController.resume();
                 break;
             case TEST:
                 test();
