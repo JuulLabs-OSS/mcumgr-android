@@ -509,9 +509,26 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrTransport.ConnectionCallback mReconnectCallback =
             new McuMgrTransport.ConnectionCallback() {
+
                 @Override
                 public void onConnected() {
                     LOG.trace("Reconnect successful.");
+                    continueUpgrade();
+                }
+
+                @Override
+                public void onDeferred() {
+                    LOG.trace("Reconnect deferred.");
+                    continueUpgrade();
+                }
+
+                @Override
+                public void onError(@NotNull Throwable t) {
+                    LOG.trace("Reconnect failed.");
+                    fail(new McuMgrException(t));
+                }
+
+                public void continueUpgrade() {
                     switch (mState) {
                         case NONE:
                             // Upload cancelled.
@@ -534,14 +551,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                                     success();
                                     break;
                             }
-                            break;
                     }
-                }
-
-                @Override
-                public void onError(@NotNull Throwable t) {
-                    LOG.trace("Reconnect failed.");
-                    fail(new McuMgrException(t));
                 }
             };
 
