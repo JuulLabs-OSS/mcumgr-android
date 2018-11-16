@@ -341,9 +341,38 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                 .done(new SuccessCallback() {
                     @Override
                     public void onRequestCompleted(@NonNull BluetoothDevice device) {
-                        if (callback != null) {
-                            callback.onConnected();
-                            notifyConnected();
+                        if (callback == null) {
+                            return;
+                        }
+                        callback.onConnected();
+                        notifyConnected();
+                    }
+                })
+                .fail(new FailCallback() {
+                    @Override
+                    public void onRequestFailed(@NonNull BluetoothDevice device, int status) {
+                        if (callback == null) {
+                            return;
+                        }
+                        switch (status) {
+                            case REASON_DEVICE_DISCONNECTED:
+                                callback.onError(new McuMgrException("Device has disconnected"));
+                                break;
+                            case REASON_DEVICE_NOT_SUPPORTED:
+                                callback.onError(new McuMgrException("Device does not support SMP Service"));
+                                break;
+                            case REASON_REQUEST_FAILED:
+                                // This could be thrown only if the manager was requested to connect for
+                                // a second time and to a different device than the one that's already
+                                // connected. This may not happen here.
+                                callback.onError(new McuMgrException("Other device already connected"));
+                                break;
+                            case REASON_BLUETOOTH_DISABLED:
+                                callback.onError(new McuMgrException("Bluetooth adapter disabled"));
+                                break;
+                            default:
+                                callback.onError(new McuMgrException(GattError.parseConnectionError(status)));
+                                break;
                         }
                     }
                 })
