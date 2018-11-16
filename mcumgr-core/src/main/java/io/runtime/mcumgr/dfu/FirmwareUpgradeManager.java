@@ -487,47 +487,63 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     /**
      * State: RESET.
      * Observer for the transport disconnection.
-     *
-     * TODO Add timeouts for disconnect/reconnect to ensure DFU does not hang indefinitely.
      */
     private McuMgrTransport.ConnectionObserver mResetObserver
             = new McuMgrTransport.ConnectionObserver() {
         @Override
         public void onConnected() {
-            // Device has reset.
-            mDefaultManager.getTransporter().removeObserver(this);
-            LOG.trace("Reset successful");
-            switch (mState) {
-                case NONE:
-                    // Upload was cancelled in VALIDATE state
-                    cancelled(State.VALIDATE);
-                    break;
-                case VALIDATE:
-                    // The device has exited test mode. Slot 1 can now be erased.
-                    validate();
-                    break;
-                case RESET:
-                    switch (mMode) {
-                        case TEST_AND_CONFIRM:
-                            // The device reconnected after testing.
-                            verify();
-                            break;
-                        case TEST_ONLY:
-                        case CONFIRM_ONLY:
-                            // The device has been tested or confirmed.
-                            success();
-                            break;
-                    }
-                    break;
-            }
+            // Do nothing
         }
 
         @Override
         public void onDisconnected() {
-            LOG.trace("Reset successful. Re-opening connection...");
-            mDefaultManager.getTransporter().open();
+            LOG.trace("Device disconnected. Reconnecting...");
+            mDefaultManager.getTransporter().removeObserver(mResetObserver);
+            mDefaultManager.getTransporter().connect(mReconnectCallback);
         }
     };
+
+    /**
+     * State: RESET.
+     * Callback for reconnecting to the device.
+     */
+    private McuMgrTransport.ConnectionCallback mReconnectCallback =
+            new McuMgrTransport.ConnectionCallback() {
+                @Override
+                public void onConnected() {
+                    LOG.trace("Reconnect successful.");
+                    switch (mState) {
+                        case NONE:
+                            // Upload cancelled.
+                            cancelled(mState);
+                            break;
+                        case VALIDATE:
+                            // If the reset occurred in the validate state, we must re-validate as
+                            // multiple resets may be required.
+                            validate();
+                            break;
+                        case RESET:
+                            switch (mMode) {
+                                case TEST_AND_CONFIRM:
+                                    // The device reconnected after testing.
+                                    verify();
+                                    break;
+                                case TEST_ONLY:
+                                case CONFIRM_ONLY:
+                                    // The device has been tested or confirmed.
+                                    success();
+                                    break;
+                            }
+                            break;
+                    }
+                }
+
+                @Override
+                public void onError(@NotNull Throwable t) {
+                    LOG.trace("Reconnect failed.");
+                    fail(new McuMgrException(t));
+                }
+            };
 
     /**
      * State: RESET.
@@ -536,12 +552,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private McuMgrCallback<McuMgrResponse> mResetCallback = new McuMgrCallback<McuMgrResponse>() {
         @Override
         public void onResponse(@NotNull McuMgrResponse response) {
-            // Reset command has been sent.
-            LOG.trace("Reset request sent. Waiting for reset...");
             // Check for an error return code
             if (!response.isSuccess()) {
                 fail(new McuMgrErrorException(response.getReturnCode()));
+                return;
             }
+            LOG.trace("Reset request success. Waiting for reset...");
         }
 
         @Override
@@ -616,7 +632,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
         public boolean isInProgress() {
             return this == VALIDATE || this == UPLOAD || this == TEST ||
-                   this == RESET    || this == CONFIRM;
+                    this == RESET || this == CONFIRM;
         }
     }
 
@@ -667,35 +683,35 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private ImageManager.ImageUploadCallback mImageUploadCallback =
             new ImageManager.ImageUploadCallback() {
-        @Override
-        public void onProgressChanged(int bytesSent, int imageSize, long timestamp) {
-            mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
-        }
+                @Override
+                public void onProgressChanged(int bytesSent, int imageSize, long timestamp) {
+                    mInternalCallback.onUploadProgressChanged(bytesSent, imageSize, timestamp);
+                }
 
-        @Override
-        public void onUploadFailed(@NotNull McuMgrException error) {
-            fail(error);
-        }
+                @Override
+                public void onUploadFailed(@NotNull McuMgrException error) {
+                    fail(error);
+                }
 
-        @Override
-        public void onUploadCanceled() {
-            cancelled(State.UPLOAD);
-        }
+                @Override
+                public void onUploadCanceled() {
+                    cancelled(State.UPLOAD);
+                }
 
-        @Override
-        public void onUploadFinished() {
-            // When upload is complete, send test on confirm commands, depending on the mode.
-            switch (mMode) {
-                case TEST_ONLY:
-                case TEST_AND_CONFIRM:
-                    test();
-                    break;
-                case CONFIRM_ONLY:
-                    confirm();
-                    break;
-            }
-        }
-    };
+                @Override
+                public void onUploadFinished() {
+                    // When upload is complete, send test on confirm commands, depending on the mode.
+                    switch (mMode) {
+                        case TEST_ONLY:
+                        case TEST_AND_CONFIRM:
+                            test();
+                            break;
+                        case CONFIRM_ONLY:
+                            confirm();
+                            break;
+                    }
+                }
+            };
 
     //******************************************************************
     // Internal Callback forwarder

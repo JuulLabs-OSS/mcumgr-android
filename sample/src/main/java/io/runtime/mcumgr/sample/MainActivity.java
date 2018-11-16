@@ -118,8 +118,8 @@ public class MainActivity extends AppCompatActivity
 			mLogsStatsFragment = getSupportFragmentManager().findFragmentByTag("logs");
 		}
 
-		// Open the connection.
-		mMcuMgrTransport.open();
+		// Connect the transporter
+		mMcuMgrTransport.connect(null);
 	}
 
 	@Override

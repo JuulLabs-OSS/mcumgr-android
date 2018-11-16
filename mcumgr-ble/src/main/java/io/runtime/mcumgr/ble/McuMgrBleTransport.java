@@ -12,6 +12,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -328,8 +329,11 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     }
 
     @Override
-    public void open() {
+    public void connect(@Nullable final ConnectionCallback callback) {
         if (isConnected()) {
+            if (callback != null) {
+                callback.onConnected();
+            }
             return;
         }
         connect(mDevice)
@@ -337,7 +341,10 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                 .done(new SuccessCallback() {
                     @Override
                     public void onRequestCompleted(@NonNull BluetoothDevice device) {
-                        notifyConnected();
+                        if (callback != null) {
+                            callback.onConnected();
+                            notifyConnected();
+                        }
                     }
                 })
                 .enqueue();

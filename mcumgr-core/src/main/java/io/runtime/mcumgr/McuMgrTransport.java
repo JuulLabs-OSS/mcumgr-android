@@ -8,7 +8,7 @@
 package io.runtime.mcumgr;
 
 import org.jetbrains.annotations.NotNull;
-
+import org.jetbrains.annotations.Nullable;
 
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
@@ -21,16 +21,41 @@ import io.runtime.mcumgr.response.McuMgrResponse;
  */
 public interface McuMgrTransport {
 
+    /**
+     * Receives connection state changes independent of explicit calls to
+     * {@link #connect} or {@link #release}.
+     * <p>
+     * To add or remove an observer, use {@link #addObserver} and
+     * {@link #removeObserver} respectively.
+     */
     interface ConnectionObserver {
         /**
-         * A method called when the connection to the device has been established.
+         * Called when the connection to the device has been established.
          */
         void onConnected();
 
         /**
-         * A method called when the connection to the device has been lost.
+         * Called when the connection to the device has been lost.
          */
         void onDisconnected();
+    }
+
+    /**
+     * Receives callbacks from an explicit call to {@link #connect}.
+     */
+    interface ConnectionCallback {
+        /**
+         * Called when connection attempt succeeds or is already open when {@link #connect} is
+         * called.
+         */
+        void onConnected();
+
+        /**
+         * Called when the connection attempt has failed.
+         *
+         * @param t The connection failure reason.
+         */
+        void onError(@NotNull Throwable t);
     }
 
     /**
@@ -52,8 +77,7 @@ public interface McuMgrTransport {
      * @throws McuMgrException thrown on error. Set the cause of the error if caused by a different
      *                         type of exception.
      */
-    @NotNull
-    <T extends McuMgrResponse> T send(@NotNull byte[] payload, @NotNull Class<T> responseType)
+    @NotNull <T extends McuMgrResponse> T send(@NotNull byte[] payload, @NotNull Class<T> responseType)
             throws McuMgrException;
 
     /**
@@ -70,9 +94,12 @@ public interface McuMgrTransport {
                                          @NotNull McuMgrCallback<T> callback);
 
     /**
-     * Open the transport connection. When the connection is already open this method does nothing.
+     * Connect the transporter to the remote device. The callback must be called if supplied, even
+     * if the transport connection is already opened.
+     *
+     * @param callback An optional callback to receive the result of the connection attempt.
      */
-    void open();
+    void connect(@Nullable ConnectionCallback callback);
 
     /**
      * Releases the transport connection. When the connection is already closed this method does
