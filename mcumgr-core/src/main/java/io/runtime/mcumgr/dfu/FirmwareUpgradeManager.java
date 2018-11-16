@@ -487,16 +487,13 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     /**
      * State: RESET.
      * Observer for the transport disconnection.
+     *
+     * TODO Add timeouts for disconnect/reconnect to ensure DFU does not hang indefinitely.
      */
     private McuMgrTransport.ConnectionObserver mResetObserver
             = new McuMgrTransport.ConnectionObserver() {
         @Override
         public void onConnected() {
-            // ignore
-        }
-
-        @Override
-        public void onDisconnected() {
             // Device has reset.
             mDefaultManager.getTransporter().removeObserver(this);
             LOG.trace("Reset successful");
@@ -523,6 +520,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     }
                     break;
             }
+        }
+
+        @Override
+        public void onDisconnected() {
+            LOG.trace("Reset successful. Re-opening connection...");
+            mDefaultManager.getTransporter().open();
         }
     };
 
@@ -695,7 +698,7 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     };
 
     //******************************************************************
-    // Main Thread Executor
+    // Internal Callback forwarder
     //******************************************************************
 
     /**
@@ -813,6 +816,10 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             }
         }
     };
+
+    //******************************************************************
+    // Main Thread Executor
+    //******************************************************************
 
     /**
      * Used to execute callbacks on the main UI thread.

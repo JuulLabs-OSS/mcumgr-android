@@ -9,6 +9,7 @@ package io.runtime.mcumgr;
 
 import org.jetbrains.annotations.NotNull;
 
+
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 
@@ -67,6 +68,11 @@ public interface McuMgrTransport {
      */
     <T extends McuMgrResponse> void send(@NotNull byte[] payload, @NotNull Class<T> responseType,
                                          @NotNull McuMgrCallback<T> callback);
+
+    /**
+     * Open the transport connection. When the connection is already open this method does nothing.
+     */
+    void open();
 
     /**
      * Releases the transport connection. When the connection is already closed this method does

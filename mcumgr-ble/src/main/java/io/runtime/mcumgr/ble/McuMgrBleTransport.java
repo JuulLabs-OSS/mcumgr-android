@@ -328,6 +328,22 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     }
 
     @Override
+    public void open() {
+        if (isConnected()) {
+            return;
+        }
+        connect(mDevice)
+                .retry(3, 100)
+                .done(new SuccessCallback() {
+                    @Override
+                    public void onRequestCompleted(@NonNull BluetoothDevice device) {
+                        notifyConnected();
+                    }
+                })
+                .enqueue();
+    }
+
+    @Override
     public void release() {
         disconnect().enqueue();
     }
