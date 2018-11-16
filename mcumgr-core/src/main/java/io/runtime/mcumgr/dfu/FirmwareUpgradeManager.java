@@ -531,8 +531,8 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 public void continueUpgrade() {
                     switch (mState) {
                         case NONE:
-                            // Upload cancelled.
-                            cancelled(mState);
+                            // Upload cancelled in state validate.
+                            cancelled(State.VALIDATE);
                             break;
                         case VALIDATE:
                             // If the reset occurred in the validate state, we must re-validate as
