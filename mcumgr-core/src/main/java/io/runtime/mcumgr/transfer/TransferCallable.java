@@ -48,15 +48,6 @@ public class TransferCallable implements Callable<Transfer>, TransferController 
 
     @Override
     public synchronized void cancel() {
-        if (mState == State.NONE || mState == State.PAUSED) {
-            mPauseLock.open();
-            cancelTransfer();
-        } else if (mState == State.TRANSFER) {
-            mState = State.CLOSED;
-        }
-    }
-
-    private synchronized void cancelTransfer() {
         mState = State.CLOSED;
         mTransfer.onCanceled();
     }
@@ -91,19 +82,20 @@ public class TransferCallable implements Callable<Transfer>, TransferController 
                 return mTransfer;
             }
 
-            // Check if upload hasn't been cancelled.
-            if (mState == State.CLOSED) {
-                cancelTransfer();
-                return mTransfer;
-            }
+            synchronized (this) {
+                // Check if upload hasn't been cancelled.
+                if (mState == State.CLOSED) {
+                    return mTransfer;
+                }
 
-            if (mTransfer.getData() == null) {
-                throw new NullPointerException("Transfer data is null!");
-            }
+                if (mTransfer.getData() == null) {
+                    throw new NullPointerException("Transfer data is null!");
+                }
 
-            // Call the progress callback.
-            mTransfer.onProgressChanged(mTransfer.getOffset(), mTransfer.getData().length,
-                    System.currentTimeMillis());
+                // Call the progress callback.
+                mTransfer.onProgressChanged(mTransfer.getOffset(), mTransfer.getData().length,
+                        System.currentTimeMillis());
+            }
         }
         completeTransfer();
         return mTransfer;

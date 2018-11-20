@@ -236,7 +236,6 @@ public class FirmwareUpgradeManagerV2 implements FirmwareUpgradeController {
     @Override
     public synchronized void pause() {
         if (mState.isInProgress()) {
-            LOG.info("Pausing upgrade.");
             mPaused = true;
             if (mState == State.UPLOAD) {
                 mUploadController.pause();
