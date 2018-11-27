@@ -128,6 +128,13 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private boolean mUiThreadCallbacks = true;
 
     /**
+     * Estimated time required for swapping images, in milliseconds.
+     * If the mode is set to {@link Mode#TEST_AND_CONFIRM}, the manager will try to reconnect after
+     * this time. 0 by default.
+     */
+    private int mEstimatedSwapTime = 0;
+
+    /**
      * Construct a firmware upgrade manager. If using this constructor, the callback must be set
      * using {@link #setFirmwareUpgradeCallback(FirmwareUpgradeCallback)} before calling
      * {@link FirmwareUpgradeManager#start}.
@@ -214,6 +221,17 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             return;
         }
         mMode = mode;
+    }
+
+    /**
+     * Sets the estimated time required to swap images after uploading the image successfully.
+     * If the mode was set to {@link Mode#TEST_AND_CONFIRM}, the manager will wait this long
+     * before trying to reconnect to the device.
+     *
+     * @param swapTime estimated time required for swapping images, in milliseconds. 0 by default.
+     */
+    public void setEstimatedSwapTime(int swapTime) {
+        this.mEstimatedSwapTime = Math.max(swapTime, 0);
     }
 
     /**
@@ -549,7 +567,17 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     switch (mMode) {
                         case TEST_AND_CONFIRM:
                             // The device reconnected after testing.
-                            verify();
+                            Runnable verify = new Runnable() {
+                                @Override
+                                public void run() {
+                                    verify();
+                                }
+                            };
+                            if (mEstimatedSwapTime > 0) {
+                                new Handler().postDelayed(verify, mEstimatedSwapTime);
+                            } else {
+                                verify.run();
+                            }
                             break;
                         case TEST_ONLY:
                         case CONFIRM_ONLY:
