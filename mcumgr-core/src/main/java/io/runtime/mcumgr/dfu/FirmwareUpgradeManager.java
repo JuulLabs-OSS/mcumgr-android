@@ -363,6 +363,11 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     }
 
                     McuMgrImageStateResponse.ImageSlot[] images = response.images;
+                    if (images == null) {
+                        LOG.error("Missing images information: {}", response.toString());
+                        fail(new McuMgrException("Missing images information"));
+                        return;
+                    }
 
                     // Check if the new firmware is different than the active one.
                     if (images.length > 0 && Arrays.equals(mHash, images[0].hash)) {
