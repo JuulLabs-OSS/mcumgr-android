@@ -11,6 +11,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
 
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import io.runtime.mcumgr.ble.callback.SmpResponse;
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 import no.nordicsemi.android.ble.Request;
+import no.nordicsemi.android.ble.annotation.ConnectionPriority;
 import no.nordicsemi.android.ble.callback.FailCallback;
 import no.nordicsemi.android.ble.callback.MtuCallback;
 import no.nordicsemi.android.ble.callback.SuccessCallback;
@@ -330,6 +332,40 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     @Override
     public void release() {
         disconnect().enqueue();
+    }
+
+    /**
+     * Requests the given connection priority. On Android, the connection priority is the
+     * equivalent of connection parameters. Acceptable values are:
+     * <ol>
+     * <li>{@link BluetoothGatt#CONNECTION_PRIORITY_HIGH}
+     * - Interval: 11.25 -15 ms, latency: 0, supervision timeout: 20 sec,</li>
+     * <li>{@link BluetoothGatt#CONNECTION_PRIORITY_BALANCED}
+     * - Interval: 30 - 50 ms, latency: 0, supervision timeout: 20 sec,</li>
+     * <li>{@link BluetoothGatt#CONNECTION_PRIORITY_LOW_POWER}
+     * - Interval: 100 - 125 ms, latency: 2, supervision timeout: 20 sec.</li>
+     * </ol>
+     * Calling this method with priority {@link BluetoothGatt#CONNECTION_PRIORITY_HIGH} may
+     * improve file transfer speed.
+     * <p>
+     * Similarly to {@link #send(byte[], Class)}, this method will connect automatically
+     * to the device if not connected.
+     *
+     * @param priority one of: {@link BluetoothGatt#CONNECTION_PRIORITY_HIGH},
+     *                 {@link BluetoothGatt#CONNECTION_PRIORITY_BALANCED},
+     *                 {@link BluetoothGatt#CONNECTION_PRIORITY_LOW_POWER}.
+     */
+    public void requestConnPriority(@ConnectionPriority final int priority) {
+        connect(mDevice).done(new SuccessCallback() {
+            @Override
+            public void onRequestCompleted(@NonNull BluetoothDevice device) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    McuMgrBleTransport.super.requestConnectionPriority(priority).enqueue();
+                } // else ignore... :(
+            }
+        })
+        .retry(3, 100)
+        .enqueue();
     }
 
     //*******************************************************************************************
