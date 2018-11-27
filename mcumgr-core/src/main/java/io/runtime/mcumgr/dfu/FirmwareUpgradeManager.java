@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.concurrent.Executor;
 
 import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
@@ -148,6 +149,35 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         mImageManager = new ImageManager(transport);
         mDefaultManager = new DefaultManager(transport);
         mCallback = callback;
+    }
+
+    /**
+     * Get the transporter.
+     *
+     * @return Transporter for this new manager instance.
+     */
+    @NotNull
+    public McuMgrTransport getTransporter() {
+        return mImageManager.getTransporter();
+    }
+
+    /**
+     * Get the transporter's scheme.
+     *
+     * @return The transporter's scheme.
+     */
+    @NotNull
+    public McuMgrScheme getScheme() {
+        return mImageManager.getScheme();
+    }
+
+    /**
+     * Returns the upload MTU. MTU must be between 20 and 1024.
+     *
+     * @return The MTY.
+     */
+    public synchronized int getMtu() {
+        return mImageManager.getMtu();
     }
 
     /**
