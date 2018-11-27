@@ -27,6 +27,7 @@ import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.exception.McuMgrTimeoutException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.ble.callback.SmpDataCallback;
 import io.runtime.mcumgr.ble.callback.SmpMerger;
@@ -181,6 +182,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                     // a second time and to a different device than the one that's already
                     // connected. This may not happen here.
                     throw new McuMgrException("Other device already connected");
+                case FailCallback.REASON_TIMEOUT:
+                    // Called after receiving error 133 after 30 seconds.
+                    throw new McuMgrTimeoutException();
                 default:
                     // Other errors are currently never thrown for the connect request.
                     throw new McuMgrException("Unknown error");
@@ -315,6 +319,10 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                         // a second time and to a different device than the one that's already
                         // connected. This may not happen here.
                         callback.onError(new McuMgrException("Other device already connected"));
+                        break;
+                    case REASON_TIMEOUT:
+                        // Called after receiving error 133 after 30 seconds.
+                        callback.onError(new McuMgrTimeoutException());
                         break;
                     case REASON_BLUETOOTH_DISABLED:
                         callback.onError(new McuMgrException("Bluetooth adapter disabled"));

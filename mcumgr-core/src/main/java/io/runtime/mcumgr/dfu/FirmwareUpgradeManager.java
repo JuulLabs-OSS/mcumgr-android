@@ -23,6 +23,7 @@ import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.exception.McuMgrTimeoutException;
 import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.managers.DefaultManager;
 import io.runtime.mcumgr.managers.ImageManager;
@@ -588,8 +589,14 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrCallback<McuMgrImageStateResponse> mConfirmCallback =
             new McuMgrCallback<McuMgrImageStateResponse>() {
+                private final static int MAX_ATTEMPTS = 2;
+                private int mAttempts = 0;
+
                 @Override
                 public void onResponse(@NotNull McuMgrImageStateResponse response) {
+                    // Reset retry counter
+                    mAttempts = 0;
+
                     LOG.trace("Confirm response: {}", response.toString());
                     // Check for an error return code
                     if (!response.isSuccess()) {
@@ -635,6 +642,18 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
                 @Override
                 public void onError(@NotNull McuMgrException e) {
+                    // The confirm request might have been sent after the device was rebooted
+                    // and the images were swapped. Swapping images, depending on the hardware,
+                    // make take a long time, during which the phone may throw 133 error as a
+                    // timeout. In such case we should try again.
+                    if (e instanceof McuMgrTimeoutException) {
+                        if (mAttempts++ < MAX_ATTEMPTS) {
+                            // Try again
+                            LOG.info("Connection timeout. Retrying...");
+                            verify();
+                            return;
+                        }
+                    }
                     fail(e);
                 }
             };
