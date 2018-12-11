@@ -58,6 +58,7 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 						  @Named("busy") final MutableLiveData<Boolean> state) {
 		super(state);
 		mManager = manager;
+		mManager.setEstimatedSwapTime(20000);
 		mManager.setFirmwareUpgradeCallback(this);
 		mStateLiveData.setValue(State.IDLE);
 		mProgressLiveData.setValue(0);
@@ -116,7 +117,6 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 	public void cancel() {
 		mManager.cancel();
 	}
-
 
 	@Override
 	public void onUpgradeStarted(final FirmwareUpgradeController controller) {
