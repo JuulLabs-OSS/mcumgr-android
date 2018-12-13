@@ -19,6 +19,7 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeCallback;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeController;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.sample.BuildConfig;
 import io.runtime.mcumgr.sample.viewmodel.SingleLiveEvent;
 import no.nordicsemi.android.ble.ConnectionPriorityRequest;
 
@@ -58,6 +59,14 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 						  @Named("busy") final MutableLiveData<Boolean> state) {
 		super(state);
 		mManager = manager;
+
+		// Enable logging for BLE transport
+		final McuMgrTransport transporter = manager.getTransporter();
+		if (transporter instanceof McuMgrBleTransport) {
+			final McuMgrBleTransport bleTransporter = (McuMgrBleTransport) transporter;
+			bleTransporter.setLoggingEnabled(BuildConfig.DEBUG);
+		}
+
 		mManager.setEstimatedSwapTime(20000);
 		mManager.setFirmwareUpgradeCallback(this);
 		mStateLiveData.setValue(State.IDLE);
