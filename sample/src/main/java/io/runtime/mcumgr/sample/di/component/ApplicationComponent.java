@@ -22,22 +22,22 @@ import io.runtime.mcumgr.sample.di.module.ViewModelModule;
  * for more details.
  */
 @Component(modules = {
-		AndroidInjectionModule.class,
-		AndroidSupportInjectionModule.class,
-		ContextModule.class,
-		ActivitiesModule.class,
-		ViewModelModule.class,
-		McuMgrModule.class
+        AndroidInjectionModule.class,
+        AndroidSupportInjectionModule.class,
+        ContextModule.class,
+        ActivitiesModule.class,
+        ViewModelModule.class,
+        McuMgrModule.class
 })
 @Singleton
 public interface ApplicationComponent {
-	@Component.Builder
-	interface Builder {
-		Builder contextModule(final ContextModule module);
+    @Component.Builder
+    interface Builder {
+        Builder contextModule(final ContextModule module);
 
-		ApplicationComponent build();
-	}
+        ApplicationComponent build();
+    }
 
-	void inject(final Dagger2Application application);
+    void inject(final Dagger2Application application);
 }
 

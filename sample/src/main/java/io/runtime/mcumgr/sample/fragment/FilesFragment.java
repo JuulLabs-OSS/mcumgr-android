@@ -23,33 +23,33 @@ import io.runtime.mcumgr.sample.dialog.PartitionDialogFragment;
 
 public class FilesFragment extends Fragment {
 
-	@Override
-	public void onCreate(@Nullable final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setHasOptionsMenu(true);
-	}
+    @Override
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
-	@Override
-	public void onCreateOptionsMenu(@NonNull final Menu menu, @NonNull final MenuInflater inflater) {
-		inflater.inflate(R.menu.settings, menu);
-	}
+    @Override
+    public void onCreateOptionsMenu(@NonNull final Menu menu, @NonNull final MenuInflater inflater) {
+        inflater.inflate(R.menu.settings, menu);
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
-		switch (item.getItemId()) {
-			case R.id.action_settings:
-				final DialogFragment dialog = PartitionDialogFragment.getInstance();
-				dialog.show(getChildFragmentManager(), null);
-				return true;
-		}
-		return false;
-	}
+    @Override
+    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                final DialogFragment dialog = PartitionDialogFragment.getInstance();
+                dialog.show(getChildFragmentManager(), null);
+                return true;
+        }
+        return false;
+    }
 
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull final LayoutInflater inflater,
-							 @Nullable final ViewGroup container,
-							 @Nullable final Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_fs, container, false);
-	}
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull final LayoutInflater inflater,
+                             @Nullable final ViewGroup container,
+                             @Nullable final Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_fs, container, false);
+    }
 }

@@ -26,18 +26,19 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.StatsViewModel;
  */
 @Subcomponent
 public interface McuMgrViewModelSubComponent {
-	@Subcomponent.Builder
-	interface Builder {
-		McuMgrViewModelSubComponent build();
-	}
-	DeviceStatusViewModel deviceStatusViewModel();
-	EchoViewModel echoViewModel();
-	ResetViewModel resetViewModel();
-	StatsViewModel statsViewModel();
-	McuMgrViewModel mcuMgrViewModel();
-	ImageUpgradeViewModel imageUpgradeViewModel();
-	ImageUploadViewModel imageUploadViewModel();
-	ImageControlViewModel imageControlViewModel();
-	FilesDownloadViewModel filesDownloadViewModel();
-	FilesUploadViewModel filesUploadViewModel();
+    @Subcomponent.Builder
+    interface Builder {
+        McuMgrViewModelSubComponent build();
+    }
+
+    DeviceStatusViewModel deviceStatusViewModel();
+    EchoViewModel echoViewModel();
+    ResetViewModel resetViewModel();
+    StatsViewModel statsViewModel();
+    McuMgrViewModel mcuMgrViewModel();
+    ImageUpgradeViewModel imageUpgradeViewModel();
+    ImageUploadViewModel imageUploadViewModel();
+    ImageControlViewModel imageControlViewModel();
+    FilesDownloadViewModel filesDownloadViewModel();
+    FilesUploadViewModel filesUploadViewModel();
 }

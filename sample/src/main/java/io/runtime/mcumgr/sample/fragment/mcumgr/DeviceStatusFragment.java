@@ -28,50 +28,50 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 
 public class DeviceStatusFragment extends Fragment implements Injectable {
 
-	@SuppressWarnings("WeakerAccess")
-	@Inject
-	McuMgrViewModelFactory mViewModelFactory;
+    @SuppressWarnings("WeakerAccess")
+    @Inject
+    McuMgrViewModelFactory mViewModelFactory;
 
-	@BindView(R.id.connection_status)
-	TextView mConnectionStatus;
-	@BindView(R.id.bonding_status)
-	TextView mBondingStatus;
-	@BindView(R.id.work_indicator)
-	ProgressBar mWorkIndicator;
+    @BindView(R.id.connection_status)
+    TextView mConnectionStatus;
+    @BindView(R.id.bonding_status)
+    TextView mBondingStatus;
+    @BindView(R.id.work_indicator)
+    ProgressBar mWorkIndicator;
 
-	private DeviceStatusViewModel mViewModel;
+    private DeviceStatusViewModel mViewModel;
 
-	@Override
-	public void onCreate(@Nullable final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		mViewModel = ViewModelProviders.of(this, mViewModelFactory)
-				.get(DeviceStatusViewModel.class);
-	}
+    @Override
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mViewModel = ViewModelProviders.of(this, mViewModelFactory)
+                .get(DeviceStatusViewModel.class);
+    }
 
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull final LayoutInflater inflater,
-							 @Nullable final ViewGroup container,
-							 @Nullable final Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_card_device_status, container, false);
-	}
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull final LayoutInflater inflater,
+                             @Nullable final ViewGroup container,
+                             @Nullable final Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_card_device_status, container, false);
+    }
 
-	@Override
-	public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
-		super.onViewCreated(view, savedInstanceState);
-		ButterKnife.bind(this, view);
-	}
+    @Override
+    public void onViewCreated(@NonNull final View view, @Nullable final Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ButterKnife.bind(this, view);
+    }
 
-	@SuppressWarnings("ConstantConditions")
-	@Override
-	public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityCreated(@Nullable final Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
-		mViewModel.getConnectionState().observe(this,
-				resId -> mConnectionStatus.setText(resId));
-		mViewModel.getBondState().observe(this, resId ->
-				mBondingStatus.setText(resId));
-		mViewModel.getBusyState().observe(this, busy ->
-				mWorkIndicator.setVisibility(busy ? View.VISIBLE : View.GONE));
-	}
+        mViewModel.getConnectionState().observe(this,
+                resId -> mConnectionStatus.setText(resId));
+        mViewModel.getBondState().observe(this, resId ->
+                mBondingStatus.setText(resId));
+        mViewModel.getBusyState().observe(this, busy ->
+                mWorkIndicator.setVisibility(busy ? View.VISIBLE : View.GONE));
+    }
 }

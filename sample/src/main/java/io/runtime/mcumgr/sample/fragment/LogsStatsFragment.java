@@ -18,11 +18,11 @@ import io.runtime.mcumgr.sample.R;
 
 public class LogsStatsFragment extends Fragment {
 
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull final LayoutInflater inflater,
-							 @Nullable final ViewGroup container,
-							 @Nullable final Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_logs_stats, container, false);
-	}
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull final LayoutInflater inflater,
+                             @Nullable final ViewGroup container,
+                             @Nullable final Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_logs_stats, container, false);
+    }
 }

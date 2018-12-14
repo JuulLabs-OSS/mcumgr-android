@@ -18,49 +18,49 @@ import io.runtime.mcumgr.managers.DefaultManager;
 import io.runtime.mcumgr.response.dflt.McuMgrEchoResponse;
 
 public class EchoViewModel extends McuMgrViewModel {
-	private final DefaultManager mManager;
+    private final DefaultManager mManager;
 
-	private final MutableLiveData<String> mRequestLiveData = new MutableLiveData<>();
-	private final MutableLiveData<String> mResponseLiveData = new MutableLiveData<>();
-	private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> mRequestLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> mResponseLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> mErrorLiveData = new MutableLiveData<>();
 
-	@Inject
-	EchoViewModel(final DefaultManager manager,
-				  @Named("busy") final MutableLiveData<Boolean> state) {
-		super(state);
-		mManager = manager;
-	}
+    @Inject
+    EchoViewModel(final DefaultManager manager,
+                  @Named("busy") final MutableLiveData<Boolean> state) {
+        super(state);
+        mManager = manager;
+    }
 
-	@NonNull
-	public LiveData<String> getRequest() {
-		return mRequestLiveData;
-	}
+    @NonNull
+    public LiveData<String> getRequest() {
+        return mRequestLiveData;
+    }
 
-	@NonNull
-	public LiveData<String> getResponse() {
-		return mResponseLiveData;
-	}
+    @NonNull
+    public LiveData<String> getResponse() {
+        return mResponseLiveData;
+    }
 
-	@NonNull
-	public LiveData<String> getError() {
-		return mErrorLiveData;
-	}
+    @NonNull
+    public LiveData<String> getError() {
+        return mErrorLiveData;
+    }
 
-	public void echo(final String echo) {
-		setBusy();
-		mRequestLiveData.postValue(echo);
-		mManager.echo(echo, new McuMgrCallback<McuMgrEchoResponse>() {
-			@Override
-			public void onResponse(@NonNull final McuMgrEchoResponse response) {
-				mResponseLiveData.postValue(response.r);
-				postReady();
-			}
+    public void echo(final String echo) {
+        setBusy();
+        mRequestLiveData.postValue(echo);
+        mManager.echo(echo, new McuMgrCallback<McuMgrEchoResponse>() {
+            @Override
+            public void onResponse(@NonNull final McuMgrEchoResponse response) {
+                mResponseLiveData.postValue(response.r);
+                postReady();
+            }
 
-			@Override
-			public void onError(@NonNull final McuMgrException error) {
-				mErrorLiveData.postValue(error.getMessage());
-				postReady();
-			}
-		});
-	}
+            @Override
+            public void onError(@NonNull final McuMgrException error) {
+                mErrorLiveData.postValue(error.getMessage());
+                postReady();
+            }
+        });
+    }
 }

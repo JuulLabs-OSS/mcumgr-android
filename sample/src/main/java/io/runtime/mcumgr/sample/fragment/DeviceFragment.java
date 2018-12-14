@@ -18,11 +18,11 @@ import io.runtime.mcumgr.sample.R;
 
 public class DeviceFragment extends Fragment {
 
-	@Nullable
-	@Override
-	public View onCreateView(@NonNull final LayoutInflater inflater,
-							 @Nullable final ViewGroup container,
-							 @Nullable final Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.fragment_device, container, false);
-	}
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull final LayoutInflater inflater,
+                             @Nullable final ViewGroup container,
+                             @Nullable final Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_device, container, false);
+    }
 }

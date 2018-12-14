@@ -22,17 +22,17 @@ import io.runtime.mcumgr.sample.di.McuMgrScope;
 @Module
 public class McuMgrTransportModule {
 
-	@Provides
-	@Named("busy")
-	@McuMgrScope
-	static MutableLiveData<Boolean> provideBusyStateLiveData() {
-		return new MutableLiveData<>();
-	}
+    @Provides
+    @Named("busy")
+    @McuMgrScope
+    static MutableLiveData<Boolean> provideBusyStateLiveData() {
+        return new MutableLiveData<>();
+    }
 
-	@Provides
-	@McuMgrScope
-	static McuMgrTransport provideMcuMgrTransport(@NonNull final Context context,
-												  @NonNull final BluetoothDevice device) {
-		return new McuMgrBleTransport(context, device);
-	}
+    @Provides
+    @McuMgrScope
+    static McuMgrTransport provideMcuMgrTransport(@NonNull final Context context,
+                                                  @NonNull final BluetoothDevice device) {
+        return new McuMgrBleTransport(context, device);
+    }
 }

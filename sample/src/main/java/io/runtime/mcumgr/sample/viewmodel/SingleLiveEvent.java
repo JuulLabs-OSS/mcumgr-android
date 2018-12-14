@@ -29,41 +29,41 @@ import timber.log.Timber;
 @SuppressWarnings("unused")
 public class SingleLiveEvent<T> extends MutableLiveData<T> {
 
-	private final AtomicBoolean mPending = new AtomicBoolean(false);
+    private final AtomicBoolean mPending = new AtomicBoolean(false);
 
-	@MainThread
-	public void observe(@NonNull final LifecycleOwner owner, @NonNull final Observer<? super T> observer) {
+    @MainThread
+    public void observe(@NonNull final LifecycleOwner owner, @NonNull final Observer<? super T> observer) {
 
-		if (hasActiveObservers()) {
-			Timber.w("Multiple observers registered but only one will be notified of changes.");
-		}
+        if (hasActiveObservers()) {
+            Timber.w("Multiple observers registered but only one will be notified of changes.");
+        }
 
-		// Observe the internal MutableLiveData
-		super.observe(owner, t -> {
-			if (mPending.compareAndSet(true, false)) {
-				observer.onChanged(t);
-			}
-		});
-	}
+        // Observe the internal MutableLiveData
+        super.observe(owner, t -> {
+            if (mPending.compareAndSet(true, false)) {
+                observer.onChanged(t);
+            }
+        });
+    }
 
-	@MainThread
-	public void setValue(@Nullable final T t) {
-		mPending.set(true);
-		super.setValue(t);
-	}
+    @MainThread
+    public void setValue(@Nullable final T t) {
+        mPending.set(true);
+        super.setValue(t);
+    }
 
-	/**
-	 * Used for cases where T is Void, to make calls cleaner.
-	 */
-	@MainThread
-	public void call() {
-		setValue(null);
-	}
+    /**
+     * Used for cases where T is Void, to make calls cleaner.
+     */
+    @MainThread
+    public void call() {
+        setValue(null);
+    }
 
-	/**
-	 * Used for cases where T is Void, to make calls cleaner.
-	 */
-	public void post() {
-		postValue(null);
-	}
+    /**
+     * Used for cases where T is Void, to make calls cleaner.
+     */
+    public void post() {
+        postValue(null);
+    }
 }
