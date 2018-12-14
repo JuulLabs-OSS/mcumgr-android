@@ -143,7 +143,6 @@ public class ImageControlFragment extends Fragment implements Injectable, Toolba
             for (final McuMgrImageStateResponse.ImageSlot slot : response.images) {
                 final int index = builder.length();
                 builder.append("\n");
-                String.format()
                 builder.append(getString(R.string.image_control_slot,
                         slot.slot, slot.version, StringUtils.toHex(slot.hash),
                         slot.bootable, slot.pending, slot.confirmed,
