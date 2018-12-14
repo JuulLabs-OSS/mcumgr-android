@@ -5,18 +5,18 @@
   ~ SPDX-License-Identifier: Apache-2.0
   -->
 
-<android.support.design.card.MaterialCardView
+<com.google.android.material.card.MaterialCardView
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content">
 
-	<android.support.constraint.ConstraintLayout
+	<androidx.constraintlayout.widget.ConstraintLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content">
 
-		<android.support.v7.widget.Toolbar
+		<androidx.appcompat.widget.Toolbar
 			android:id="@+id/toolbar"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -125,7 +125,7 @@
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/progress"/>
 
-		<android.support.design.button.MaterialButton
+		<com.google.android.material.button.MaterialButton
 			android:id="@+id/action_select_file"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
@@ -135,7 +135,7 @@
 			app:layout_constraintEnd_toStartOf="@+id/action_start"
 			app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
-		<android.support.design.button.MaterialButton
+		<com.google.android.material.button.MaterialButton
 			android:id="@+id/action_start"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
@@ -147,7 +147,7 @@
 			app:layout_constraintEnd_toStartOf="@+id/action_cancel"
 			app:layout_constraintTop_toTopOf="@+id/action_select_file"/>
 
-		<android.support.design.button.MaterialButton
+		<com.google.android.material.button.MaterialButton
 			android:id="@+id/action_cancel"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
@@ -159,7 +159,7 @@
 			app:layout_constraintEnd_toStartOf="@+id/action_pause_resume"
 			app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
-		<android.support.design.button.MaterialButton
+		<com.google.android.material.button.MaterialButton
 			android:id="@+id/action_pause_resume"
 			style="@style/Widget.ActionButton"
 			android:layout_width="wrap_content"
@@ -171,5 +171,5 @@
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
-	</android.support.constraint.ConstraintLayout>
-</android.support.design.card.MaterialCardView>
+	</androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

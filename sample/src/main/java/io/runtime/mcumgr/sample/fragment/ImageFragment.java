@@ -6,12 +6,7 @@
 
 package io.runtime.mcumgr.sample.fragment;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,6 +16,11 @@ import android.view.ViewGroup;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProviders;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.di.Injectable;
 import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModel;
@@ -29,6 +29,7 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 public class ImageFragment extends Fragment implements Injectable {
 	private static final String SIS_MODE_ADVANCED = "advanced";
 
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 
@@ -63,7 +64,7 @@ public class ImageFragment extends Fragment implements Injectable {
 	}
 
 	@Override
-	public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
+	public void onCreateOptionsMenu(@NonNull final Menu menu, @NonNull final MenuInflater inflater) {
 		inflater.inflate(R.menu.image_mode, menu);
 
 		menu.findItem(R.id.action_switch_to_advanced)
@@ -75,7 +76,7 @@ public class ImageFragment extends Fragment implements Injectable {
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(final MenuItem item) {
+	public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.action_switch_to_advanced:
 				mModeAdvanced = true;

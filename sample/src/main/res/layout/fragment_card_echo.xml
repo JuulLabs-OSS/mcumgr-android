@@ -5,20 +5,20 @@
   ~ SPDX-License-Identifier: Apache-2.0
   -->
 
-<android.support.design.card.MaterialCardView
+<com.google.android.material.card.MaterialCardView
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content">
 
-	<android.support.constraint.ConstraintLayout
+	<androidx.constraintlayout.widget.ConstraintLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:animateLayoutChanges="true"
 		android:paddingBottom="16dp">
 
-		<android.support.v7.widget.Toolbar
+		<androidx.appcompat.widget.Toolbar
 			android:id="@+id/toolbar"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -27,20 +27,28 @@
 			app:layout_constraintTop_toTopOf="parent"
 			app:title="@string/echo_title"/>
 
-		<EditText
-			android:id="@+id/echo_value"
+		<com.google.android.material.textfield.TextInputLayout
+			android:id="@+id/echo_layout"
+			style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:layout_marginEnd="16dp"
-			android:layout_marginStart="8dp"
+			android:layout_marginStart="16dp"
+			android:layout_weight="1"
 			android:hint="@string/echo_hint"
-			android:inputType="text"
-			android:text="@string/echo_hello"
 			app:layout_constraintEnd_toStartOf="@+id/action_send"
 			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
+			app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
-		<android.support.design.button.MaterialButton
+			<com.google.android.material.textfield.TextInputEditText
+				android:id="@+id/echo_value"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:inputType="text"
+				android:text="@string/echo_hello"/>
+		</com.google.android.material.textfield.TextInputLayout>
+
+		<com.google.android.material.button.MaterialButton
 			android:id="@+id/action_send"
 			style="@style/Widget.MaterialComponents.Button"
 			android:layout_width="wrap_content"
@@ -48,7 +56,8 @@
 			android:layout_marginEnd="16dp"
 			android:text="@string/echo_action"
 			app:layout_constraintEnd_toEndOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
+			app:layout_constraintTop_toTopOf="@+id/echo_layout"
+			app:layout_constraintBottom_toBottomOf="@+id/echo_layout"/>
 
 		<LinearLayout
 			android:id="@+id/echo_content"
@@ -59,7 +68,7 @@
 			android:visibility="gone"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toBottomOf="@+id/echo_value"
+			app:layout_constraintTop_toBottomOf="@+id/echo_layout"
 			tools:visibility="visible">
 
 			<View
@@ -98,5 +107,5 @@
 				tools:visibility="visible"/>
 		</LinearLayout>
 
-	</android.support.constraint.ConstraintLayout>
-</android.support.design.card.MaterialCardView>
+	</androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

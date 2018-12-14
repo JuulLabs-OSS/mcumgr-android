@@ -6,16 +6,15 @@
 
 package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
-import android.arch.lifecycle.ViewModel;
-import android.arch.lifecycle.ViewModelProvider;
-import android.support.annotation.NonNull;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import io.runtime.mcumgr.sample.di.component.McuMgrViewModelSubComponent;
 
 public class McuMgrViewModelFactory implements ViewModelProvider.Factory {

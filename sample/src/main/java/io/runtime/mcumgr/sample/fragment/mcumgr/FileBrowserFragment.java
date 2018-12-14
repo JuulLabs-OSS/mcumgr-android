@@ -14,16 +14,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
-import android.util.Log;
 import android.widget.Toast;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -32,11 +25,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.utils.Utils;
 import timber.log.Timber;
 
 public abstract class FileBrowserFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+	@SuppressWarnings("unused")
 	private static final String TAG = FileBrowserFragment.class.getSimpleName();
 
 	private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 1023; // random number
@@ -74,11 +75,11 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
 	 * @return The file content, or null.
 	 */
 	@Nullable
-	protected byte[] getFileContent() {
+	byte[] getFileContent() {
 		return mFileContent;
 	}
 
-	protected void setFileContent(@NonNull final byte[] data) {
+	void setFileContent(@NonNull final byte[] data) {
 		mFileContent = data;
 		onFileLoaded(data);
 	}
@@ -86,7 +87,7 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
 	/**
 	 * Releases the reference to the file content and calls {@link #onFileCleared()}.
 	 */
-	protected void clearFileContent() {
+	void clearFileContent() {
 		mFileContent = null;
 		onFileCleared();
 	}
@@ -96,7 +97,7 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
 	 *
 	 * @return True if the file has been selected, false otherwise.
 	 */
-	protected boolean isFileLoaded() {
+	boolean isFileLoaded() {
 		return mFileContent != null;
 	}
 
@@ -263,7 +264,7 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
 	 *
 	 * @param mimeType required MIME TYPE of a file.
 	 */
-	protected void selectFile(@Nullable final String mimeType) {
+	void selectFile(@Nullable final String mimeType) {
 		final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 		intent.setType(mimeType);
 		intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -317,7 +318,7 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
 				int retry = 0;
 				while (offset < size && retry < 5) {
 					offset += buf.read(bytes, offset, size - offset);
-					retry ++;
+					retry++;
 				}
 			} finally {
 				buf.close();

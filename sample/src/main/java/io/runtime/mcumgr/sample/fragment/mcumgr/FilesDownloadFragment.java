@@ -6,16 +6,10 @@
 
 package io.runtime.mcumgr.sample.fragment.mcumgr;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.PopupMenu;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -39,6 +33,12 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.sample.R;
@@ -49,8 +49,10 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 
 public class FilesDownloadFragment extends Fragment implements Injectable {
 
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	FsUtils mFsUtils;
 
@@ -126,7 +128,7 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 			if (recents.isEmpty()) {
 				menu.add(R.string.files_download_recent_files_empty).setEnabled(false);
 			} else {
-				final String[] recentsArray = recents.toArray(new String[recents.size()]);
+				final String[] recentsArray = recents.toArray(new String[0]);
 				Arrays.sort(recentsArray); // Alphabetic order
 				for (final String fileName : recentsArray) {
 					menu.add(fileName);
@@ -135,8 +137,8 @@ public class FilesDownloadFragment extends Fragment implements Injectable {
 			popupMenu.setOnMenuItemClickListener(item -> {
 				mFileName.setError(null);
 				mFileName.setText(item.getTitle());
-                return true;
-            });
+				return true;
+			});
 			popupMenu.show();
 		});
 		mDownloadAction.setOnClickListener(v -> {

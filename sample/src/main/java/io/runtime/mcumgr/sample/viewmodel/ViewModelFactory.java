@@ -7,9 +7,6 @@
 package io.runtime.mcumgr.sample.viewmodel;
 
 import android.app.Application;
-import android.arch.lifecycle.ViewModel;
-import android.arch.lifecycle.ViewModelProvider;
-import android.support.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +14,9 @@ import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import io.runtime.mcumgr.sample.di.component.ViewModelSubComponent;
 
 public class ViewModelFactory extends ViewModelProvider.AndroidViewModelFactory {
@@ -25,7 +25,7 @@ public class ViewModelFactory extends ViewModelProvider.AndroidViewModelFactory 
 	/**
 	 * Creates a {@code AndroidViewModelFactory}.
 	 *
-	 * @param application an application to pass in {@link android.arch.lifecycle.AndroidViewModel}.
+	 * @param application an application to pass in {@link androidx.lifecycle.AndroidViewModel}.
 	 */
 	@Inject
 	public ViewModelFactory(@NonNull final Application application,

@@ -7,7 +7,6 @@
 package io.runtime.mcumgr.sample.viewmodel;
 
 import android.app.Application;
-import android.arch.lifecycle.AndroidViewModel;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,11 +19,11 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import androidx.lifecycle.AndroidViewModel;
 import io.runtime.mcumgr.sample.utils.FilterUtils;
 import io.runtime.mcumgr.sample.utils.Utils;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
 import no.nordicsemi.android.support.v18.scanner.ScanCallback;
-import no.nordicsemi.android.support.v18.scanner.ScanRecord;
 import no.nordicsemi.android.support.v18.scanner.ScanResult;
 import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 

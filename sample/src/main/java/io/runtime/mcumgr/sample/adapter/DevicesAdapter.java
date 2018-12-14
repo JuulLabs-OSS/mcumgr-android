@@ -7,9 +7,6 @@
 package io.runtime.mcumgr.sample.adapter;
 
 import android.bluetooth.BluetoothDevice;
-import android.support.annotation.NonNull;
-import android.support.v7.util.DiffUtil;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +17,9 @@ import android.widget.TextView;
 import java.util.List;
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.sample.R;
@@ -105,10 +105,14 @@ public class DevicesAdapter extends RecyclerView.Adapter<DevicesAdapter.ViewHold
 	}
 
 	final class ViewHolder extends RecyclerView.ViewHolder {
-		@BindView(R.id.icon) ImageView icon;
-		@BindView(R.id.device_address) TextView deviceAddress;
-		@BindView(R.id.device_name) TextView deviceName;
-		@BindView(R.id.rssi) ImageView rssi;
+		@BindView(R.id.icon)
+		ImageView icon;
+		@BindView(R.id.device_address)
+		TextView deviceAddress;
+		@BindView(R.id.device_name)
+		TextView deviceName;
+		@BindView(R.id.rssi)
+		ImageView rssi;
 
 		private ViewHolder(final View view) {
 			super(view);

@@ -6,13 +6,12 @@
 
 package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.exception.McuMgrException;
@@ -48,8 +47,8 @@ public class FilesUploadViewModel extends McuMgrViewModel implements FsManager.F
 	private final SingleLiveEvent<Void> mCancelledEvent = new SingleLiveEvent<>();
 
 	@Inject
-    FilesUploadViewModel(final FsManager manager,
-                         @Named("busy") final MutableLiveData<Boolean> state) {
+	FilesUploadViewModel(final FsManager manager,
+						 @Named("busy") final MutableLiveData<Boolean> state) {
 		super(state);
 		mStateLiveData.setValue(State.IDLE);
 		mManager = manager;

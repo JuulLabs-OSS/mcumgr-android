@@ -9,10 +9,10 @@ package io.runtime.mcumgr.sample.application;
 import android.app.Activity;
 import android.app.Application;
 import android.bluetooth.BluetoothDevice;
-import android.support.annotation.NonNull;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 import io.runtime.mcumgr.sample.di.AppInjector;

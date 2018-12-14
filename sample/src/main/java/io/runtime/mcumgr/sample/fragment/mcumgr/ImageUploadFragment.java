@@ -6,14 +6,8 @@
 
 package io.runtime.mcumgr.sample.fragment.mcumgr;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
@@ -28,6 +22,12 @@ import android.widget.TextView;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProviders;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.exception.McuMgrException;
@@ -42,6 +42,7 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 public class ImageUploadFragment extends FileBrowserFragment implements Injectable,
 		Toolbar.OnMenuItemClickListener {
 
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 

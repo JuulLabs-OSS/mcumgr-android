@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 
 import dagger.Component;
 import dagger.android.AndroidInjectionModule;
+import dagger.android.support.AndroidSupportInjectionModule;
 import io.runtime.mcumgr.sample.application.Dagger2Application;
 import io.runtime.mcumgr.sample.di.module.ActivitiesModule;
 import io.runtime.mcumgr.sample.di.module.ContextModule;
@@ -22,6 +23,7 @@ import io.runtime.mcumgr.sample.di.module.ViewModelModule;
  */
 @Component(modules = {
 		AndroidInjectionModule.class,
+		AndroidSupportInjectionModule.class,
 		ContextModule.class,
 		ActivitiesModule.class,
 		ViewModelModule.class,

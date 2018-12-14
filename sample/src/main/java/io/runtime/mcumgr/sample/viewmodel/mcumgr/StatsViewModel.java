@@ -6,16 +6,15 @@
 
 package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.support.annotation.NonNull;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.managers.StatsManager;

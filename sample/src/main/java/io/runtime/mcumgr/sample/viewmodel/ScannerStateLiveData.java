@@ -6,7 +6,7 @@
 
 package io.runtime.mcumgr.sample.viewmodel;
 
-import android.arch.lifecycle.LiveData;
+import androidx.lifecycle.LiveData;
 
 /**
  * This class keeps the current state of the scanner.

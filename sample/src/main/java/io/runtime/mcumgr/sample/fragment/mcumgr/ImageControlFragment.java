@@ -7,15 +7,8 @@
 package io.runtime.mcumgr.sample.fragment.mcumgr;
 
 import android.animation.LayoutTransition;
-import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -30,6 +23,13 @@ import android.widget.TextView;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.response.img.McuMgrImageStateResponse;
@@ -42,6 +42,7 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 
 public class ImageControlFragment extends Fragment implements Injectable, Toolbar.OnMenuItemClickListener {
 
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 
@@ -141,7 +142,7 @@ public class ImageControlFragment extends Fragment implements Injectable, Toolba
 					0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 			for (final McuMgrImageStateResponse.ImageSlot slot : response.images) {
 				final int index = builder.length();
-				builder.append("\n");
+				builder.append("\n");String.format()
 				builder.append(getString(R.string.image_control_slot,
 						slot.slot, slot.version, StringUtils.toHex(slot.hash),
 						slot.bootable, slot.pending, slot.confirmed,

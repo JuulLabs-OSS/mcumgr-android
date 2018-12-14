@@ -6,13 +6,8 @@
 
 package io.runtime.mcumgr.sample.fragment.mcumgr;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.content.ContextCompat;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
@@ -26,6 +21,11 @@ import android.widget.TextView;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProviders;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.sample.R;
@@ -37,8 +37,10 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.McuMgrViewModelFactory;
 
 public class FilesUploadFragment extends FileBrowserFragment implements Injectable {
 
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	FsUtils mFsUtils;
 

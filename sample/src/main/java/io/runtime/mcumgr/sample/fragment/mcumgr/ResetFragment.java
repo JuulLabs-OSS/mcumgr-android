@@ -6,11 +6,7 @@
 
 package io.runtime.mcumgr.sample.fragment.mcumgr;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +15,10 @@ import android.widget.TextView;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.runtime.mcumgr.sample.R;
@@ -28,6 +28,7 @@ import io.runtime.mcumgr.sample.viewmodel.mcumgr.ResetViewModel;
 
 public class ResetFragment extends Fragment implements Injectable {
 
+	@SuppressWarnings("WeakerAccess")
 	@Inject
 	McuMgrViewModelFactory mViewModelFactory;
 

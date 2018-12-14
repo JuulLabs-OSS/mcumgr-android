@@ -8,10 +8,10 @@ package io.runtime.mcumgr.sample.dialog;
 
 import android.app.Dialog;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AlertDialog;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.sample.R;
 import io.runtime.mcumgr.sample.fragment.mcumgr.ImageUpgradeFragment;
@@ -48,7 +48,7 @@ public class FirmwareUpgradeModeDialogFragment extends DialogFragment {
 	}
 
 	@Override
-	public void onSaveInstanceState(final Bundle outState) {
+	public void onSaveInstanceState(@NonNull final Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putInt(SIS_ITEM, mSelectedItem);
 	}

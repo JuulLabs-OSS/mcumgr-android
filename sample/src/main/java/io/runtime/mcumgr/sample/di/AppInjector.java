@@ -9,10 +9,11 @@ package io.runtime.mcumgr.sample.di;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v7.app.AppCompatActivity;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import dagger.android.AndroidInjection;
 import dagger.android.support.AndroidSupportInjection;
 import dagger.android.support.HasSupportFragmentInjector;
@@ -78,14 +79,16 @@ public class AppInjector {
 		if (activity instanceof AppCompatActivity) {
 			((AppCompatActivity) activity).getSupportFragmentManager()
 					.registerFragmentLifecycleCallbacks(
-					new FragmentManager.FragmentLifecycleCallbacks() {
-						@Override
-						public void onFragmentPreCreated(final FragmentManager fm, final Fragment f, final Bundle savedInstanceState) {
-							if (f instanceof Injectable) {
-								AndroidSupportInjection.inject(f);
-							}
-						}
-					}, true);
+							new FragmentManager.FragmentLifecycleCallbacks() {
+								@Override
+								public void onFragmentPreCreated(@NonNull final FragmentManager fm,
+																 @NonNull final Fragment f,
+																 final Bundle savedInstanceState) {
+									if (f instanceof Injectable) {
+										AndroidSupportInjection.inject(f);
+									}
+								}
+							}, true);
 		}
 	}
 }

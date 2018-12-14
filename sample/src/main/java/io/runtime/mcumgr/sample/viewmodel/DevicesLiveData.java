@@ -6,12 +6,12 @@
 
 package io.runtime.mcumgr.sample.viewmodel;
 
-import android.arch.lifecycle.LiveData;
 import android.os.ParcelUuid;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.lifecycle.LiveData;
 import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.sample.adapter.DiscoveredBluetoothDevice;
 import no.nordicsemi.android.support.v18.scanner.ScanRecord;

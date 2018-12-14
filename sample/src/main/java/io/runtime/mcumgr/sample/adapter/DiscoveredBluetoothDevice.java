@@ -43,6 +43,7 @@ public class DiscoveredBluetoothDevice implements Parcelable {
 	public ScanResult getScanResult() {
 		return lastScanResult;
 	}
+
 	/**
 	 * Returns the highest recorded RSSI value during the scan.
 	 *

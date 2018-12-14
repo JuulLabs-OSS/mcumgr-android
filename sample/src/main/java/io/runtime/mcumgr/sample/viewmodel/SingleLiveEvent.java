@@ -6,15 +6,14 @@
 
 package io.runtime.mcumgr.sample.viewmodel;
 
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
-import android.support.annotation.MainThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import timber.log.Timber;
 
 /**
@@ -30,41 +29,41 @@ import timber.log.Timber;
 @SuppressWarnings("unused")
 public class SingleLiveEvent<T> extends MutableLiveData<T> {
 
-    private final AtomicBoolean mPending = new AtomicBoolean(false);
+	private final AtomicBoolean mPending = new AtomicBoolean(false);
 
-    @MainThread
-    public void observe(@NonNull final LifecycleOwner owner, @NonNull final Observer<T> observer) {
+	@MainThread
+	public void observe(@NonNull final LifecycleOwner owner, @NonNull final Observer<? super T> observer) {
 
-        if (hasActiveObservers()) {
-            Timber.w("Multiple observers registered but only one will be notified of changes.");
-        }
+		if (hasActiveObservers()) {
+			Timber.w("Multiple observers registered but only one will be notified of changes.");
+		}
 
-        // Observe the internal MutableLiveData
-        super.observe(owner, t -> {
+		// Observe the internal MutableLiveData
+		super.observe(owner, t -> {
 			if (mPending.compareAndSet(true, false)) {
 				observer.onChanged(t);
 			}
 		});
-    }
+	}
 
-    @MainThread
-    public void setValue(@Nullable final T t) {
-        mPending.set(true);
-        super.setValue(t);
-    }
+	@MainThread
+	public void setValue(@Nullable final T t) {
+		mPending.set(true);
+		super.setValue(t);
+	}
 
-    /**
-     * Used for cases where T is Void, to make calls cleaner.
-     */
-    @MainThread
-    public void call() {
-        setValue(null);
-    }
+	/**
+	 * Used for cases where T is Void, to make calls cleaner.
+	 */
+	@MainThread
+	public void call() {
+		setValue(null);
+	}
 
-    /**
-     * Used for cases where T is Void, to make calls cleaner.
-     */
-    public void post() {
-        postValue(null);
-    }
+	/**
+	 * Used for cases where T is Void, to make calls cleaner.
+	 */
+	public void post() {
+		postValue(null);
+	}
 }
