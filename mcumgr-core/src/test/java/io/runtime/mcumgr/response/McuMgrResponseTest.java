@@ -270,31 +270,7 @@ public class McuMgrResponseTest {
     }
 
     @Test
-    public void requiresDefragmentation_partialMessage() {
-        final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
-                (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
-                (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
-                (byte) 0x65, (byte) 0x72, (byte) 0x73, (byte) 0x69, (byte) 0x6F, (byte) 0x6E, (byte) 0x65, (byte) 0x33, (byte) 0x2E,
-                (byte) 0x30, (byte) 0x2E, (byte) 0x30, (byte) 0x64, (byte) 0x68, (byte) 0x61, (byte) 0x73, (byte) 0x68, (byte) 0x58,
-                (byte) 0x20, (byte) 0x0D, (byte) 0x4F, (byte) 0x2C, (byte) 0x73, (byte) 0xD8, (byte) 0x58, (byte) 0x1C, (byte) 0xE9,
-                (byte) 0x30, (byte) 0x15, (byte) 0xA2, (byte) 0xDA, (byte) 0xE6, (byte) 0x38, (byte) 0x73, (byte) 0x99, (byte) 0xF0,
-                (byte) 0x20, (byte) 0x1C, (byte) 0x3C, (byte) 0x0C, (byte) 0x56, (byte) 0x15, (byte) 0xF0, (byte) 0xDD, (byte) 0x7A,
-                (byte) 0x2D, (byte) 0x49, (byte) 0xCD, (byte) 0xF3, (byte) 0x46, (byte) 0xB2, (byte) 0x68, (byte) 0x62, (byte) 0x6F,
-                (byte) 0x6F, (byte) 0x74, (byte) 0x61, (byte) 0x62, (byte) 0x6C, (byte) 0x65, (byte) 0xF5, (byte) 0x67, (byte) 0x70,
-                (byte) 0x65, (byte) 0x6E, (byte) 0x64, (byte) 0x69, (byte) 0x6E, (byte) 0x67, (byte) 0xF4, (byte) 0x69, (byte) 0x63,
-                (byte) 0x6F, (byte) 0x6E, (byte) 0x66, (byte) 0x69, (byte) 0x72, (byte) 0x6D, (byte) 0x65, (byte) 0x64, (byte) 0xF5,
-                (byte) 0x66, (byte) 0x61, (byte) 0x63, (byte) 0x74, (byte) 0x69, (byte) 0x76, (byte) 0x65, (byte) 0xF5, (byte) 0x69,
-                (byte) 0x70, (byte) 0x65, (byte) 0x72, (byte) 0x6D, (byte) 0x61, (byte) 0x6E, (byte) 0x65, (byte) 0x6E, (byte) 0x74};
-
-        try {
-            assertTrue(McuMgrResponse.requiresDefragmentation(McuMgrScheme.BLE, data));
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
-    }
-
-    @Test
-    public void requiresDefragmentation_completeMessage() {
+    public void getExpectedLength_full() {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
                 (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
                 (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
@@ -313,9 +289,37 @@ public class McuMgrResponseTest {
                 (byte) 0xFF};
 
         try {
-            assertFalse(McuMgrResponse.requiresDefragmentation(McuMgrScheme.BLE, data));
+            assertEquals(129, McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data));
         } catch (IOException e) {
             fail("Exception: " + e.getLocalizedMessage());
+        }
+    }
+
+    @Test
+    public void getExpectedLength_partial() {
+        final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
+                (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
+                (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
+                (byte) 0x65, (byte) 0x72, (byte) 0x73, (byte) 0x69, (byte) 0x6F, (byte) 0x6E, (byte) 0x65, (byte) 0x33, (byte) 0x2E,
+                (byte) 0x30, (byte) 0x2E, (byte) 0x30, (byte) 0x64, (byte) 0x68, (byte) 0x61, (byte) 0x73, (byte) 0x68, (byte) 0x58,
+                (byte) 0x20, (byte) 0x0D, (byte) 0x4F, (byte) 0x2C, (byte) 0x73, (byte) 0xD8, (byte) 0x58, (byte) 0x1C, (byte) 0xE9};
+
+        try {
+            assertEquals(129, McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data));
+        } catch (IOException e) {
+            fail("Exception: " + e.getLocalizedMessage());
+        }
+    }
+
+    @Test
+    public void getExpectedLength_tooShort() {
+        final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00};
+
+        try {
+            McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data);
+            fail("Incorrectly parsed too short header");
+        } catch (IOException e) {
+            // success
         }
     }
 }
