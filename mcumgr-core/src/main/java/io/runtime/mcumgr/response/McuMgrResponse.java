@@ -287,11 +287,11 @@ public class McuMgrResponse {
         if (scheme.isCoap()) {
             throw new UnsupportedOperationException("Method not implemented for CoAP");
         } else {
-            byte[] headerBytes = Arrays.copyOf(bytes, McuMgrHeader.HEADER_LENGTH);
-            McuMgrHeader header = McuMgrHeader.fromBytes(headerBytes);
-            if (header == null) {
+            if (bytes.length < McuMgrHeader.HEADER_LENGTH) {
                 throw new IOException("Invalid McuMgrHeader");
             }
+            byte[] headerBytes = Arrays.copyOf(bytes, McuMgrHeader.HEADER_LENGTH);
+            McuMgrHeader header = McuMgrHeader.fromBytes(headerBytes);
             return header.getLen() + McuMgrHeader.HEADER_LENGTH;
         }
     }
