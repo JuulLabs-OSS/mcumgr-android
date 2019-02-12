@@ -251,12 +251,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     }
 
     @Override
-    public boolean isPaused() {
+    public synchronized boolean isPaused() {
         return mPaused;
     }
 
     @Override
-    public boolean isInProgress() {
+    public synchronized boolean isInProgress() {
         return mState.isInProgress() && !isPaused();
     }
 

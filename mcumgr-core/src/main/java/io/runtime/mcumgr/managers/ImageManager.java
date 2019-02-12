@@ -21,6 +21,7 @@ import java.util.HashMap;
 import io.runtime.mcumgr.McuMgrCallback;
 import io.runtime.mcumgr.McuMgrErrorCode;
 import io.runtime.mcumgr.McuMgrTransport;
+import io.runtime.mcumgr.crash.CoreDump;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
@@ -109,13 +110,13 @@ public class ImageManager extends TransferManager {
      * Use {@link InsufficientMtuException#getMtu()} to get the current MTU and
      * pass it to {@link #setUploadMtu(int)} and try again.
      * <p>
-     * Use {@link #upload(byte[], ImageUploadCallback)} to send the whole file asynchronously
+     * Use {@link #imageUpload(byte[], UploadCallback)} to send the whole file asynchronously
      * using one command.
      *
      * @param data     image data.
      * @param offset   the offset, from which the chunk will be sent.
      * @param callback the asynchronous callback.
-     * @see #upload(byte[], ImageUploadCallback)
+     * @see #imageUpload(byte[], UploadCallback)
      */
     public void upload(@NotNull byte[] data, int offset,
                        @NotNull McuMgrCallback<McuMgrImageUploadResponse> callback) {
@@ -131,13 +132,13 @@ public class ImageManager extends TransferManager {
      * thrown. Use {@link InsufficientMtuException#getMtu()} to get the current MTU and
      * pass it to {@link #setUploadMtu(int)} and try again.
      * <p>
-     * Use {@link #upload(byte[], ImageUploadCallback)} to send the whole file asynchronously
+     * Use {@link #imageUpload(byte[], UploadCallback)} to send the whole file asynchronously
      * using one command.
      *
      * @param data   image data.
      * @param offset the offset, from which the chunk will be sent.
      * @return The upload response.
-     * @see #upload(byte[], ImageUploadCallback)
+     * @see #imageUpload(byte[], UploadCallback)
      */
     @NotNull
     public McuMgrImageUploadResponse upload(@NotNull byte[] data, int offset) throws McuMgrException {
@@ -376,18 +377,22 @@ public class ImageManager extends TransferManager {
     /**
      * Start core download.
      * <p>
-     * Multiple calls will queue multiple downloads, executed sequentially.
+     * Multiple calls will queue multiple downloads, executed sequentially. This includes image
+     * uploads executed from {@link #imageUpload}.
+     * <p>
+     * The download may be controlled using the {@link TransferController} returned by this method.
      *
      * @param callback Receives callbacks from the download.
      * @return The object used to control this download.
      * @see TransferController
+     * @see CoreDump
      */
     public TransferController coreDownload(@NotNull DownloadCallback callback) {
         return startDownload(new CoreDownload(callback));
     }
 
     /**
-     * Core Download.
+     * Core Download Implementation
      */
     public class CoreDownload extends Download {
         protected CoreDownload(@NotNull DownloadCallback callback) {
@@ -401,13 +406,16 @@ public class ImageManager extends TransferManager {
     }
 
     //******************************************************************
-    // Image Upload v2
+    // Image Upload
     //******************************************************************
 
     /**
      * Start image upload.
      * <p>
-     * Multiple calls will queue multiple uploads, executed sequentially.
+     * Multiple calls will queue multiple uploads, executed sequentially. This includes core
+     * downloads executed from {@link #coreDownload}.
+     * <p>
+     * The upload may be controlled using the {@link TransferController} returned by this method.
      *
      * @param imageData The image data to upload.
      * @param callback  Receives callbacks from the upload.
@@ -419,7 +427,7 @@ public class ImageManager extends TransferManager {
     }
 
     /**
-     * Image Upload.
+     * Image Upload Implementation
      */
     public class ImageUpload extends Upload {
         protected ImageUpload(@NotNull byte[] imageData, @NotNull UploadCallback callback) {
@@ -433,7 +441,7 @@ public class ImageManager extends TransferManager {
     }
 
     //******************************************************************
-    // Image Upload
+    // Image Upload (OLD, DEPRECATED)
     //******************************************************************
 
     // Upload states
@@ -456,7 +464,9 @@ public class ImageManager extends TransferManager {
      * @param data     the image data to upload to slot 1.
      * @param callback the image upload callback.
      * @return True, if the upload has stared, false otherwise.
+     * @deprecated Use the new transfer implementation's imageUpload(...) method
      */
+    @Deprecated
     public synchronized boolean upload(@NotNull byte[] data, @NotNull ImageUploadCallback callback) {
         if (mUploadState == STATE_NONE) {
             mUploadState = STATE_UPLOADING;
@@ -477,14 +487,18 @@ public class ImageManager extends TransferManager {
      * {@link ImageManager#STATE_UPLOADING}, {@link ImageManager#STATE_PAUSED}).
      *
      * @return The current upload state.
+     * @deprecated Use the new transfer implementation's imageUpload(...) method
      */
+    @Deprecated
     public synchronized int getUploadState() {
         return mUploadState;
     }
 
     /**
      * Cancel an image upload. Does nothing if an image upload is not in progress.
+     * @deprecated Use the new transfer implementation's imageUpload(...) method
      */
+    @Deprecated
     public synchronized void cancelUpload() {
         if (mUploadState == STATE_NONE) {
             LOG.debug("Image upload is not in progress");
@@ -499,7 +513,9 @@ public class ImageManager extends TransferManager {
 
     /**
      * Pause an in progress upload.
+     * @deprecated Use the new transfer implementation's imageUpload(...) method
      */
+    @Deprecated
     public synchronized void pauseUpload() {
         if (mUploadState == STATE_NONE) {
             LOG.debug("Upload is not in progress.");
@@ -511,7 +527,9 @@ public class ImageManager extends TransferManager {
 
     /**
      * Continue a paused image upload.
+     * @deprecated Use the new transfer implementation's imageUpload(...) method
      */
+    @Deprecated
     public synchronized void continueUpload() {
         if (mUploadState == STATE_PAUSED) {
             LOG.debug("Continuing upload.");
@@ -521,10 +539,6 @@ public class ImageManager extends TransferManager {
             LOG.debug("Upload is not paused.");
         }
     }
-
-    //******************************************************************
-    // Implementation
-    //******************************************************************
 
     private synchronized void failUpload(McuMgrException error) {
         if (mUploadCallback != null) {
@@ -662,13 +676,11 @@ public class ImageManager extends TransferManager {
         return -1;
     }
 
-    //******************************************************************
-    // Image Upload Callback
-    //******************************************************************
-
     /**
      * Callback for upload command.
+     * @deprecated Use the new transfer implementation's UploadCallback
      */
+    @Deprecated
     public interface ImageUploadCallback {
 
         /**
