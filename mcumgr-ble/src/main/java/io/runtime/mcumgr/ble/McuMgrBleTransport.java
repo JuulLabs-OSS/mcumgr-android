@@ -11,7 +11,9 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,7 @@ import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.InsufficientMtuException;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.exception.McuMgrTimeoutException;
 import io.runtime.mcumgr.response.McuMgrResponse;
 import io.runtime.mcumgr.ble.callback.SmpDataCallback;
 import io.runtime.mcumgr.ble.callback.SmpMerger;
@@ -33,6 +36,7 @@ import io.runtime.mcumgr.ble.callback.SmpResponse;
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 import no.nordicsemi.android.ble.Request;
+import no.nordicsemi.android.ble.annotation.ConnectionPriority;
 import no.nordicsemi.android.ble.callback.FailCallback;
 import no.nordicsemi.android.ble.callback.MtuCallback;
 import no.nordicsemi.android.ble.callback.SuccessCallback;
@@ -51,7 +55,7 @@ import no.nordicsemi.android.ble.exception.RequestFailedException;
  * existing BLE implementation, you may simply implement {@link McuMgrTransport} or use this class
  * to perform your BLE actions by calling {@link BleManager#enqueue(Request)}.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implements McuMgrTransport {
 
     private static final Logger LOG = LoggerFactory.getLogger(McuMgrBleTransport.class);
@@ -91,6 +95,12 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     private int mMaxPacketLength;
 
     /**
+     * Flag indicating should low-level logging be enabled. Default to false.
+     * Call {@link #setLoggingEnabled(boolean)} to change.
+     */
+    private boolean mLoggingEnabled;
+
+    /**
      * Construct a McuMgrBleTransport object.
      *
      * @param context the context used to connect to the device.
@@ -103,6 +113,12 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
         setGattCallbacks(new McuMgrBleCallbacksStub());
     }
 
+    /**
+     * Returns the device set in the constructor.
+     *
+     * @return The device to connect to and communicate with.
+     */
+    @NonNull
     @Override
     public BluetoothDevice getBluetoothDevice() {
         return mDevice;
@@ -134,8 +150,46 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
      *
      * @param maxLength the maximum packet length.
      */
-    public void setDeviceSidePacketMergingSupported(final int maxLength) {
+    public void setDeviceSidePacketMergingSupported(int maxLength) {
         mMaxPacketLength = maxLength;
+    }
+
+    //*******************************************************************************************
+    // Logging
+    //*******************************************************************************************
+
+    /**
+     * Allows to enable low-level logging. If enabled, all BLE events will be logged.
+     *
+     * @param enabled true to enable logging, false to disable (default).
+     */
+    public void setLoggingEnabled(boolean enabled) {
+        mLoggingEnabled = enabled;
+    }
+
+    @Override
+    public void log(int priority, @NonNull String message) {
+        if (mLoggingEnabled) {
+            switch (priority) {
+                case Log.DEBUG:
+                    LOG.debug(message);
+                    break;
+                case Log.INFO:
+                    LOG.info(message);
+                    break;
+                case Log.WARN:
+                    LOG.warn(message);
+                    break;
+                case Log.ERROR:
+                case Log.ASSERT:
+                    LOG.error(message);
+                    break;
+                case Log.VERBOSE:
+                default:
+                    LOG.trace(message);
+                    break;
+            }
+        }
     }
 
     //*******************************************************************************************
@@ -159,7 +213,8 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             // Await will wait until the device is ready (that is initialization is complete)
             connect(mDevice)
                     .retry(3, 100)
-                    .await(25 * 1000);
+                    .timeout(25 * 1000)
+                    .await();
             if (!wasConnected) {
                 notifyConnected();
             }
@@ -172,6 +227,9 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                     // a second time and to a different device than the one that's already
                     // connected. This may not happen here.
                     throw new McuMgrException("Other device already connected");
+                case FailCallback.REASON_TIMEOUT:
+                    // Called after receiving error 133 after 30 seconds.
+                    throw new McuMgrTimeoutException();
                 default:
                     // Other errors are currently never thrown for the connect request.
                     throw new McuMgrException("Unknown error");
@@ -200,7 +258,8 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
             final SmpResponse<T> smpResponse = waitForNotification(mSmpCharacteristic)
                     .merge(mSMPMerger)
                     .trigger(writeCharacteristic(mSmpCharacteristic, payload).split())
-                    .await(new SmpResponse<>(responseType), 30000);
+                    .timeout(30000)
+                    .await(new SmpResponse<>(responseType));
             if (smpResponse.isValid()) {
                 //noinspection ConstantConditions
                 return smpResponse.getResponse();
@@ -287,7 +346,8 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                                 }
                             }
                         })
-                        .enqueue(30000);
+                        .timeout(30000)
+                        .enqueue();
             }
         }).fail(new FailCallback() {
             @Override
@@ -305,6 +365,10 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                         // connected. This may not happen here.
                         callback.onError(new McuMgrException("Other device already connected"));
                         break;
+                    case REASON_TIMEOUT:
+                        // Called after receiving error 133 after 30 seconds.
+                        callback.onError(new McuMgrTimeoutException());
+                        break;
                     case REASON_BLUETOOTH_DISABLED:
                         callback.onError(new McuMgrException("Bluetooth adapter disabled"));
                         break;
@@ -321,6 +385,40 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
     @Override
     public void release() {
         disconnect().enqueue();
+    }
+
+    /**
+     * Requests the given connection priority. On Android, the connection priority is the
+     * equivalent of connection parameters. Acceptable values are:
+     * <ol>
+     * <li>{@link BluetoothGatt#CONNECTION_PRIORITY_HIGH}
+     * - Interval: 11.25 -15 ms, latency: 0, supervision timeout: 20 sec,</li>
+     * <li>{@link BluetoothGatt#CONNECTION_PRIORITY_BALANCED}
+     * - Interval: 30 - 50 ms, latency: 0, supervision timeout: 20 sec,</li>
+     * <li>{@link BluetoothGatt#CONNECTION_PRIORITY_LOW_POWER}
+     * - Interval: 100 - 125 ms, latency: 2, supervision timeout: 20 sec.</li>
+     * </ol>
+     * Calling this method with priority {@link BluetoothGatt#CONNECTION_PRIORITY_HIGH} may
+     * improve file transfer speed.
+     * <p>
+     * Similarly to {@link #send(byte[], Class)}, this method will connect automatically
+     * to the device if not connected.
+     *
+     * @param priority one of: {@link BluetoothGatt#CONNECTION_PRIORITY_HIGH},
+     *                 {@link BluetoothGatt#CONNECTION_PRIORITY_BALANCED},
+     *                 {@link BluetoothGatt#CONNECTION_PRIORITY_LOW_POWER}.
+     */
+    public void requestConnPriority(@ConnectionPriority final int priority) {
+        connect(mDevice).done(new SuccessCallback() {
+            @Override
+            public void onRequestCompleted(@NonNull BluetoothDevice device) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    McuMgrBleTransport.super.requestConnectionPriority(priority).enqueue();
+                } // else ignore... :(
+            }
+        })
+        .retry(3, 100)
+        .enqueue();
     }
 
     //*******************************************************************************************

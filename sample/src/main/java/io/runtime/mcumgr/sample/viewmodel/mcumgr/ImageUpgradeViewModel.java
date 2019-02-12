@@ -13,11 +13,15 @@ import android.support.annotation.NonNull;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import io.runtime.mcumgr.McuMgrTransport;
+import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeCallback;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeController;
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.sample.BuildConfig;
 import io.runtime.mcumgr.sample.viewmodel.SingleLiveEvent;
+import no.nordicsemi.android.ble.ConnectionPriorityRequest;
 
 public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUpgradeCallback {
 	public enum State {
@@ -55,6 +59,15 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 						  @Named("busy") final MutableLiveData<Boolean> state) {
 		super(state);
 		mManager = manager;
+
+		// Enable logging for BLE transport
+		final McuMgrTransport transporter = manager.getTransporter();
+		if (transporter instanceof McuMgrBleTransport) {
+			final McuMgrBleTransport bleTransporter = (McuMgrBleTransport) transporter;
+			bleTransporter.setLoggingEnabled(BuildConfig.DEBUG);
+		}
+
+		mManager.setEstimatedSwapTime(20000);
 		mManager.setFirmwareUpgradeCallback(this);
 		mStateLiveData.setValue(State.IDLE);
 		mProgressLiveData.setValue(0);
@@ -82,6 +95,10 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 
 	public void upgrade(@NonNull final byte[] data, @NonNull final FirmwareUpgradeManager.Mode mode) {
 		try {
+			final McuMgrTransport transport = mManager.getTransporter();
+			if (transport instanceof McuMgrBleTransport) {
+				((McuMgrBleTransport) transport).requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH);
+			}
 			mManager.setMode(mode);
 			mManager.start(data);
 		} catch (final McuMgrException e) {
@@ -109,7 +126,6 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 	public void cancel() {
 		mManager.cancel();
 	}
-
 
 	@Override
 	public void onUpgradeStarted(final FirmwareUpgradeController controller) {
