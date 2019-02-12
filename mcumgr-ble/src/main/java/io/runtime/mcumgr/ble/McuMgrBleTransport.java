@@ -341,11 +341,11 @@ public class McuMgrBleTransport extends BleManager<BleManagerCallbacks> implemen
                 .done(new SuccessCallback() {
                     @Override
                     public void onRequestCompleted(@NonNull BluetoothDevice device) {
+                        notifyConnected();
                         if (callback == null) {
                             return;
                         }
                         callback.onConnected();
-                        notifyConnected();
                     }
                 })
                 .fail(new FailCallback() {
