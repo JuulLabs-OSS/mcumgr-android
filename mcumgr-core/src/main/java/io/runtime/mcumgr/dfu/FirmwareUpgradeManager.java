@@ -9,6 +9,7 @@ package io.runtime.mcumgr.dfu;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +20,11 @@ import java.util.Arrays;
 import java.util.concurrent.Executor;
 
 import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.exception.McuMgrTimeoutException;
 import io.runtime.mcumgr.image.McuMgrImage;
 import io.runtime.mcumgr.managers.DefaultManager;
 import io.runtime.mcumgr.managers.ImageManager;
@@ -126,6 +129,21 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private boolean mUiThreadCallbacks = true;
 
     /**
+     * Estimated time required for swapping images, in milliseconds.
+     * If the mode is set to {@link Mode#TEST_AND_CONFIRM}, the manager will try to reconnect after
+     * this time. 0 by default.
+     */
+    private int mEstimatedSwapTime = 0;
+
+    /**
+     * The timestamp at which the response to Reset command was received.
+     * Assuming that the target device has reset just after sending this response,
+     * the time difference between this moment and receiving disconnection event may be deducted
+     * from the {@link #mEstimatedSwapTime}.
+     */
+    private long mResetResponseTime;
+
+    /**
      * Construct a firmware upgrade manager. If using this constructor, the callback must be set
      * using {@link #setFirmwareUpgradeCallback(FirmwareUpgradeCallback)} before calling
      * {@link FirmwareUpgradeManager#start}.
@@ -148,6 +166,35 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
         mImageManager = new ImageManager(transport);
         mDefaultManager = new DefaultManager(transport);
         mCallback = callback;
+    }
+
+    /**
+     * Get the transporter.
+     *
+     * @return Transporter for this new manager instance.
+     */
+    @NotNull
+    public McuMgrTransport getTransporter() {
+        return mImageManager.getTransporter();
+    }
+
+    /**
+     * Get the transporter's scheme.
+     *
+     * @return The transporter's scheme.
+     */
+    @NotNull
+    public McuMgrScheme getScheme() {
+        return mImageManager.getScheme();
+    }
+
+    /**
+     * Returns the upload MTU. MTU must be between 20 and 1024.
+     *
+     * @return The MTY.
+     */
+    public synchronized int getMtu() {
+        return mImageManager.getMtu();
     }
 
     /**
@@ -183,6 +230,17 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
             return;
         }
         mMode = mode;
+    }
+
+    /**
+     * Sets the estimated time required to swap images after uploading the image successfully.
+     * If the mode was set to {@link Mode#TEST_AND_CONFIRM}, the manager will wait this long
+     * before trying to reconnect to the device.
+     *
+     * @param swapTime estimated time required for swapping images, in milliseconds. 0 by default.
+     */
+    public void setEstimatedSwapTime(int swapTime) {
+        mEstimatedSwapTime = Math.max(swapTime, 0);
     }
 
     /**
@@ -363,6 +421,11 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                     }
 
                     McuMgrImageStateResponse.ImageSlot[] images = response.images;
+                    if (images == null) {
+                        LOG.error("Missing images information: {}", response.toString());
+                        fail(new McuMgrException("Missing images information"));
+                        return;
+                    }
 
                     // Check if the new firmware is different than the active one.
                     if (images.length > 0 && Arrays.equals(mHash, images[0].hash)) {
@@ -497,9 +560,28 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
         @Override
         public void onDisconnected() {
-            LOG.trace("Device disconnected. Reconnecting...");
             mDefaultManager.getTransporter().removeObserver(mResetObserver);
-            mDefaultManager.getTransporter().connect(mReconnectCallback);
+
+            LOG.trace("Device disconnected.");
+            Runnable reconnect = new Runnable() {
+                @Override
+                public void run() {
+                    mDefaultManager.getTransporter().connect(mReconnectCallback);
+                }
+            };
+            // Calculate the delay needed before verification.
+            // It may have taken 20 sec before the phone realized that it's
+            // disconnected. No need to wait more, perhaps?
+            long now = SystemClock.elapsedRealtime();
+            long timeSinceReset = now - mResetResponseTime;
+            long remainingTime = mEstimatedSwapTime - timeSinceReset;
+
+            if (remainingTime > 0) {
+                LOG.trace("Waiting for estimated swap time {}ms", mEstimatedSwapTime);
+                new Handler().postDelayed(reconnect, remainingTime);
+            } else {
+                reconnect.run();
+            }
         }
     };
 
@@ -567,7 +649,8 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
                 fail(new McuMgrErrorException(response.getReturnCode()));
                 return;
             }
-            LOG.trace("Reset request success. Waiting for reset...");
+            mResetResponseTime = SystemClock.elapsedRealtime();
+            LOG.trace("Reset request success. Waiting for disconnect...");
         }
 
         @Override
@@ -582,8 +665,14 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
      */
     private McuMgrCallback<McuMgrImageStateResponse> mConfirmCallback =
             new McuMgrCallback<McuMgrImageStateResponse>() {
+                private final static int MAX_ATTEMPTS = 2;
+                private int mAttempts = 0;
+
                 @Override
                 public void onResponse(@NotNull McuMgrImageStateResponse response) {
+                    // Reset retry counter
+                    mAttempts = 0;
+
                     LOG.trace("Confirm response: {}", response.toString());
                     // Check for an error return code
                     if (!response.isSuccess()) {
@@ -629,6 +718,18 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
 
                 @Override
                 public void onError(@NotNull McuMgrException e) {
+                    // The confirm request might have been sent after the device was rebooted
+                    // and the images were swapped. Swapping images, depending on the hardware,
+                    // make take a long time, during which the phone may throw 133 error as a
+                    // timeout. In such case we should try again.
+                    if (e instanceof McuMgrTimeoutException) {
+                        if (mAttempts++ < MAX_ATTEMPTS) {
+                            // Try again
+                            LOG.info("Connection timeout. Retrying...");
+                            verify();
+                            return;
+                        }
+                    }
                     fail(e);
                 }
             };
