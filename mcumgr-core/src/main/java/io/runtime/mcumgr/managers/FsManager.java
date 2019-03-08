@@ -263,6 +263,7 @@ public class FsManager extends TransferManager {
      *
      * @param name     the file name.
      * @param callback the file download callback.
+     * @deprecated Use {@link #fileDownload(String, byte[], DownloadCallback)} instead.
      */
     @Deprecated
     public synchronized void download(@NotNull String name, @NotNull FileDownloadCallback callback) {
@@ -286,6 +287,7 @@ public class FsManager extends TransferManager {
      * @param name     the file name.
      * @param data     the file data to upload.
      * @param callback the file upload callback.
+     * @deprecated Use {@link #fileUpload(String, byte[], UploadCallback)} instead.
      */
     @Deprecated
     public synchronized void upload(@NotNull String name, @NotNull byte[] data,
@@ -308,6 +310,7 @@ public class FsManager extends TransferManager {
      * {@link #STATE_UPLOADING}, {@link #STATE_DOWNLOADING}, {@link #STATE_PAUSED}).
      *
      * @return The current upload state.
+     * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
      */
     @Deprecated
     public synchronized int getState() {
@@ -316,6 +319,7 @@ public class FsManager extends TransferManager {
 
     /**
      * Cancel an undergoing file transfer. Does nothing if no transfer is in progress.
+     * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
      */
     @Deprecated
     public synchronized void cancelTransfer() {
@@ -340,6 +344,7 @@ public class FsManager extends TransferManager {
 
     /**
      * Pause an in progress transfer.
+     * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
      */
     @Deprecated
     public synchronized void pauseTransfer() {
@@ -353,6 +358,7 @@ public class FsManager extends TransferManager {
 
     /**
      * Continue a paused file transfer.
+     * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
      */
     @Deprecated
     public synchronized void continueTransfer() {
@@ -607,6 +613,9 @@ public class FsManager extends TransferManager {
     // File Upload Callback
     //******************************************************************
 
+    /**
+     * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
+     */
     @Deprecated
     public interface FileUploadCallback {
 
@@ -641,6 +650,9 @@ public class FsManager extends TransferManager {
     // File Download Callback
     //******************************************************************
 
+    /**
+     * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
+     */
     @Deprecated
     public interface FileDownloadCallback {
 
@@ -650,6 +662,7 @@ public class FsManager extends TransferManager {
          * @param bytesDownloaded the number of bytes downloaded so far.
          * @param imageSize       the size of the image in bytes.
          * @param timestamp       the timestamp of when the response was received.
+         * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
          */
         void onProgressChanged(int bytesDownloaded, int imageSize, long timestamp);
 
@@ -657,11 +670,13 @@ public class FsManager extends TransferManager {
          * Called when the download has failed.
          *
          * @param error the error. See the cause for more info.
+         * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
          */
         void onDownloadFailed(@NotNull McuMgrException error);
 
         /**
          * Called when the download has been canceled.
+         * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
          */
         void onDownloadCanceled();
 
@@ -670,6 +685,7 @@ public class FsManager extends TransferManager {
          *
          * @param name file name.
          * @param data file data.
+         * @deprecated Old implementation. See {@link #fileUpload} and {@link #fileDownload}
          */
         void onDownloadFinished(@NotNull String name, @NotNull byte[] data);
     }
