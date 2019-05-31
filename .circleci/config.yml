@@ -6,6 +6,25 @@ jobs:
       - image: circleci/android:api-27-alpha
     steps:
       - checkout
+      - run:
+           name: Configure Android SDK Licenses
+           # Failure to configure the necessary licenses results in the following error during the Gradle build process:
+           #
+           # Checking the license for package Android SDK Platform 27 in /opt/android/sdk/licenses
+           # Warning: License for package Android SDK Platform 27 not accepted.
+           #
+           # FAILURE: Build failed with an exception.
+           #
+           # * What went wrong:
+           # A problem occurred configuring project ':app'.
+           # > You have not accepted the license agreements of the following SDK components:
+           #   [Android SDK Platform 27].
+           #   Before building your project, you need to accept the license agreements and complete the installation of the missing components using the Android Studio SDK Manager.
+           #   Alternatively, to learn how to transfer the license agreements from one workstation to another, go to http://d.android.com/r/studio-ui/export-licenses.html
+           command: |
+             mkdir "$ANDROID_HOME/licenses" || true
+             echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
+             echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$ANDROID_HOME/licenses/android-sdk-license"
       - restore_cache:
           key: gradle-{{ checksum "settings.gradle" }}-{{ checksum "build.gradle" }}-{{ checksum "mcumgr-core/build.gradle" }}-{{ checksum "mcumgr-ble/build.gradle" }}
       - run:
