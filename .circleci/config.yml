@@ -6,11 +6,14 @@ jobs:
       - image: circleci/android:api-27-alpha
     steps:
       - checkout
-     - restore_cache:
+      - restore_cache:
           key: gradle-{{ checksum "settings.gradle" }}-{{ checksum "build.gradle" }}-{{ checksum "mcumgr-core/build.gradle" }}-{{ checksum "mcumgr-ble/build.gradle" }}
       - run:
           name: Assemble Debug
           command: ./gradlew assembleDebug
+      - run:
+          name: Deploy
+          command: .circleci/deploy.sh
       - save_cache:
           paths:
             - ~/.gradle
