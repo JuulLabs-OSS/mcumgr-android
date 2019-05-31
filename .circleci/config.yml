@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/mcumgr-android
+    docker:
+      - image: circleci/android:api-27-alpha
+    steps:
+      - checkout
+     - restore_cache:
+          key: gradle-{{ checksum "settings.gradle" }}-{{ checksum "build.gradle" }}-{{ checksum "mcumgr-core/build.gradle" }}-{{ checksum "mcumgr-ble/build.gradle" }}
+      - run:
+          name: Assemble Debug
+          command: ./gradlew assembleDebug
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: gradle-{{ checksum "settings.gradle" }}-{{ checksum "build.gradle" }}-{{ checksum "mcumgr-core/build.gradle" }}-{{ checksum "mcumgr-ble/build.gradle" }}
+      - run:
+          name: Test
+          command: ./gradlew test
+
