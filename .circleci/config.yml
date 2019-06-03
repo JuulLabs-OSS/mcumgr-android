@@ -18,6 +18,18 @@ jobs:
           name: Assemble Debug
           command: ./gradlew assembleDebug
       - run:
+          name: Android Assemble, Check
+          command: >
+                     ./gradlew
+                     -PdisablePreDex
+                     --max-workers 2
+                     --no-daemon
+                     --stacktrace
+                     assemble check
+      - run:
+          name: Keyring
+          command: mkdir -p ~/.gnupg && echo "$SIGNING_SECRET_KEY_RING" | base64 --decode > ~/.gnupg/secring.gpg
+      - run:
           name: Deploy
           command: .circleci/deploy.sh
       - save_cache:
