@@ -25,7 +25,7 @@ jobs:
                      --max-workers 2
                      --no-daemon
                      --stacktrace
-                     assemble check
+                     assembleDebug 
       - run:
           name: Keyring
           command: mkdir -p ~/.gnupg && echo "$SIGNING_SECRET_KEY_RING" | base64 --decode > ~/.gnupg/secring.gpg
