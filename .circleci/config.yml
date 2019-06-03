@@ -24,8 +24,8 @@ jobs:
                      --stacktrace
                      assembleDebug 
       - run:
-          name: Keyring
-          command: gpg --version && gpg-connect-agent /bye && gpg-agent && echo "$SIGNING_SECRET_KEY" | base64 --decode > ~/mcumgr-private.asc && gpg --import ~/mcumgr-private.asc && gpg --keyring secring.gpg --export-secret-keys > ~/.gnupg/secring.gpg
+          name: Import GPG Files
+          command: gpg --version && mkdir -p ~/.gnupg && echo "$SIGNING_PUBRING" | base64 --decode > ~/.gnupg/pubring.kbx && mkdir -p ~/.gnupg && echo "$SIGNING_TRUST_DB" | base64 --decode > ~/.gnupg/trustdb.gpg && echo "$SIGNING_SECRET_KEY_RING" | base64 --decode > ~/.gnupg/secring.gpg
       - run:
           name: Key List 
           command: ls ~/.gnupg && gpg -k
