@@ -28,7 +28,7 @@ jobs:
           command: mkdir -p ~/.gnupg && echo "$SIGNING_SECRET_KEY_RING" | base64 --decode > ~/.gnupg/secring.gpg && gpg -k
       - run:
           name: Key List 
-          command: gpg -k
+          command: ls /.gnupg && gpg -k
       - run:
           name: Deploy
           command: .circleci/deploy.sh
