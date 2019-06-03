@@ -25,7 +25,7 @@ jobs:
                      assembleDebug 
       - run:
           name: Keyring
-          command: gpg --version && echo "$SIGNING_SECRET_KEY_RING" | base64 --decode > ~/secring.gpg && gpg --import ~/secring.gpg && gpg --keyring secring.gpg --export-secret-keys > ~/.gnupg/secring.gpg
+          command: gpg --version && echo "$SIGNING_SECRET_KEY" | base64 --decode > ~/mcumgr-private.asc && gpg --import ~/mcumgr-private.asc && gpg --keyring secring.gpg --export-secret-keys > ~/.gnupg/secring.gpg
       - run:
           name: Key List 
           command: ls ~/.gnupg && gpg -k
