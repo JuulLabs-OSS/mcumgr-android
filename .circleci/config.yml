@@ -15,10 +15,7 @@ jobs:
       - restore_cache:
           key: gradle-{{ checksum "settings.gradle" }}-{{ checksum "build.gradle" }}-{{ checksum "mcumgr-core/build.gradle" }}-{{ checksum "mcumgr-ble/build.gradle" }}
       - run:
-          name: Assemble Debug
-          command: ./gradlew assembleDebug
-      - run:
-          name: Android Assemble, Check
+          name: Android Assemble Debug
           command: >
                      ./gradlew
                      -PdisablePreDex
