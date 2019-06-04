@@ -28,7 +28,7 @@ jobs:
       #    command: gpg --version && mkdir -p ~/.gnupg && echo "$SIGNING_PUBLIC_KEY_RING" | base64 --decode > ~/.gnupg/pubring.kbx && mkdir -p ~/.gnupg && echo "$SIGNING_TRUST_DB" | base64 --decode > ~/.gnupg/trustdb.gpg && echo "$SIGNING_SECRET_KEY_RING" | base64 --decode > ~/.gnupg/secring.gpg && gpg -K 0CFF1FF7 
       - run:
           name: Import GPG Keys
-          command: export GPG_TTY=$(tty) && gpg --version && echo "$SIGNING_SECRET_KEY" | base64 --decode > ~/mcumgr-private.asc && gpg --batch --import ~/mcumgr-private.asc && echo "$SIGNING_SECRET_KEY_PASSPHRASE" > ~/mcumgr-private-passphrase && gpg --pinentry-mode loopback --passphrase "$SIGNING_SECRET_KEY_PASSPHRASE" --keyring secring.gpg --export-secret-keys > ~/.gnupg/secring.gpg 
+          command: export GPG_TTY=$(tty) && gpg --version && echo "$SIGNING_SECRET_KEY" | base64 --decode > ~/mcumgr-private.asc && gpg --batch --import ~/mcumgr-private.asc && echo "$SIGNING_SECRET_KEY_PASSPHRASE" > ~/mcumgr-private-passphrase && echo "$SIGNING_SECRET_KEY_PASSPHRASE" | gpg --pinentry-mode loopback --passphrase-fd 0 --keyring secring.gpg --export-secret-keys > ~/.gnupg/secring.gpg 
       #- run:
       #    name: Import GPG Keys
       #    command: export GPG_TTY=$(tty) && gpg --version && echo "$SIGNING_SECRET_KEY" | base64 --decode > ~/mcumgr-private.asc && gpg --import ~/mcumgr-private.asc && echo "$SIGNING_SECRET_KEY_RING" > ~/.gnupg/secring.gpg && gpg -K 0CFF1FF7 
