@@ -11,10 +11,10 @@ set -e
 
 if [ "$CIRCLE_REPOSITORY_URL" != "$REPOSITORY_URL" ]; then
     echo "Skipping snapshot deployment: wrong repository. Expected '$REPOSITORY_URL' but was '$CIRCLE_REPOSITORY_URL'."
-#elif [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
-#    echo "Skipping snapshot deployment: was pull request."
-#elif [ "$CIRCLE_BRANCH" != "$BRANCH" ]; then
-#    echo "Skipping snapshot deployment: wrong branch. Expected '$BRANCH' but was '$CIRCLE_BRANCH'."
+elif [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+    echo "Skipping snapshot deployment: was pull request."
+elif [ "$CIRCLE_BRANCH" != "$BRANCH" ]; then
+    echo "Skipping snapshot deployment: wrong branch. Expected '$BRANCH' but was '$CIRCLE_BRANCH'."
 else
     echo "Deploying snapshot..."
     ./gradlew uploadArchives \
