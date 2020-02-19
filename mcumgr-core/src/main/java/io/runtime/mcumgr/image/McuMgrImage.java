@@ -48,6 +48,16 @@ public class McuMgrImage {
         mData = data;
     }
 
+    @Deprecated
+    public McuMgrImage(@NotNull byte[] data) throws McuMgrException {
+        McuMgrImage image = fromBytes(data);
+        mHeader = image.mHeader;
+        mProtectedTlv = image.mProtectedTlv;
+        mTlv = image.mTlv;
+        mHash = image.mHash;
+        mData = image.mData;
+    }
+
     @NotNull
     public byte[] getData() {
         return mData;

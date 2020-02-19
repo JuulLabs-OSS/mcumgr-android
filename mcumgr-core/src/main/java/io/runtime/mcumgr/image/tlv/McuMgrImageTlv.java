@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.runtime.mcumgr.exception.McuMgrException;
+import io.runtime.mcumgr.image.McuMgrImageHeader;
 
 /**
  * Represents a type-length-value table for firmware images using McuBoot or the legacy Apache
@@ -142,5 +143,12 @@ public class McuMgrImageTlv {
         } else {
             return new McuMgrImageTlv(tlvInfo, entries);
         }
+    }
+
+    @Deprecated
+    public static McuMgrImageTlv fromBytes(byte[] data, McuMgrImageHeader header)
+            throws McuMgrException {
+        int offset = header.getHdrSize() + header.getImgSize();
+        return fromBytes(data, offset, header.isLegacy());
     }
 }
