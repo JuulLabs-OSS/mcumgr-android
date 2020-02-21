@@ -34,9 +34,9 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.25'
 
     // Import CBOR parser
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.6'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.6'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.1'
 
     // Test
     testImplementation 'junit:junit:4.12'

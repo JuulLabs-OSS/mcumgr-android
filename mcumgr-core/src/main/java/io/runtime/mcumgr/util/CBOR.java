@@ -49,6 +49,12 @@ public class CBOR {
         return MAPPER.readTree(data).toString();
     }
 
+    @Deprecated
+    @SuppressWarnings("RedundantThrows")
+    public static <T> String toString(T obj) throws IOException {
+        return MAPPER.valueToTree(obj).toString();
+    }
+
     /*
      * Object
      */
