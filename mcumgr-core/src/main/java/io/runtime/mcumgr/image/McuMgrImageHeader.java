@@ -18,7 +18,7 @@ import io.runtime.mcumgr.util.Endian;
  * bootloader.
  * <p>
  * For more info about McuBoot and image format see:
- * <a href="https://runtimeco.github.io/mcuboot/design.html">https://runtimeco.github.io/mcuboot/design.html</a>
+ * <a href="https://juullabs-oss.github.io/mcuboot/design.html">https://juullabs-oss.github.io/mcuboot/design.html</a>
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class McuMgrImageHeader {
@@ -26,16 +26,14 @@ public class McuMgrImageHeader {
     private static final int IMG_HEADER_MAGIC      = 0x96f3b83d;
     private static final int IMG_HEADER_MAGIC_V1   = 0x96f3b83c;
 
-    private static final int HEADER_LENGTH = 4 + 4 + 2 + 2 + 4 + 4 + 4;
+    private static final int HEADER_LENGTH = 24;
     private int mMagic;
     private int mLoadAddr;
     private short mHdrSize;
-//    private short __mPad1;
     private int mImgSize;
     private int mFlags;
     @NotNull
     private McuMgrImageVersion mVersion;
-//    private int __mPad2;
 
     private McuMgrImageHeader(int magic,
                               int loadAddr,

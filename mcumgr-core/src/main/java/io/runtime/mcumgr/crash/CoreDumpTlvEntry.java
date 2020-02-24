@@ -22,7 +22,6 @@ public class CoreDumpTlvEntry {
     private static final int MIN_SIZE = 8;
 
     private int mType;      // uint8_t
-    //private byte __pad;   // uint8_t
     private int mLength;    // uint16_t
     private long mOff;      // uint32_t
 
