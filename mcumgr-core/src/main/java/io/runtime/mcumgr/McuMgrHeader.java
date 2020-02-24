@@ -95,7 +95,8 @@ public class McuMgrHeader {
     @NotNull
     @Override
     public String toString() {
-        return "Header (Op: " + mOp + ", Flags: " + mFlags + ", Len: " + mLen + ", Group: " + mGroupId + ", Seq: " + mSequenceNum + ", Command: " + mCommandId + ")";
+        return "Header (Op: " + mOp + ", Flags: " + mFlags + ", Len: " + mLen + ", Group: " +
+                mGroupId + ", Seq: " + mSequenceNum + ", Command: " + mCommandId + ")";
     }
 
     /**
