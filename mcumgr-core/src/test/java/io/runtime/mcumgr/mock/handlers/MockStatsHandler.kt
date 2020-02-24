@@ -13,8 +13,62 @@ enum class McuMgrStatsCommand(val value: Int) {
 }
 
 class MockStatsHandler(
-    private val stats: Map<String, Map<String, Long>>
+    private val stats: Map<String, Map<String, Long>> = allStats
 ): McuMgrHandler {
+
+    /**
+     * Default stats to query and return when
+     */
+    companion object DefaultStats {
+
+        const val GROUP1_NAME = "group1"
+        const val GROUP2_NAME = "group2"
+        const val GROUP3_NAME = "group3"
+
+        const val stat1Name = "stat1"
+        const val stat2Name = "stat2"
+        const val stat3Name = "stat3"
+        const val stat4Name = "stat4"
+        const val stat5Name = "stat5"
+
+        const val stat1Value = 1L
+        const val stat2Value = 2L
+        const val stat3Value = 3L
+        const val stat4Value = 4L
+        const val stat5Value = 5L
+
+        val group1Stats = mapOf(
+            GROUP1_NAME to mapOf(
+                stat1Name to stat1Value,
+                stat2Name to stat2Value,
+                stat3Name to stat3Value,
+                stat4Name to stat4Value,
+                stat5Name to stat5Value
+            )
+        )
+
+        val group2Stats = mapOf(
+            GROUP2_NAME to mapOf(
+                stat1Name to stat1Value,
+                stat2Name to stat2Value,
+                stat3Name to stat3Value,
+                stat4Name to stat4Value,
+                stat5Name to stat5Value
+            )
+        )
+
+        val group3Stats = mapOf(
+            GROUP3_NAME to mapOf(
+                stat1Name to stat1Value,
+                stat2Name to stat2Value,
+                stat3Name to stat3Value,
+                stat4Name to stat4Value,
+                stat5Name to stat5Value
+            )
+        )
+
+        private val allStats = group1Stats + group2Stats + group3Stats
+    }
 
     /**
      * Handle a request for the stats group
