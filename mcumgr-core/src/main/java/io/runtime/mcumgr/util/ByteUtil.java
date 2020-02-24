@@ -204,12 +204,12 @@ public class ByteUtil {
     }
 
     @NotNull
-    public static String byteArrayToHex(byte[] a, String format) {
+    public static String byteArrayToHex(@NotNull byte[] a, String format) {
         return byteArrayToHex(a, 0, a.length, format);
     }
 
     @NotNull
-    public static String byteArrayToHex(byte[] a, int offset, int length, String format) {
+    public static String byteArrayToHex(@NotNull byte[] a, int offset, int length, String format) {
         StringBuilder sb = new StringBuilder(a.length * 2);
         for (int i = offset; i < length; i++) {
             sb.append(String.format(format, a[i]));
