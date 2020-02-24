@@ -308,7 +308,7 @@ public class LogManager extends McuManager {
      * @return The show response.
      */
     @Nullable
-    public McuMgrLogResponse showNext(State state) {
+    public McuMgrLogResponse showNext(@NotNull State state) {
         LOG.debug("Show logs: name={}, nextIndex={}", state.getName(), state.getNextIndex());
         try {
             McuMgrLogResponse response = show(state.getName(), state.getNextIndex(), null);
