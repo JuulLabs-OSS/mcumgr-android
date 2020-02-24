@@ -30,38 +30,52 @@ public class McuMgrImageHeader {
     private int mMagic;
     private int mLoadAddr;
     private short mHdrSize;
-    private short __mPad1;
+//    private short __mPad1;
     private int mImgSize;
     private int mFlags;
+    @NotNull
     private McuMgrImageVersion mVersion;
-    private int __mPad2;
+//    private int __mPad2;
 
-    private McuMgrImageHeader() {}
+    private McuMgrImageHeader(int magic,
+                              int loadAddr,
+                              short hdrSize,
+                              int imgSize,
+                              int flags,
+                              @NotNull McuMgrImageVersion version) {
+        mMagic = magic;
+        mLoadAddr = loadAddr;
+        mHdrSize = hdrSize;
+        mImgSize = imgSize;
+        mFlags = flags;
+        mVersion = version;
+    }
 
+    @NotNull
     public static McuMgrImageHeader fromBytes(@NotNull byte[] b) throws McuMgrException {
         return fromBytes(b, 0);
     }
 
+    @NotNull
     public static McuMgrImageHeader fromBytes(@NotNull byte[] b, int offset) throws McuMgrException {
         if (b.length - offset < getSize()) {
             throw new McuMgrException("The byte array is too short to be a McuMgrImageHeader");
         }
 
-        McuMgrImageHeader header = new McuMgrImageHeader();
-        header.mMagic = ByteUtil.byteArrayToUnsignedInt(b, offset, Endian.LITTLE, 4);
+        int magic = ByteUtil.byteArrayToUnsignedInt(b, offset, Endian.LITTLE, 4);
 
-        if (header.mMagic != IMG_HEADER_MAGIC && header.mMagic != IMG_HEADER_MAGIC_V1) {
-            throw new McuMgrException("Wrong magic number: header=" + header.mMagic + ", magic=" +
+        if (magic != IMG_HEADER_MAGIC && magic != IMG_HEADER_MAGIC_V1) {
+            throw new McuMgrException("Wrong magic number: header=" + magic + ", magic=" +
                     IMG_HEADER_MAGIC + " or " + IMG_HEADER_MAGIC_V1);
         }
 
-        header.mLoadAddr = ByteUtil.byteArrayToUnsignedInt(b, 4 + offset, Endian.LITTLE, 4);
-        header.mHdrSize = (short) ByteUtil.byteArrayToUnsignedInt(b, 8 + offset, Endian.LITTLE, 2);
-        header.mImgSize = ByteUtil.byteArrayToUnsignedInt(b, 12 + offset, Endian.LITTLE, 4);
-        header.mFlags = ByteUtil.byteArrayToUnsignedInt(b, 16 + offset, Endian.LITTLE, 4);
-        header.mVersion = McuMgrImageVersion.fromBytes(b, 20 + offset);
+        int loadAddr = ByteUtil.byteArrayToUnsignedInt(b, 4 + offset, Endian.LITTLE, 4);
+        short hdrSize = (short) ByteUtil.byteArrayToUnsignedInt(b, 8 + offset, Endian.LITTLE, 2);
+        int imgSize = ByteUtil.byteArrayToUnsignedInt(b, 12 + offset, Endian.LITTLE, 4);
+        int flags = ByteUtil.byteArrayToUnsignedInt(b, 16 + offset, Endian.LITTLE, 4);
+        McuMgrImageVersion version = McuMgrImageVersion.fromBytes(b, 20 + offset);
 
-        return header;
+        return new McuMgrImageHeader(magic, loadAddr, hdrSize, imgSize, flags, version);
     }
 
     public static int getSize() {
@@ -88,6 +102,7 @@ public class McuMgrImageHeader {
         return mFlags;
     }
 
+    @NotNull
     public McuMgrImageVersion getVersion() {
         return mVersion;
     }

@@ -198,14 +198,17 @@ public class ByteUtil {
     // String
     //******************************************************************
 
-    public static String byteArrayToHex(byte[] a) {
+    @NotNull
+    public static String byteArrayToHex(@NotNull byte[] a) {
         return byteArrayToHex(a, 0, a.length, "%02x ");
     }
 
+    @NotNull
     public static String byteArrayToHex(byte[] a, String format) {
         return byteArrayToHex(a, 0, a.length, format);
     }
 
+    @NotNull
     public static String byteArrayToHex(byte[] a, int offset, int length, String format) {
         StringBuilder sb = new StringBuilder(a.length * 2);
         for (int i = offset; i < length; i++) {
