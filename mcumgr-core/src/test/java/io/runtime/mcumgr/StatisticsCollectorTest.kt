@@ -158,7 +158,7 @@ class StatisticsCollectorTest {
         require(result is StatCollectionResult.Failure) {
             "Expected stat collection result success, was ${result::class.java.canonicalName}"
         }
-        val throwable = result.t
+        val throwable = result.throwable
         require(throwable is McuMgrErrorException) {
             "Expected McuMgrErrorException, was ${throwable::class.java.canonicalName}"
         }

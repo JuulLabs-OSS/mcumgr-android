@@ -63,4 +63,11 @@ public class CBOR {
         ObjectMapper mapper = new ObjectMapper(sFactory);
         return mapper.convertValue(mapper.readTree(data).get(key), type);
     }
+
+    @NotNull
+    public static String getString(@NotNull byte[] data, @NotNull String key) throws IOException {
+        ObjectMapper mapper = new ObjectMapper(sFactory);
+        return mapper.readTree(data).get(key).asText();
+    }
+
 }
