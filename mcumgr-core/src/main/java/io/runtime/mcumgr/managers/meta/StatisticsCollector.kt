@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 sealed class StatCollectionResult {
     data class Success(val statistics: Map<String, Map<String, Long>>): StatCollectionResult()
     data class Cancelled(val statistics: Map<String, Map<String, Long>>): StatCollectionResult()
-    data class Failure(val t: Throwable): StatCollectionResult()
+    data class Failure(val throwable: Throwable): StatCollectionResult()
 }
 
 /**
@@ -135,7 +135,6 @@ private class StatCollection(
             }
 
             override fun onError(error: McuMgrException) {
-                // Failed
                 callback(StatCollectionResult.Failure(error))
             }
         })
