@@ -5,7 +5,7 @@ import io.runtime.mcumgr.managers.StatsManager
 import io.runtime.mcumgr.managers.meta.StatCollectionResult
 import io.runtime.mcumgr.managers.meta.StatisticsCollector
 import io.runtime.mcumgr.mock.MockMcuMgrTransport
-import io.runtime.mcumgr.mock.MockStatsHandler
+import io.runtime.mcumgr.mock.handlers.MockStatsHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

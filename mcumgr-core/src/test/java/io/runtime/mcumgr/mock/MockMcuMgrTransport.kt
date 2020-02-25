@@ -6,6 +6,7 @@ import io.runtime.mcumgr.McuMgrHeader
 import io.runtime.mcumgr.McuMgrScheme
 import io.runtime.mcumgr.McuMgrTransport
 import io.runtime.mcumgr.exception.McuMgrException
+import io.runtime.mcumgr.mock.handlers.MockStatsHandler
 import io.runtime.mcumgr.response.McuMgrResponse
 import io.runtime.mcumgr.util.CBOR
 import java.util.concurrent.Executor
