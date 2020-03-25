@@ -18,7 +18,8 @@
         android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ImageUpgradeFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         tools:layout="@layout/fragment_card_image_upgrade"/>
 
     <androidx.fragment.app.FragmentContainerView
@@ -26,7 +27,8 @@
         android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ImageUploadFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         tools:layout="@layout/fragment_card_image_upload"/>
 
     <androidx.fragment.app.FragmentContainerView
@@ -34,7 +36,8 @@
         android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ImageControlFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         tools:layout="@layout/fragment_card_image_control"/>
 
     <androidx.fragment.app.FragmentContainerView
@@ -42,7 +45,8 @@
         android:name="io.runtime.mcumgr.sample.fragment.mcumgr.ResetFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         tools:layout="@layout/fragment_card_reset"/>
 
 </LinearLayout>

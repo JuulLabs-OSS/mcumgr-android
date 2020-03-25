@@ -51,7 +51,8 @@
                 android:name="io.runtime.mcumgr.sample.fragment.mcumgr.DeviceStatusFragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 tools:layout="@layout/fragment_card_device_status"/>
 
             <androidx.fragment.app.FragmentContainerView
