@@ -2,21 +2,20 @@ apply plugin: 'com.android.library'
 apply from: rootProject.file('gradle/jacoco-android.gradle')
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 28
+        targetSdkVersion 29
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             consumerProguardFiles 'mcumgr-ble-proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {

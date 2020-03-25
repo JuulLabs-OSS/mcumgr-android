@@ -44,7 +44,7 @@ import io.runtime.mcumgr.sample.viewmodel.ViewModelFactory;
 
 public class ScannerActivity extends AppCompatActivity
         implements Injectable, DevicesAdapter.OnItemClickListener {
-    private static final int REQUEST_ACCESS_COARSE_LOCATION = 1022; // random number
+    private static final int REQUEST_ACCESS_FINE_LOCATION = 1022; // random number
 
     @Inject
     ViewModelFactory mViewModelFactory;
@@ -144,7 +144,7 @@ public class ScannerActivity extends AppCompatActivity
                                            @NonNull final int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
-            case REQUEST_ACCESS_COARSE_LOCATION:
+            case REQUEST_ACCESS_FINE_LOCATION:
                 mScannerViewModel.refresh();
                 break;
         }
@@ -166,8 +166,8 @@ public class ScannerActivity extends AppCompatActivity
     public void onGrantLocationPermissionClicked() {
         Utils.markLocationPermissionRequested(this);
         ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                REQUEST_ACCESS_COARSE_LOCATION
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                REQUEST_ACCESS_FINE_LOCATION
         );
     }
 
