@@ -17,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -26,7 +26,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:title="@string/image_control_title"/>
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/image_control_value"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -38,7 +38,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/toolbar"/>
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/image_control_error"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

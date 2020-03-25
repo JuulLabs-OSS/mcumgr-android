@@ -18,7 +18,7 @@
     android:paddingTop="@dimen/item_padding_top"
     tools:ignore="ContentDescription">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -27,7 +27,7 @@
         android:scaleType="center"
         android:src="@drawable/ic_device_other"/>
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/device_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -40,7 +40,7 @@
         android:ellipsize="end"
         tools:text="Zephyr"/>
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/device_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -51,7 +51,7 @@
         android:textSize="12sp"
         tools:text="AA:BB:CC:DD:EE:FF"/>
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/rssi"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

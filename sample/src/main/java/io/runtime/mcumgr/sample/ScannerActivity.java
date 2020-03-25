@@ -26,6 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -77,7 +78,7 @@ public class ScannerActivity extends AppCompatActivity
         getSupportActionBar().setTitle(R.string.app_name);
 
         // Create view model containing utility methods for scanning
-        mScannerViewModel = ViewModelProviders.of(this, mViewModelFactory)
+        mScannerViewModel = new ViewModelProvider(this, mViewModelFactory)
                 .get(ScannerViewModel.class);
         mScannerViewModel.getScannerState().observe(this, this::startScan);
 

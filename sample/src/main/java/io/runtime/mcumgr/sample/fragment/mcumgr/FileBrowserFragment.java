@@ -164,7 +164,7 @@ public abstract class FileBrowserFragment extends Fragment implements LoaderMana
                             loadFile(uri);
                         } else {
                             if (Utils.isStoragePermissionDeniedForever(requireActivity())) {
-                                Snackbar.make(getView(), R.string.file_loader_permission_denied, Snackbar.LENGTH_LONG)
+                                Snackbar.make(requireView(), R.string.file_loader_permission_denied, Snackbar.LENGTH_LONG)
                                         .setAction(R.string.menu_settings, v -> {
                                             final Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                                             intent.setData(Uri.fromParts("package", requireContext().getPackageName(), null));
