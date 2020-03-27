@@ -28,6 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
+        android:textColor="?colorAccent"
         android:text="@string/location_permission_title"/>
 
     <com.google.android.material.textview.MaterialTextView
@@ -52,5 +53,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:text="@string/location_permission_settings"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        tools:visibility="visible"/>
 </LinearLayout>

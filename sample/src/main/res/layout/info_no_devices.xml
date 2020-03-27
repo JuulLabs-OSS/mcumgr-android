@@ -28,6 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
+        android:textColor="?colorAccent"
         android:text="@string/mcumgr_guide_title"/>
 
     <com.google.android.material.textview.MaterialTextView

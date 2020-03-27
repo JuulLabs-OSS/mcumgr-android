@@ -36,9 +36,9 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:maxLines="1"
             android:hint="@string/files_download_hint"
-            app:layout_constraintEnd_toStartOf="@+id/action_download"
+            android:maxLines="1"
+            app:layout_constraintEnd_toStartOf="@+id/action_history"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
@@ -48,22 +48,21 @@
                 android:layout_height="wrap_content"
                 android:inputType="text"
                 android:maxLines="1"
-                android:paddingStart="0dp"
-                android:paddingEnd="50dp"/>
+                android:paddingEnd="50dp"
+                android:paddingStart="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.MaterialComponents.Button"
             android:id="@+id/action_history"
-            android:layout_width="46dp"
-            android:layout_height="44dp"
-            android:background="?selectableItemBackgroundBorderless"
-            android:contentDescription="@string/files_download_recent_files"
-            android:scaleType="center"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
-            app:layout_constraintEnd_toStartOf="@+id/action_download"
-            app:layout_constraintTop_toTopOf="@+id/file_name_layout"
+            app:icon="@drawable/ic_history"
+            android:paddingLeft="12dp"
             app:layout_constraintBottom_toBottomOf="@+id/file_name_layout"
-            app:srcCompat="@drawable/ic_history"/>
+            app:layout_constraintEnd_toStartOf="@+id/action_download"
+            app:layout_constraintTop_toTopOf="@+id/file_name_layout" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/file_path"
