@@ -15,7 +15,7 @@ import io.runtime.mcumgr.util.Endian;
  * Mynewt bootloader.
  * <p>
  * For more info about McuBoot and image format see:
- * <a href="https://runtimeco.github.io/mcuboot/design.html">https://runtimeco.github.io/mcuboot/design.html</a>
+ * <a href="https://juullabs-oss.github.io/mcuboot/design.html">https://juullabs-oss.github.io/mcuboot/design.html</a>
  */
 @SuppressWarnings("unused")
 public class McuMgrImageTlvInfo {
@@ -39,9 +39,9 @@ public class McuMgrImageTlvInfo {
         info.mMagic = (short) ByteUtil.byteArrayToUnsignedInt(b, offset, Endian.LITTLE, 2);
         info.mTotal = (short) ByteUtil.byteArrayToUnsignedInt(b, offset + 2, Endian.LITTLE, 2);
 
-        if (info.mMagic != McuMgrImageTlv.IMG_TLV_INFO_MAGIC) {
-            throw new McuMgrException("Wrong magic number, magic= " + info.mMagic + " instead of " +
-                    McuMgrImageTlv.IMG_TLV_INFO_MAGIC);
+        if (info.mMagic != McuMgrImageTlv.IMG_TLV_INFO_MAGIC &&
+                info.mMagic != McuMgrImageTlv.IMG_TLV_PROTECTED_INFO_MAGIC) {
+            throw new McuMgrException("Wrong magic number, magic=" + info.mMagic);
         }
         return info;
     }
@@ -56,5 +56,9 @@ public class McuMgrImageTlvInfo {
 
     public short getTotal() {
         return mTotal;
+    }
+
+    public boolean isProtected() {
+        return mMagic == McuMgrImageTlv.IMG_TLV_PROTECTED_INFO_MAGIC;
     }
 }
