@@ -15,9 +15,10 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.ble.McuMgrBleCallbacksStub;
 import io.runtime.mcumgr.ble.McuMgrBleTransport;
 import io.runtime.mcumgr.sample.R;
+import no.nordicsemi.android.ble.observer.BondingObserver;
+import no.nordicsemi.android.ble.observer.ConnectionObserver;
 
 public class DeviceStatusViewModel extends McuMgrViewModel {
     private final MutableLiveData<Integer> mConnectionStateLiveData = new MutableLiveData<>();
@@ -28,7 +29,63 @@ public class DeviceStatusViewModel extends McuMgrViewModel {
                           @Named("busy") final MutableLiveData<Boolean> state) {
         super(state);
         if (transport instanceof McuMgrBleTransport) {
-            ((McuMgrBleTransport) transport).setGattCallbacks(new DeviceCallbacks());
+            final McuMgrBleTransport bleTransport = (McuMgrBleTransport) transport;
+            bleTransport.setConnectionObserver(new ConnectionObserver() {
+                @Override
+                public void onDeviceConnecting(@NonNull final BluetoothDevice device) {
+                    mConnectionStateLiveData.postValue(R.string.status_connecting);
+                }
+
+                @Override
+                public void onDeviceConnected(@NonNull final BluetoothDevice device) {
+                    // The device is connected. Now service discovery and initialization will begin.
+                    mConnectionStateLiveData.postValue(R.string.status_initializing);
+                }
+
+                @Override
+                public void onDeviceFailedToConnect(@NonNull final BluetoothDevice device, final int reason) {
+                    if (reason == ConnectionObserver.REASON_TIMEOUT) {
+                        mConnectionStateLiveData.postValue(R.string.status_connection_timeout);
+                    } else {
+                        mConnectionStateLiveData.postValue(R.string.status_connection_failed);
+                    }
+                }
+
+                @Override
+                public void onDeviceReady(@NonNull final BluetoothDevice device) {
+                    mConnectionStateLiveData.postValue(R.string.status_connected);
+                }
+
+                @Override
+                public void onDeviceDisconnecting(@NonNull final BluetoothDevice device) {
+                    mConnectionStateLiveData.postValue(R.string.status_disconnecting);
+                }
+
+                @Override
+                public void onDeviceDisconnected(@NonNull final BluetoothDevice device, final int reason) {
+                    if (reason == ConnectionObserver.REASON_NOT_SUPPORTED) {
+                        mConnectionStateLiveData.postValue(R.string.status_not_supported);
+                    } else {
+                        mConnectionStateLiveData.postValue(R.string.status_disconnected);
+                    }
+                }
+            });
+            bleTransport.setBondingObserver(new BondingObserver() {
+                @Override
+                public void onBondingRequired(@NonNull final BluetoothDevice device) {
+                    mBondStateLiveData.postValue(R.string.status_bonding);
+                }
+
+                @Override
+                public void onBonded(@NonNull final BluetoothDevice device) {
+                    mBondStateLiveData.postValue(R.string.status_bonded);
+                }
+
+                @Override
+                public void onBondingFailed(@NonNull final BluetoothDevice device) {
+                    mBondStateLiveData.postValue(R.string.status_not_bonded);
+                }
+            });
         }
     }
 
@@ -40,45 +97,4 @@ public class DeviceStatusViewModel extends McuMgrViewModel {
         return mBondStateLiveData;
     }
 
-    private final class DeviceCallbacks extends McuMgrBleCallbacksStub {
-        @Override
-        public void onDeviceConnecting(@NonNull final BluetoothDevice device) {
-            mConnectionStateLiveData.postValue(R.string.status_connecting);
-        }
-
-        @Override
-        public void onDeviceConnected(@NonNull final BluetoothDevice device) {
-            mConnectionStateLiveData.postValue(R.string.status_initializing);
-        }
-
-        @Override
-        public void onDeviceReady(@NonNull final BluetoothDevice device) {
-            mConnectionStateLiveData.postValue(R.string.status_connected);
-        }
-
-        @Override
-        public void onDeviceDisconnecting(@NonNull final BluetoothDevice device) {
-            mConnectionStateLiveData.postValue(R.string.status_disconnecting);
-        }
-
-        @Override
-        public void onDeviceDisconnected(@NonNull final BluetoothDevice device) {
-            mConnectionStateLiveData.postValue(R.string.status_disconnected);
-        }
-
-        @Override
-        public void onBondingRequired(@NonNull final BluetoothDevice device) {
-            mBondStateLiveData.postValue(R.string.status_bonding);
-        }
-
-        @Override
-        public void onBonded(@NonNull final BluetoothDevice device) {
-            mBondStateLiveData.postValue(R.string.status_bonded);
-        }
-
-        @Override
-        public void onBondingFailed(@NonNull final BluetoothDevice device) {
-            mBondStateLiveData.postValue(R.string.status_not_bonded);
-        }
-    }
 }
