@@ -21,14 +21,18 @@ import io.runtime.mcumgr.util.ByteUtil;
 import io.runtime.mcumgr.util.CBOR;
 
 public class McuMgrLogResponse extends McuMgrResponse {
+
+    @Deprecated
     @JsonProperty("next_index")
-    public int next_index;
+    public long next_index;
+
     @JsonProperty("logs")
     public LogResult[] logs;
 
     @JsonCreator
     public McuMgrLogResponse() {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LogResult {
 
         public static final int LOG_TYPE_STREAM = 0;
@@ -93,7 +97,7 @@ public class McuMgrLogResponse extends McuMgrResponse {
          * Log entry index. The index should be unique to this entry.
          */
         @JsonProperty("index")
-        public int index;
+        public long index;
 
         /**
          * Module which logged the entry.
@@ -107,6 +111,14 @@ public class McuMgrLogResponse extends McuMgrResponse {
          */
         @JsonProperty("type")
         public String type;
+
+        /**
+         * The first 4 bytes of the build ID (image hash) which was running when this log entry was
+         * written by the device.
+         */
+        @Nullable
+        @JsonProperty("imghash")
+        public byte[] imghash;
 
         @JsonCreator
         public Entry() {}

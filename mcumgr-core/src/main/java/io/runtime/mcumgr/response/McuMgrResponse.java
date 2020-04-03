@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.exception.McuMgrCoapException;
 import io.runtime.mcumgr.util.CBOR;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings("unused")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class McuMgrResponse {
 
@@ -53,11 +54,6 @@ public class McuMgrResponse {
     private McuMgrHeader mHeader;
 
     /**
-     * The return code (enum) for this response. For the raw return code use the "rc" property.
-     */
-    private McuMgrErrorCode mReturnCode;
-
-    /**
      * McuMgr payload for this response. This does not include the McuMgr header for standard
      * schemes and does not include the CoAP header for CoAP schemes.
      */
@@ -69,13 +65,15 @@ public class McuMgrResponse {
     private int mCoapCode = 0;
 
     @JsonCreator
-    public McuMgrResponse() {}
+    public McuMgrResponse() {
+    }
 
     /**
      * Return the string representation of the response payload.
      *
      * @return The string representation of the response payload.
      */
+    @NotNull
     @Override
     public String toString() {
         try {
@@ -91,7 +89,7 @@ public class McuMgrResponse {
      *
      * @return The McuMgrHeader.
      */
-    @NotNull
+    @Nullable
     public McuMgrHeader getHeader() {
         return mHeader;
     }
@@ -102,12 +100,7 @@ public class McuMgrResponse {
      * @return Mcu Manager return code.
      */
     public int getReturnCodeValue() {
-        if (mReturnCode == null) {
-            LOG.warn("Response does not contain a McuMgr return code.");
-            return 0;
-        } else {
-            return mReturnCode.value();
-        }
+        return rc;
     }
 
     /**
@@ -116,12 +109,13 @@ public class McuMgrResponse {
      * @return The return code enum.
      */
     public McuMgrErrorCode getReturnCode() {
-        return mReturnCode;
+        return McuMgrErrorCode.valueOf(rc);
     }
 
     /**
      * Returns true if the response payload contains a return code of 0 or no return code. In other
      * words, return true if the command was a success, false otherwise.
+     *
      * @return return true if the command was a success, false otherwise
      */
     public boolean isSuccess() {
@@ -148,6 +142,7 @@ public class McuMgrResponse {
      *
      * @return The payload bytes.
      */
+    @Nullable
     public byte[] getPayload() {
         return mPayload;
     }
@@ -189,16 +184,13 @@ public class McuMgrResponse {
      * @param bytes   packet bytes.
      * @param header  McuMgrHeader.
      * @param payload McuMgr CBOR payload.
-     * @param rc      the return code.
      */
     void initFields(@NotNull McuMgrScheme scheme, @NotNull byte[] bytes,
-                    @NotNull McuMgrHeader header, @NotNull byte[] payload,
-                    @NotNull McuMgrErrorCode rc) {
+                    @NotNull McuMgrHeader header, @NotNull byte[] payload) {
         mScheme = scheme;
         mBytes = bytes;
         mHeader = header;
         mPayload = payload;
-        mReturnCode = rc;
     }
 
     /**
@@ -212,6 +204,7 @@ public class McuMgrResponse {
      * @throws IOException              Error parsing response.
      * @throws IllegalArgumentException If the scheme is CoAP.
      */
+    @NotNull
     public static <T extends McuMgrResponse> T buildResponse(@NotNull McuMgrScheme scheme,
                                                              @NotNull byte[] bytes,
                                                              @NotNull Class<T> type)
@@ -225,12 +218,10 @@ public class McuMgrResponse {
 
         // Initialize response and set fields
         T response = CBOR.toObject(payload, type);
-        McuMgrErrorCode rc = McuMgrErrorCode.valueOf(response.rc);
-        response.initFields(scheme, bytes, header, payload, rc);
+        response.initFields(scheme, bytes, header, payload);
 
         return response;
     }
-
 
     /**
      * Build a CoAP McuMgrResponse. This method will throw a McuMgrCoapException if the CoAP
@@ -248,6 +239,7 @@ public class McuMgrResponse {
      * @throws IOException         if parsing the payload into the object (type T) failed
      * @throws McuMgrCoapException if the CoAP code class indicates a CoAP error response
      */
+    @NotNull
     public static <T extends McuMgrResponse> T buildCoapResponse(@NotNull McuMgrScheme scheme,
                                                                  @NotNull byte[] bytes,
                                                                  @NotNull byte[] header,
@@ -262,33 +254,34 @@ public class McuMgrResponse {
         }
 
         T response = CBOR.toObject(payload, type);
-        McuMgrErrorCode rc = McuMgrErrorCode.valueOf(response.rc);
-        response.initFields(scheme, bytes, McuMgrHeader.fromBytes(header), payload, rc);
+        response.initFields(scheme, bytes, McuMgrHeader.fromBytes(header), payload);
         int code = (codeClass * 100) + codeDetail;
         response.setCoapCode(code);
         return response;
     }
 
-    public static boolean requiresDefragmentation(@NotNull McuMgrScheme scheme, @NotNull byte[] bytes)
-            throws IOException {
-        if (scheme.isCoap()) {
-            throw new UnsupportedOperationException("Method not implemented for CoAP");
-        } else {
-            int expectedLength = getExpectedLength(scheme, bytes);
-            return (expectedLength > (bytes.length - McuMgrHeader.HEADER_LENGTH));
-        }
-    }
-
+    /**
+     * This method parses the given bytes and reads the LENGTH field from the header.
+     * Returns the LENGTH + length of the header. This method may be used to determine whether
+     * more bytes must be received before parsing them into a response.
+     *
+     * @param scheme must be {@link McuMgrScheme#BLE}. COAP schemes are not supported.
+     * @param bytes  an array containing the whole or beginning of the message. It must contain
+     *               at least the whole header.
+     * @return The size of an array containing the header and complete response.
+     * @throws IOException                   thrown when the header could not be parsed.
+     * @throws UnsupportedOperationException when scheme is not equal to {@link McuMgrScheme#BLE}.
+     */
     public static int getExpectedLength(@NotNull McuMgrScheme scheme, @NotNull byte[] bytes)
             throws IOException {
         if (scheme.isCoap()) {
             throw new UnsupportedOperationException("Method not implemented for CoAP");
         } else {
-            byte[] headerBytes = Arrays.copyOf(bytes, McuMgrHeader.HEADER_LENGTH);
-            McuMgrHeader header = McuMgrHeader.fromBytes(headerBytes);
-            if (header == null) {
+            if (bytes.length < McuMgrHeader.HEADER_LENGTH) {
                 throw new IOException("Invalid McuMgrHeader");
             }
+            byte[] headerBytes = Arrays.copyOf(bytes, McuMgrHeader.HEADER_LENGTH);
+            McuMgrHeader header = McuMgrHeader.fromBytes(headerBytes);
             return header.getLen() + McuMgrHeader.HEADER_LENGTH;
         }
     }

@@ -17,7 +17,7 @@ import io.runtime.mcumgr.util.Endian;
  * Apache Mynewt bootloader.
  * <p>
  * For more info about McuBoot and image format see:
- * <a href="https://runtimeco.github.io/mcuboot/design.html">https://runtimeco.github.io/mcuboot/design.html</a>
+ * <a href="https://juullabs-oss.github.io/mcuboot/design.html">https://juullabs-oss.github.io/mcuboot/design.html</a>
  */
 public class McuMgrImageTlvTrailerEntry {
     public final byte type;
@@ -42,7 +42,7 @@ public class McuMgrImageTlvTrailerEntry {
         byte t = b[offset++];
         offset++; // Account for byte padding
         // Get length
-        short l = (short) ByteUtil.unsignedByteArrayToInt(b, offset, 2, Endian.LITTLE);
+        short l = (short) ByteUtil.byteArrayToUnsignedInt(b, offset, Endian.LITTLE, 2);
         offset += 2; // Move past length
         // Get value
         byte[] v = Arrays.copyOfRange(b, offset, offset + l);

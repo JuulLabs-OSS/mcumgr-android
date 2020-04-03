@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/JuulLabs-OSS/mcumgr-android/branch/master/graph/badge.svg)](https://codecov.io/gh/JuulLabs-OSS/mcumgr-android)
+
 # McuManager Android
 
 A transport agnostic implementation of the McuManager protocol. Contains a default implementation for BLE transport.
@@ -8,14 +10,14 @@ A transport agnostic implementation of the McuManager protocol. Contains a defau
 Contains the core and a BLE transport implementation using Nordic's [Android-BLE-Library v2](https://github.com/NordicSemiconductor/Android-BLE-Library/tree/develop). 
 
 ```
-implementation 'io.runtime.mcumgr:mcumgr-ble:0.7-alpha3'
+implementation 'io.runtime.mcumgr:mcumgr-ble:0.9.1'
 ```
 
 #### McuManager Core
 Core dependency only. Use if you want to provide your own transport implementation.
 
 ```
-implementation 'io.runtime.mcumgr:mcumgr-core:0.7-alpha3'
+implementation 'io.runtime.mcumgr:mcumgr-core:0.9.1'
 ```
 
 # Introduction
@@ -69,6 +71,6 @@ McuManager firmware upgrades can actually be performed in few different ways. Th
 
 The `FirmwareUpgradeManager` contains an additional state, `VALIDATE`, which precedes the upload. The `VALIDATE` state checks the current image state of the device in an attempt to bypass certain states of the firmware upgrade. For example, if the image to upload is already in slot 1 on the device, the `State` will skip `UPLOAD` and move directly to `TEST` (or `CONFIRM` if `Mode.CONFIRM_ONLY` has been set). If the uploaded image is already active, and confirmed in slot 0, the upgrade will succeed immediately. The `VALIDATE` state makes it easy to reattempt an upgrade without needing to re-upload the image or manually determine where to start.
 
+## License
 
-
-
+This library is licensed under the Apache 2.0 license. For more info, see the `LICENSE` file.

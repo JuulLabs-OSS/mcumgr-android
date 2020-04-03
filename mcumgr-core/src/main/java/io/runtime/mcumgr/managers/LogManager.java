@@ -75,7 +75,7 @@ public class LogManager extends McuManager {
      * @param callback     the response callback.
      */
     public void show(@Nullable String logName,
-                     @Nullable Integer minIndex,
+                     @Nullable Long minIndex,
                      @Nullable Date minTimestamp,
                      @NotNull McuMgrCallback<McuMgrLogResponse> callback) {
         HashMap<String, Object> payloadMap = new HashMap<>();
@@ -111,7 +111,7 @@ public class LogManager extends McuManager {
      * @throws McuMgrException Transport error. See cause.
      */
     @NotNull
-    public McuMgrLogResponse show(@Nullable String logName, @Nullable Integer minIndex,
+    public McuMgrLogResponse show(@Nullable String logName, @Nullable Long minIndex,
                                   @Nullable Date minTimestamp)
             throws McuMgrException {
         HashMap<String, Object> payloadMap = new HashMap<>();
@@ -126,7 +126,6 @@ public class LogManager extends McuManager {
         }
         return send(OP_READ, ID_READ, payloadMap, McuMgrLogResponse.class);
     }
-
 
     /**
      * Clear the logs on a device (asynchronous).
@@ -221,6 +220,7 @@ public class LogManager extends McuManager {
      *
      * @return A mapping of log name to state.
      */
+    @NotNull
     public synchronized Map<String, State> getAll() {
         HashMap<String, State> logStates = new HashMap<>();
         try {
@@ -259,10 +259,8 @@ public class LogManager extends McuManager {
      * @param state The log state to collect logs from.
      * @return The log state with updated next index and entry list.
      */
-    public State getAllFromState(State state) {
-        if (state == null) {
-            throw new NullPointerException("State must not be null!");
-        }
+    @NotNull
+    public State getAllFromState(@NotNull State state) {
         // Loop until we run out of entries or encounter a problem
         while (true) {
             // Get the next set of entries for this log
@@ -293,7 +291,7 @@ public class LogManager extends McuManager {
                 break;
             }
             // Get the index of the last entry in the list and set the LogState nextIndex
-            int nextIndex = log.entries[log.entries.length - 1].index + 1;
+            long nextIndex = log.entries[log.entries.length - 1].index + 1;
             state.setNextIndex(nextIndex);
             // Add entries to the list and set the next index
             state.getEntries().addAll(Arrays.asList(log.entries));
@@ -309,7 +307,8 @@ public class LogManager extends McuManager {
      * @param state The state to get logs from.
      * @return The show response.
      */
-    public McuMgrLogResponse showNext(State state) {
+    @Nullable
+    public McuMgrLogResponse showNext(@NotNull State state) {
         LOG.debug("Show logs: name={}, nextIndex={}", state.getName(), state.getNextIndex());
         try {
             McuMgrLogResponse response = show(state.getName(), state.getNextIndex(), null);
@@ -341,7 +340,7 @@ public class LogManager extends McuManager {
         /**
          * The next index to use to get new logs.
          */
-        private int mNextIndex = 0;
+        private long mNextIndex = 0;
 
         /**
          * The list of entries pulled from the log.
@@ -352,7 +351,7 @@ public class LogManager extends McuManager {
             this(name, 0);
         }
 
-        public State(String name, int nextIndex) {
+        public State(String name, long nextIndex) {
             mName = name;
             mNextIndex = nextIndex;
         }
@@ -379,7 +378,7 @@ public class LogManager extends McuManager {
          *
          * @return the next index.
          */
-        public int getNextIndex() {
+        public long getNextIndex() {
             return mNextIndex;
         }
 
@@ -388,7 +387,7 @@ public class LogManager extends McuManager {
          *
          * @param nextIndex the next index.
          */
-        public void setNextIndex(int nextIndex) {
+        public void setNextIndex(long nextIndex) {
             mNextIndex = nextIndex;
         }
 
