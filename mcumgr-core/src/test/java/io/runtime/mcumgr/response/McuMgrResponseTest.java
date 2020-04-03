@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 public class McuMgrResponseTest {
 
     @Test
-    public void buildResponse_two_slots() {
+    public void buildResponse_two_slots() throws IOException {
         /*
         Header:
         01-00-00-F4-00-01-00-00
@@ -116,37 +116,34 @@ public class McuMgrResponseTest {
                 (byte) 0x6E, (byte) 0x74, (byte) 0xF4, (byte) 0xFF, (byte) 0xFF, (byte) 0x6B, (byte) 0x73, (byte) 0x70, (byte) 0x6C,
                 (byte) 0x69, (byte) 0x74, (byte) 0x53, (byte) 0x74, (byte) 0x61, (byte) 0x74, (byte) 0x75, (byte) 0x73, (byte) 0x00,
                 (byte) 0xFF};
-        try {
-            McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
-            assertNotNull(response);
-            assertTrue(response.isSuccess());
-            assertNotNull(response.images);
-            assertEquals(2, response.images.length);
 
-            assertEquals(0, response.images[0].slot);
-            assertEquals("3.0.0", response.images[0].version);
-            assertTrue(response.images[0].bootable);
-            assertFalse(response.images[0].pending);
-            assertTrue(response.images[0].confirmed);
-            assertTrue(response.images[0].active);
-            assertFalse(response.images[0].permanent);
+        McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertNotNull(response.images);
+        assertEquals(2, response.images.length);
 
-            assertEquals(1, response.images[1].slot);
-            assertEquals("3.0.0", response.images[1].version);
-            assertTrue(response.images[1].bootable);
-            assertFalse(response.images[1].pending);
-            assertFalse(response.images[1].confirmed);
-            assertFalse(response.images[1].active);
-            assertFalse(response.images[1].permanent);
+        assertEquals(0, response.images[0].slot);
+        assertEquals("3.0.0", response.images[0].version);
+        assertTrue(response.images[0].bootable);
+        assertFalse(response.images[0].pending);
+        assertTrue(response.images[0].confirmed);
+        assertTrue(response.images[0].active);
+        assertFalse(response.images[0].permanent);
 
-            assertEquals(0, response.splitStatus);
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
+        assertEquals(1, response.images[1].slot);
+        assertEquals("3.0.0", response.images[1].version);
+        assertTrue(response.images[1].bootable);
+        assertFalse(response.images[1].pending);
+        assertFalse(response.images[1].confirmed);
+        assertFalse(response.images[1].active);
+        assertFalse(response.images[1].permanent);
+
+        assertEquals(0, response.splitStatus);
     }
 
     @Test
-    public void buildResponse_one_slot() {
+    public void buildResponse_one_slot() throws IOException {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
                 (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
                 (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
@@ -166,29 +163,25 @@ public class McuMgrResponseTest {
                 (byte) 0x69, (byte) 0x74, (byte) 0x53, (byte) 0x74, (byte) 0x61, (byte) 0x74, (byte) 0x75, (byte) 0x73, (byte) 0x00,
                 (byte) 0xFF};
 
-        try {
-            McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
-            assertNotNull(response);
-            assertTrue(response.isSuccess());
-            assertNotNull(response.images);
-            assertEquals(1, response.images.length);
+        McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertNotNull(response.images);
+        assertEquals(1, response.images.length);
 
-            assertEquals(0, response.images[0].slot);
-            assertEquals("3.0.0", response.images[0].version);
-            assertTrue(response.images[0].bootable);
-            assertFalse(response.images[0].pending);
-            assertTrue(response.images[0].confirmed);
-            assertTrue(response.images[0].active);
-            assertFalse(response.images[0].permanent);
+        assertEquals(0, response.images[0].slot);
+        assertEquals("3.0.0", response.images[0].version);
+        assertTrue(response.images[0].bootable);
+        assertFalse(response.images[0].pending);
+        assertTrue(response.images[0].confirmed);
+        assertTrue(response.images[0].active);
+        assertFalse(response.images[0].permanent);
 
-            assertEquals(0, response.splitStatus);
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
+        assertEquals(0, response.splitStatus);
     }
 
     @Test
-    public void buildResponse_missing_splitStatus() {
+    public void buildResponse_missing_splitStatus() throws IOException {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
                 (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
                 (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
@@ -206,29 +199,25 @@ public class McuMgrResponseTest {
                 (byte) 0xF4, (byte) 0xFF, (byte) 0xFF, // no slot 2
                 (byte) 0xFF};
 
-        try {
-            McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
-            assertNotNull(response);
-            assertTrue(response.isSuccess());
-            assertNotNull(response.images);
-            assertEquals(1, response.images.length);
+        McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertNotNull(response.images);
+        assertEquals(1, response.images.length);
 
-            assertEquals(0, response.images[0].slot);
-            assertEquals("3.0.0", response.images[0].version);
-            assertTrue(response.images[0].bootable);
-            assertFalse(response.images[0].pending);
-            assertTrue(response.images[0].confirmed);
-            assertTrue(response.images[0].active);
-            assertFalse(response.images[0].permanent);
+        assertEquals(0, response.images[0].slot);
+        assertEquals("3.0.0", response.images[0].version);
+        assertTrue(response.images[0].bootable);
+        assertFalse(response.images[0].pending);
+        assertTrue(response.images[0].confirmed);
+        assertTrue(response.images[0].active);
+        assertFalse(response.images[0].permanent);
 
-            assertEquals(0, response.splitStatus);
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
+        assertEquals(0, response.splitStatus);
     }
 
     @Test
-    public void buildResponse_typo() {
+    public void buildResponse_typo() throws IOException {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
                 (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
                 (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
@@ -248,29 +237,25 @@ public class McuMgrResponseTest {
                 (byte) 0x69, (byte) 0x74, (byte) 0x53, (byte) 0x74, (byte) 0x61, (byte) 0x74, (byte) 0x75, (byte) 0x73, (byte) 0x00,
                 (byte) 0xFF};
 
-        try {
-            McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
-            assertNotNull(response);
-            assertTrue(response.isSuccess());
-            assertNotNull(response.images);
-            assertEquals(1, response.images.length);
+        McuMgrImageStateResponse response = McuMgrResponse.buildResponse(McuMgrScheme.BLE, data, McuMgrImageStateResponse.class);
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertNotNull(response.images);
+        assertEquals(1, response.images.length);
 
-            assertEquals(0, response.images[0].slot);
-            assertEquals("3.0.0", response.images[0].version);
-            assertTrue(response.images[0].bootable);
-            assertFalse(response.images[0].pending);
-            assertTrue(response.images[0].confirmed);
-            assertTrue(response.images[0].active);
-            assertFalse(response.images[0].permanent);
+        assertEquals(0, response.images[0].slot);
+        assertEquals("3.0.0", response.images[0].version);
+        assertTrue(response.images[0].bootable);
+        assertFalse(response.images[0].pending);
+        assertTrue(response.images[0].confirmed);
+        assertTrue(response.images[0].active);
+        assertFalse(response.images[0].permanent);
 
-            assertEquals(0, response.splitStatus);
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
+        assertEquals(0, response.splitStatus);
     }
 
     @Test
-    public void getExpectedLength_full() {
+    public void getExpectedLength_full() throws IOException {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
                 (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
                 (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
@@ -288,15 +273,11 @@ public class McuMgrResponseTest {
                 (byte) 0xF4, (byte) 0xFF, (byte) 0xFF, // no slot 2
                 (byte) 0xFF};
 
-        try {
-            assertEquals(129, McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data));
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
+        assertEquals(129, McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data));
     }
 
     @Test
-    public void getExpectedLength_partial() {
+    public void getExpectedLength_partial() throws IOException {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
                 (byte) 0xBF, (byte) 0x66, (byte) 0x69, (byte) 0x6D, (byte) 0x61, (byte) 0x67, (byte) 0x65, (byte) 0x73, (byte) 0x9F,
                 (byte) 0xBF, (byte) 0x64, (byte) 0x73, (byte) 0x6C, (byte) 0x6F, (byte) 0x74, (byte) 0x00, (byte) 0x67, (byte) 0x76,
@@ -304,22 +285,14 @@ public class McuMgrResponseTest {
                 (byte) 0x30, (byte) 0x2E, (byte) 0x30, (byte) 0x64, (byte) 0x68, (byte) 0x61, (byte) 0x73, (byte) 0x68, (byte) 0x58,
                 (byte) 0x20, (byte) 0x0D, (byte) 0x4F, (byte) 0x2C, (byte) 0x73, (byte) 0xD8, (byte) 0x58, (byte) 0x1C, (byte) 0xE9};
 
-        try {
-            assertEquals(129, McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data));
-        } catch (IOException e) {
-            fail("Exception: " + e.getLocalizedMessage());
-        }
+        assertEquals(129, McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data));
     }
 
-    @Test
-    public void getExpectedLength_tooShort() {
+    @Test(expected = IOException.class)
+    public void getExpectedLength_tooShort() throws IOException {
         final byte[] data = {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x79, (byte) 0x00, (byte) 0x01, (byte) 0x00};
 
-        try {
-            McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data);
-            fail("Incorrectly parsed too short header");
-        } catch (IOException e) {
-            // success
-        }
+        McuMgrResponse.getExpectedLength(McuMgrScheme.BLE, data);
+        fail("Incorrectly parsed too short header");
     }
 }
