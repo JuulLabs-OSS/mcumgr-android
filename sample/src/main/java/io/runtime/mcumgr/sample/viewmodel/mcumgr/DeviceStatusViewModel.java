@@ -6,94 +6,52 @@
 
 package io.runtime.mcumgr.sample.viewmodel.mcumgr;
 
-import android.bluetooth.BluetoothDevice;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import io.runtime.mcumgr.McuMgrTransport;
-import io.runtime.mcumgr.ble.McuMgrBleTransport;
-import io.runtime.mcumgr.sample.R;
-import no.nordicsemi.android.ble.observer.BondingObserver;
-import no.nordicsemi.android.ble.observer.ConnectionObserver;
+import io.runtime.mcumgr.sample.observable.BondingState;
+import io.runtime.mcumgr.sample.observable.ConnectionState;
+import io.runtime.mcumgr.sample.observable.ObservableMcuMgrBleTransport;
 
 public class DeviceStatusViewModel extends McuMgrViewModel {
-    private final MutableLiveData<Integer> mConnectionStateLiveData = new MutableLiveData<>();
-    private final MutableLiveData<Integer> mBondStateLiveData = new MutableLiveData<>();
+    private LiveData<ConnectionState> mConnectionStateLiveData;
+    private LiveData<BondingState> mBondStateLiveData;
 
     @Inject
     DeviceStatusViewModel(final McuMgrTransport transport,
                           @Named("busy") final MutableLiveData<Boolean> state) {
         super(state);
-        if (transport instanceof McuMgrBleTransport) {
-            final McuMgrBleTransport bleTransport = (McuMgrBleTransport) transport;
-            bleTransport.setConnectionObserver(new ConnectionObserver() {
+
+        if (transport instanceof ObservableMcuMgrBleTransport) {
+            mConnectionStateLiveData = ((ObservableMcuMgrBleTransport) transport).getState();
+            mBondStateLiveData = ((ObservableMcuMgrBleTransport) transport).getBondingState();
+        } else {
+            final MutableLiveData<ConnectionState> connectionStateLiveData = new MutableLiveData<>();
+            transport.addObserver(new McuMgrTransport.ConnectionObserver() {
                 @Override
-                public void onDeviceConnecting(@NonNull final BluetoothDevice device) {
-                    mConnectionStateLiveData.postValue(R.string.status_connecting);
+                public void onConnected() {
+                    connectionStateLiveData.postValue(ConnectionState.READY);
                 }
 
                 @Override
-                public void onDeviceConnected(@NonNull final BluetoothDevice device) {
-                    // The device is connected. Now service discovery and initialization will begin.
-                    mConnectionStateLiveData.postValue(R.string.status_initializing);
-                }
-
-                @Override
-                public void onDeviceFailedToConnect(@NonNull final BluetoothDevice device, final int reason) {
-                    if (reason == ConnectionObserver.REASON_TIMEOUT) {
-                        mConnectionStateLiveData.postValue(R.string.status_connection_timeout);
-                    } else {
-                        mConnectionStateLiveData.postValue(R.string.status_connection_failed);
-                    }
-                }
-
-                @Override
-                public void onDeviceReady(@NonNull final BluetoothDevice device) {
-                    mConnectionStateLiveData.postValue(R.string.status_connected);
-                }
-
-                @Override
-                public void onDeviceDisconnecting(@NonNull final BluetoothDevice device) {
-                    mConnectionStateLiveData.postValue(R.string.status_disconnecting);
-                }
-
-                @Override
-                public void onDeviceDisconnected(@NonNull final BluetoothDevice device, final int reason) {
-                    if (reason == ConnectionObserver.REASON_NOT_SUPPORTED) {
-                        mConnectionStateLiveData.postValue(R.string.status_not_supported);
-                    } else {
-                        mConnectionStateLiveData.postValue(R.string.status_disconnected);
-                    }
+                public void onDisconnected() {
+                    connectionStateLiveData.postValue(ConnectionState.DISCONNECTED);
                 }
             });
-            bleTransport.setBondingObserver(new BondingObserver() {
-                @Override
-                public void onBondingRequired(@NonNull final BluetoothDevice device) {
-                    mBondStateLiveData.postValue(R.string.status_bonding);
-                }
-
-                @Override
-                public void onBonded(@NonNull final BluetoothDevice device) {
-                    mBondStateLiveData.postValue(R.string.status_bonded);
-                }
-
-                @Override
-                public void onBondingFailed(@NonNull final BluetoothDevice device) {
-                    mBondStateLiveData.postValue(R.string.status_not_bonded);
-                }
-            });
+            mConnectionStateLiveData = connectionStateLiveData;
+            mBondStateLiveData = new MutableLiveData<>(BondingState.NOT_BONDED);
         }
     }
 
-    public LiveData<Integer> getConnectionState() {
+    public LiveData<ConnectionState> getConnectionState() {
         return mConnectionStateLiveData;
     }
 
-    public LiveData<Integer> getBondState() {
+    public LiveData<BondingState> getBondState() {
         return mBondStateLiveData;
     }
 
