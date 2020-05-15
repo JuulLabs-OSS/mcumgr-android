@@ -28,6 +28,5 @@
     <color name="black">#FF000000</color>
     <color name="lightGray">#FFF5F5F5</color>
     <color name="zephyr">#FF3B3E4E</color>
-    <color name="error">?colorError</color>
 
 </resources>

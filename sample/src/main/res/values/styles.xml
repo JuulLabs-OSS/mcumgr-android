@@ -36,6 +36,8 @@
         <item name="colorPrimaryDark">@color/colorStatusBar</item>
         <!-- Secondary color of the app. -->
         <item name="colorSecondary">@color/colorSecondary</item>
+        <!-- Color for displaying error messages.  -->
+        <item name="colorError">@color/colorError</item>
     </style>
 
     <!-- Main app's toolbar theme. -->
