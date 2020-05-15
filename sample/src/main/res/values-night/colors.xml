@@ -6,7 +6,21 @@
   -->
 
 <resources>
-    <color name="background">#000</color>
+
+    <!-- Base theme colors -->
+    <color name="colorPrimary">@color/nordicBlue</color>
+    <color name="colorOnPrimary">@color/white</color>
+    <color name="colorAccentOnPrimary">@color/nordicBlue</color>
+    <color name="colorSecondary">@color/nordicBlue</color>
+    <color name="colorStatusBar">@color/black</color>
+    <color name="colorDivider">#444</color>
+
+    <color name="colorBackground">@color/black</color>
+    <color name="colorOnBackground">@color/white</color>
+    <color name="colorDestructive">#D00</color>
+    <color name="colorDestructiveDisabled">#8800</color>
+
+   <!-- <color name="background">#000</color>
     <color name="appBar">#222</color>
     <color name="statusBar">#111</color>
     <color name="icon">#FFF</color>
@@ -16,5 +30,5 @@
     <color name="error">#D00</color>
 
     <color name="colorDestructive">#D00</color>
-    <color name="colorDestructiveDisabled">#8800</color>
+    <color name="colorDestructiveDisabled">#8800</color>-->
 </resources>
