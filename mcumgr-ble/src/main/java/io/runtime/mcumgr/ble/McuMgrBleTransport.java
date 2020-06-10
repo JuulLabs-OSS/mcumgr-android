@@ -14,6 +14,9 @@ import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrHeader;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.ble.callback.SmpDataCallback;
@@ -34,9 +36,11 @@ import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.exception.McuMgrTimeoutException;
 import io.runtime.mcumgr.response.McuMgrResponse;
+import io.runtime.mcumgr.util.CBOR;
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.Request;
 import no.nordicsemi.android.ble.annotation.ConnectionPriority;
+import no.nordicsemi.android.ble.callback.DataSentCallback;
 import no.nordicsemi.android.ble.callback.FailCallback;
 import no.nordicsemi.android.ble.callback.MtuCallback;
 import no.nordicsemi.android.ble.callback.SuccessCallback;
@@ -59,6 +63,12 @@ import no.nordicsemi.android.ble.exception.RequestFailedException;
 public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
 
     private static final Logger LOG = LoggerFactory.getLogger(McuMgrBleTransport.class);
+    /**
+     * Log level priority for CBOR-level messages. It is compatible with APPLICATION level in nRF Logger:
+     * https://github.com/NordicSemiconductor/nRF-Logger-API/blob/master/log/src/main/java/no/nordicsemi/android/log/LogContract.java#L188
+     * When not used with nRF Logger library, this defaults to level INFO.
+     */
+    private static final int LOG_CBOR = 10;
 
     public final static UUID SMP_SERVICE_UUID =
             UUID.fromString("8D53DC1D-1DB7-4CD3-868B-8A527460AA84");
@@ -98,7 +108,7 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
      * Flag indicating should low-level logging be enabled. Default to false.
      * Call {@link #setLoggingEnabled(boolean)} to change.
      */
-    private boolean mLoggingEnabled;
+    protected boolean mLoggingEnabled;
 
     /**
      * Construct a McuMgrBleTransport object.
@@ -172,8 +182,8 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                 case Log.DEBUG:
                     LOG.debug(message);
                     break;
-                case Log.INFO:
-                    LOG.info(message);
+                case Log.VERBOSE:
+                    LOG.trace(message);
                     break;
                 case Log.WARN:
                     LOG.warn(message);
@@ -182,9 +192,10 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                 case Log.ASSERT:
                     LOG.error(message);
                     break;
-                case Log.VERBOSE:
+                case Log.INFO:
+                case LOG_CBOR:
                 default:
-                    LOG.trace(message);
+                    LOG.info(message);
                     break;
             }
         }
@@ -255,10 +266,19 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
         try {
             final SmpResponse<T> smpResponse = waitForNotification(mSmpCharacteristic)
                     .merge(mSMPMerger)
-                    .trigger(writeCharacteristic(mSmpCharacteristic, payload).split())
+                    .trigger(writeCharacteristic(mSmpCharacteristic, payload).split().with(mRequestLogger))
                     .timeout(30000)
                     .await(new SmpResponse<>(responseType));
             if (smpResponse.isValid()) {
+                if (mLoggingEnabled) {
+                    try {
+                        log(LOG_CBOR, "\"" +
+                                CBOR.toString(smpResponse.getRawData().getValue(), McuMgrHeader.HEADER_LENGTH) +
+                                "\" received");
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
                 //noinspection ConstantConditions
                 return smpResponse.getResponse();
             } else {
@@ -307,6 +327,21 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                         .merge(mSMPMerger)
                         .with(new SmpDataCallback<T>(responseType) {
                             @Override
+                            public void onDataReceived(@NonNull BluetoothDevice device,
+                                                       @NonNull Data data) {
+                                if (mLoggingEnabled) {
+                                    try {
+                                        log(LOG_CBOR, "\"" +
+                                                CBOR.toString(data.getValue(), McuMgrHeader.HEADER_LENGTH) +
+                                                "\" received");
+                                    } catch (Exception e) {
+                                        // Ignore
+                                    }
+                                }
+                                super.onDataReceived(device, data);
+                            }
+
+                            @Override
                             public void onResponseReceived(@NonNull BluetoothDevice device,
                                                            @NonNull T response) {
                                 if (response.isSuccess()) {
@@ -323,7 +358,7 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                                         "McuMgrResponse from response data: " + data));
                             }
                         })
-                        .trigger(writeCharacteristic(mSmpCharacteristic, payload).split())
+                        .trigger(writeCharacteristic(mSmpCharacteristic, payload).split().with(mRequestLogger))
                         .fail(new FailCallback() {
                             @Override
                             public void onRequestFailed(@NonNull BluetoothDevice device,
@@ -567,4 +602,21 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
             o.onDisconnected();
         }
     }
+
+    //*******************************************************************************************
+    // Other
+    //*******************************************************************************************
+
+    private final DataSentCallback mRequestLogger = new DataSentCallback() {
+        @Override
+        public void onDataSent(@NonNull final BluetoothDevice device, @NonNull final Data data) {
+            if (mLoggingEnabled) {
+                try {
+                    log(LOG_CBOR, "\"" + CBOR.toString(data.getValue(), McuMgrHeader.HEADER_LENGTH) + "\" sent");
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+        }
+    };
 }
