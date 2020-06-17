@@ -214,6 +214,7 @@ public class McuMgrResponse {
         }
 
         byte[] payload = Arrays.copyOfRange(bytes, McuMgrHeader.HEADER_LENGTH, bytes.length);
+        LOG.info(CBOR.toString(payload) + " received");
         McuMgrHeader header = McuMgrHeader.fromBytes(Arrays.copyOf(bytes, McuMgrHeader.HEADER_LENGTH));
 
         // Initialize response and set fields
