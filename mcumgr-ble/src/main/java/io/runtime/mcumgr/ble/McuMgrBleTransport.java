@@ -173,8 +173,8 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                 case Log.DEBUG:
                     LOG.debug(message);
                     break;
-                case Log.VERBOSE:
-                    LOG.trace(message);
+                case Log.INFO:
+                    LOG.info(message);
                     break;
                 case Log.WARN:
                     LOG.warn(message);
@@ -183,9 +183,9 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                 case Log.ASSERT:
                     LOG.error(message);
                     break;
-                case Log.INFO:
+                case Log.VERBOSE:
                 default:
-                    LOG.info(message);
+                    LOG.trace(message);
                     break;
             }
         }
