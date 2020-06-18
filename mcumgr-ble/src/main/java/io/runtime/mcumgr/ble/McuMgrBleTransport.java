@@ -99,7 +99,7 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
      * Flag indicating should low-level logging be enabled. Default to false.
      * Call {@link #setLoggingEnabled(boolean)} to change.
      */
-    protected boolean mLoggingEnabled;
+    private boolean mLoggingEnabled;
 
     /**
      * Construct a McuMgrBleTransport object.
