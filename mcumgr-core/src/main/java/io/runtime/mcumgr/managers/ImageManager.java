@@ -51,7 +51,7 @@ import io.runtime.mcumgr.util.CBOR;
  *
  * @see FirmwareUpgradeManager
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused", "WeakerAccess", "deprecation", "DeprecatedIsStillUsed"})
 public class ImageManager extends TransferManager {
 
     private final static Logger LOG = LoggerFactory.getLogger(ImageManager.class);

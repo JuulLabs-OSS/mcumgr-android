@@ -32,7 +32,7 @@ import io.runtime.mcumgr.transfer.Upload;
 import io.runtime.mcumgr.transfer.UploadCallback;
 import io.runtime.mcumgr.util.CBOR;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused", "DeprecatedIsStillUsed", "deprecation"})
 public class FsManager extends TransferManager {
 
     private final static Logger LOG = LoggerFactory.getLogger(FsManager.class);
