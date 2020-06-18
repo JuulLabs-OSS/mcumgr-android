@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import io.runtime.mcumgr.McuMgrCallback;
+import io.runtime.mcumgr.McuMgrHeader;
 import io.runtime.mcumgr.McuMgrScheme;
 import io.runtime.mcumgr.McuMgrTransport;
 import io.runtime.mcumgr.ble.callback.SmpDataCallback;
@@ -35,6 +36,7 @@ import io.runtime.mcumgr.exception.McuMgrErrorException;
 import io.runtime.mcumgr.exception.McuMgrException;
 import io.runtime.mcumgr.exception.McuMgrTimeoutException;
 import io.runtime.mcumgr.response.McuMgrResponse;
+import io.runtime.mcumgr.util.CBOR;
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.Request;
 import no.nordicsemi.android.ble.annotation.ConnectionPriority;
@@ -254,12 +256,32 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
 
         // Send the request and wait for a notification in a synchronous way
         try {
+            if (mLoggingEnabled) {
+                try {
+                    log(Log.VERBOSE, "Sending "
+                            + McuMgrHeader.fromBytes(payload).toString() + " CBOR "
+                            + CBOR.toString(payload, McuMgrHeader.HEADER_LENGTH));
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
             final SmpResponse<T> smpResponse = waitForNotification(mSmpCharacteristic)
                     .merge(mSMPMerger)
                     .trigger(writeCharacteristic(mSmpCharacteristic, payload).split())
                     .timeout(30000)
                     .await(new SmpResponse<>(responseType));
             if (smpResponse.isValid()) {
+                if (mLoggingEnabled) {
+                    try {
+                        byte[] response = smpResponse.getRawData().getValue();
+                        //noinspection ConstantConditions
+                        log(Log.INFO, "Received "
+                                + McuMgrHeader.fromBytes(response).toString() + " CBOR "
+                                + CBOR.toString(response, McuMgrHeader.HEADER_LENGTH));
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
                 //noinspection ConstantConditions
                 return smpResponse.getResponse();
             } else {
@@ -304,9 +326,35 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                     return;
                 }
 
+                if (mLoggingEnabled) {
+                    try {
+                        log(Log.VERBOSE, "Sending "
+                                + McuMgrHeader.fromBytes(payload).toString() + " CBOR "
+                                + CBOR.toString(payload, McuMgrHeader.HEADER_LENGTH));
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
                 waitForNotification(mSmpCharacteristic)
                         .merge(mSMPMerger)
                         .with(new SmpDataCallback<T>(responseType) {
+                            @Override
+                            public void onDataReceived(@NonNull BluetoothDevice device,
+                                                       @NonNull Data data) {
+                                if (mLoggingEnabled) {
+                                    try {
+                                        byte[] response = data.getValue();
+                                        //noinspection ConstantConditions
+                                        log(Log.INFO, "Received "
+                                                + McuMgrHeader.fromBytes(response).toString() + " CBOR "
+                                                + CBOR.toString(response, McuMgrHeader.HEADER_LENGTH));
+                                    } catch (Exception e) {
+                                        // Ignore
+                                    }
+                                }
+                                super.onDataReceived(device, data);
+                            }
+
                             @Override
                             public void onResponseReceived(@NonNull BluetoothDevice device,
                                                            @NonNull T response) {

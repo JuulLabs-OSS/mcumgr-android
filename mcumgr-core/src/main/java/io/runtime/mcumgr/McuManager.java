@@ -320,7 +320,6 @@ public abstract class McuManager {
             } else {
                 // Standard scheme appends the CBOR payload to the header.
                 byte[] cborPayload = CBOR.toBytes(payloadMap);
-                LOG.info("Sending " + CBOR.toString(cborPayload));
                 packet = new byte[header.length + cborPayload.length];
                 System.arraycopy(header, 0, packet, 0, header.length);
                 System.arraycopy(cborPayload, 0, packet, header.length, cborPayload.length);
