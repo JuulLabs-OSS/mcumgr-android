@@ -16,7 +16,6 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Parcel;
 import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
@@ -500,12 +499,12 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                 LOG.error("Device does not support SMP service");
                 return false;
             }
-            mSmpCharacteristicWrite = mSmpService.getCharacteristic(SMP_CHAR_UUID);
-            if (mSmpCharacteristicWrite == null) {
+            mSmpCharacteristicNotify = mSmpService.getCharacteristic(SMP_CHAR_UUID);
+            if (mSmpCharacteristicNotify == null) {
                 LOG.error("Device does not support SMP characteristic");
                 return false;
             } else {
-                final int rxProperties = mSmpCharacteristicWrite.getProperties();
+                final int rxProperties = mSmpCharacteristicNotify.getProperties();
                 boolean write = (rxProperties &
                         BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) > 0;
                 boolean notify = (rxProperties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0;
@@ -523,8 +522,7 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
             //
             // More info:
             // https://stackoverflow.com/questions/38922639/how-could-i-achieve-maximum-thread-safety-with-a-read-write-ble-gatt-characteris
-            mSmpCharacteristicNotify = mSmpCharacteristicWrite;
-            mSmpCharacteristicWrite = cloneCharacteristic(mSmpCharacteristicWrite);
+            mSmpCharacteristicWrite = cloneCharacteristic(mSmpCharacteristicNotify);
             mSmpService.addCharacteristic(mSmpCharacteristicWrite);
             return true;
         }
@@ -545,7 +543,8 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                     .fail(new FailCallback() {
                         @Override
                         public void onRequestFailed(@NonNull final BluetoothDevice device, final int status) {
-                            mMaxPacketLength = Math.max(getMtu() - 3, mMaxPacketLength);
+                            log(Log.INFO, "Failed to negotiate MTU, disconnecting,");
+                            disconnect().enqueue();
                         }
                     }).enqueue();
             enableNotifications(mSmpCharacteristicNotify).enqueue();
@@ -590,6 +589,7 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
             mSmpService = null;
             mSmpCharacteristicWrite = null;
             mSmpCharacteristicNotify = null;
+            McuMgrBleTransport.this.overrideMtu(23); // TODO remove with new version of BLE-Library
             runOnCallbackThread(new Runnable() {
                 @Override
                 public void run() {
@@ -627,31 +627,27 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
         }
     }
 
-    private static BluetoothGattDescriptor getCccd(@Nullable final BluetoothGattCharacteristic characteristic,
-                                                   final int requiredProperty) {
-        if (characteristic == null)
-            return null;
-
+    private static BluetoothGattDescriptor getNotifyCccd(@NonNull final BluetoothGattCharacteristic characteristic) {
         // Check characteristic property
         final int properties = characteristic.getProperties();
-        if ((properties & requiredProperty) == 0)
+        if ((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0) {
             return null;
-
+        }
         return characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR_UUID);
     }
 
+    @NonNull
     @SuppressLint("DiscouragedPrivateApi")
     private static BluetoothGattCharacteristic cloneCharacteristic(@NonNull BluetoothGattCharacteristic characteristic) {
         BluetoothGattCharacteristic clone;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
             // On older versions of android we have to use reflection in order
             // to set the instance ID and the service.
             clone = new BluetoothGattCharacteristic(
                     characteristic.getUuid(),
                     characteristic.getProperties(),
                     characteristic.getPermissions());
-            clone.addDescriptor(getCccd(characteristic,
-                    BluetoothGattCharacteristic.PROPERTY_NOTIFY));
+            clone.addDescriptor(getNotifyCccd(characteristic));
             try {
                 Method setInstanceId = characteristic.getClass()
                         .getDeclaredMethod("setInstanceId", int.class);
@@ -665,18 +661,9 @@ public class McuMgrBleTransport extends BleManager implements McuMgrTransport {
                 clone = characteristic;
             }
         } else {
-            // Newer versions of android must use Parcelable to clone the
-            // characteristic.
-            Parcel p = Parcel.obtain();
-            try {
-                characteristic.writeToParcel(p, 0);
-                clone = p.readParcelable(ClassLoader.getSystemClassLoader());
-            } catch (Throwable e) {
-                LOG.error("SMP characteristic clone failed", e);
-                clone = characteristic;
-            } finally {
-                p.recycle();
-            }
+            // Newer versions of android have this bug fixed as long as a
+            // handler is used in connectGatt().
+            clone = characteristic;
         }
         return clone;
     }
