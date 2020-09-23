@@ -1,17 +1,34 @@
 package io.runtime.mcumgr.transfer
 
 import io.runtime.mcumgr.McuMgrCallback
+import io.runtime.mcumgr.exception.InsufficientMtuException
 import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.managers.ImageManager
+import io.runtime.mcumgr.managers.meta.StatCollectionResult
 import io.runtime.mcumgr.response.UploadResponse
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.ByteString.Companion.toByteString
 import java.lang.IllegalStateException
+import java.lang.RuntimeException
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 private const val OP_WRITE = 2
 private const val ID_UPLOAD = 1
@@ -22,16 +39,23 @@ fun ImageManager.windowUpload(
     callback: UploadCallback
 ): TransferController {
     val uploader = ImageUploader(data, this, windowCapacity)
-    val upload = GlobalScope.launch {
-        uploader.progress.onEach { progress ->
+    val job = GlobalScope.launch(CoroutineExceptionHandler { _, t ->
+        // TODO handle exceptions better than this
+    }) {
+        val progress = uploader.progress.onEach { progress ->
             callback.onUploadProgressChanged(
                 progress.offset,
                 progress.size,
                 System.currentTimeMillis()
             )
-        }
+        }.launchIn(this)
+
+        uploader.uploadCatchMtu()
+        progress.cancel()
     }
-    upload.invokeOnCompletion { throwable ->
+
+    job.invokeOnCompletion { throwable ->
+        throwable?.printStackTrace()
         when (throwable) {
             null -> callback.onUploadCompleted()
             is CancellationException -> callback.onUploadCanceled()
@@ -44,8 +68,18 @@ fun ImageManager.windowUpload(
         override fun pause() = throw IllegalStateException("cannot pause window upload")
         override fun resume() = throw IllegalStateException("cannot resume window upload")
         override fun cancel() {
-            upload.cancel()
+            job.cancel()
         }
+    }
+}
+
+// Catches an mtu exception, sets the new mtu and restarts the upload.
+private suspend fun Uploader.uploadCatchMtu() {
+    try {
+        upload()
+    } catch (e: InsufficientMtuException) {
+        mtu = e.mtu
+        upload()
     }
 }
 
@@ -60,31 +94,27 @@ internal class ImageUploader(
     imageManager.scheme
 ) {
 
-    private val truncatedHash =
-        imageData.toByteString().sha256().toByteArray().copyOfRange(0, TRUNCATED_HASH_LEN)
-
     @Throws
-    override suspend fun write(
+    override fun writeAsync(
         data: ByteArray,
         offset: Int,
         length: Int?
-    ): UploadResult {
+    ): ReceiveChannel<UploadResult> {
         val requestMap: MutableMap<String, Any> = mutableMapOf(
             "data" to data,
             "off" to offset
         )
         if (offset == 0) {
             requestMap["len"] = imageData.size
-            requestMap["sha"] = truncatedHash
         }
-        return imageManager.upload(requestMap)
+        return imageManager.uploadAsync(requestMap)
     }
 }
 
-@Throws
-private suspend fun ImageManager.upload(
+private fun ImageManager.uploadAsync(
     requestMap: Map<String, Any>
-): UploadResult = suspendCancellableCoroutine { cont ->
+): ReceiveChannel<UploadResult> {
+    val receiveChannel = Channel<UploadResult>(1)
     send(
         OP_WRITE,
         ID_UPLOAD,
@@ -92,12 +122,13 @@ private suspend fun ImageManager.upload(
         UploadResponse::class.java,
         object : McuMgrCallback<UploadResponse> {
             override fun onResponse(response: UploadResponse) {
-                cont.resume(UploadResult.Response(response, response.returnCode))
+                receiveChannel.offer(UploadResult.Response(response, response.returnCode))
             }
 
             override fun onError(error: McuMgrException) {
-                cont.resume(UploadResult.Failure(error))
+                receiveChannel.offer(UploadResult.Failure(error))
             }
         }
     )
+    return receiveChannel
 }

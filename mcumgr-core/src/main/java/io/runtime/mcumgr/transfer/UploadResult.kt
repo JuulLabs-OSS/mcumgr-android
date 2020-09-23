@@ -1,6 +1,7 @@
 package io.runtime.mcumgr.transfer
 
 import io.runtime.mcumgr.McuMgrErrorCode
+import io.runtime.mcumgr.R
 import io.runtime.mcumgr.response.UploadResponse
 
 class ErrorResponseException internal constructor(
@@ -51,6 +52,13 @@ internal inline fun UploadResult.onErrorOrFailure(action: (throwable: Throwable)
         is UploadResult.Failure -> action(throwable)
     }
     return this
+}
+
+internal inline fun UploadResult.mapResponse(transform: (result: UploadResult.Response) -> UploadResult): UploadResult {
+    return when (this) {
+        is UploadResult.Response -> transform(this)
+        else -> this
+    }
 }
 
 internal val McuMgrErrorCode.isSuccess: Boolean

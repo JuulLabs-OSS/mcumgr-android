@@ -1,15 +1,15 @@
 package io.runtime.mcumgr.transfer
 
 import io.runtime.mcumgr.McuMgrScheme
-import io.runtime.mcumgr.response.UploadResponse
+import kotlinx.coroutines.channels.ReceiveChannel
 import java.lang.IllegalArgumentException
 import kotlin.math.min
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.lang.IllegalStateException
 
-internal const val TRUNCATED_HASH_LEN = 3
 private const val RETRIES = 5
 
 data class UploadProgress(val offset: Int, val size: Int)
@@ -17,7 +17,7 @@ data class UploadProgress(val offset: Int, val size: Int)
 abstract class Uploader(
     private val data: ByteArray,
     private val windowCapacity: Int,
-    private val mtu: Int,
+    internal var mtu: Int,
     private val protocol: McuMgrScheme
 ) {
 
@@ -27,26 +27,43 @@ abstract class Uploader(
     val progress: Flow<UploadProgress> = _progress
 
     @Throws
-    internal abstract suspend fun write(
+    internal abstract fun writeAsync(
         data: ByteArray,
         offset: Int,
         length: Int?
-    ): UploadResult
+    ): ReceiveChannel<UploadResult>
 
     @Throws
     suspend fun upload() = coroutineScope {
         val window = WindowSemaphore(windowCapacity)
         var offset = 0
-
         while (offset < data.size) {
 
             val transmitOffset = offset
             val chunkSize = getChunkSize(data, offset)
-
             window.acquire()
 
+            // Write the chunk asynchronously and launch a coroutine which
+            // suspends until the response is received on the result channel.
+            val resultChannel = writeChunkAsync(data, transmitOffset, chunkSize)
             launch {
-                writeChunk(data, transmitOffset, chunkSize)
+                resultChannel.receive()
+                    .mapResponse { result ->
+                        // An unexpected offset means that the device did not
+                        // accept the chunk. We need to resend the chunk.
+                        // Map the response to a failure to be handled by the
+                        // onErrorOrFailure block.
+                        val responseOffset = result.body.off
+                        if (responseOffset != transmitOffset + chunkSize) {
+                            val e = IllegalStateException(
+                                "Unexpected offset: expected=${transmitOffset + chunkSize}, " +
+                                    "actual=${responseOffset}"
+                            )
+                            UploadResult.Failure(e)
+                        } else {
+                            result
+                        }
+                    }
                     .onSuccess {
                         window.success()
                         val current = transmitOffset + chunkSize
@@ -60,6 +77,7 @@ abstract class Uploader(
                             .onSuccess { window.recover() }
                             .onErrorOrFailure { throw it }
                     }
+
             }
 
             // Update the offset with the size of the last chunk
@@ -70,18 +88,18 @@ abstract class Uploader(
     /**
      * Copy a chunk of data from the offset and send the write request.
      */
-    private suspend fun writeChunk(
+    private fun writeChunkAsync(
         data: ByteArray,
         offset: Int,
         chunkSize: Int
-    ): UploadResult {
+    ): ReceiveChannel<UploadResult> {
         val chunk = data.copyOfRange(offset, offset + chunkSize)
         val length = if (offset == 0) {
             data.size
         } else {
             null
         }
-        return write(chunk, offset, length)
+        return writeAsync(chunk, offset, length)
     }
 
     /**
@@ -97,7 +115,7 @@ abstract class Uploader(
     ): UploadResult {
         var error: UploadResult? = null
         repeat(times) {
-            val result = writeChunk(data, offset, chunkSize)
+            val result = writeChunkAsync(data, offset, chunkSize).receive()
             when {
                 result.isSuccess -> return result
                 result.isError || result.isFailure -> error = result
@@ -137,18 +155,10 @@ abstract class Uploader(
             0
         }
 
-        // Size of the string "sha" plus the length of the truncated hash
-        val shaSize = if (offset == 0) {
-            cborStringLength("sha") + 1 + TRUNCATED_HASH_LEN
-        } else {
-            0
-        }
-
         // Size of the field name "data" utf8 string
         val dataStringSize = cborStringLength("data")
 
-        val combinedSize = headerSize + mapSize + offsetSize + lengthSize + shaSize +
-            dataStringSize
+        val combinedSize = headerSize + mapSize + offsetSize + lengthSize + dataStringSize
 
         // Now we calculate the max amount of data that we can fit given the MTU.
         val maxDataLength = mtu - combinedSize
