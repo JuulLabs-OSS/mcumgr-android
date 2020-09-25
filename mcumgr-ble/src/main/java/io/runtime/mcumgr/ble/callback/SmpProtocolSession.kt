@@ -15,7 +15,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 private const val SMP_SEQ_NUM_MAX = 255
 
-internal class SmpProtocolSession(private val handler: Handler) {
+internal class SmpProtocolSession(
+    private val handler: Handler? = null
+) {
 
     private data class Outgoing(val data: ByteArray, val transaction: SmpTransaction)
 
@@ -63,14 +65,17 @@ internal class SmpProtocolSession(private val handler: Handler) {
      */
     private suspend fun writer() {
         txChannel.consumeEach { outgoing ->
+
             // Set sequence number in outgoing data
             val sequenceNumber = txCounter.getAndRotate()
             outgoing.data.setSequenceNumber(sequenceNumber)
+
             // Add transaction to store. Fail an existing transaction on overwrite
             transactionsMutex.withLock {
                 fail(sequenceNumber, TransactionOverwriteException(sequenceNumber))
                 transactions[sequenceNumber] = outgoing.transaction
             }
+
             // Send the transaction and launch timeout coroutine
             outgoing.transaction.send(handler, outgoing.data)
             scope.launch {
@@ -85,23 +90,29 @@ internal class SmpProtocolSession(private val handler: Handler) {
      */
     private suspend fun reader() {
         rxChannel.consumeEach { data ->
+
             // Parse header and validate fields
             val header = McuMgrHeader.fromBytes(data)
             val sequenceNumber = header.sequenceNum
             if (header.op == 0 || header.op == 2) {
                 return
             }
+
             // Get the transaction, fail any skipped transactions if the
             // sequence numbers don't match
-            val transaction = transactions[sequenceNumber]
-            if (transaction != null) {
-                transactions[sequenceNumber] = null
-                rxCounter.rotationalDifference(sequenceNumber)?.forEach {
+            val transaction = transactionsMutex.withLock {
+                val transaction = transactions[sequenceNumber]
+                if (transaction != null) {
+                    transactions[sequenceNumber] = null
+                    rxCounter.rotationalDifference(sequenceNumber)?.forEach {
+                        rxCounter.rotate()
+                        fail(it, TransactionSkippedException(it))
+                    }
                     rxCounter.rotate()
-                    fail(it, TransactionSkippedException(it))
                 }
-                rxCounter.rotate()
+                transaction
             }
+
             // Call transaction response callback
             transaction?.onResponse(handler, data)
         }
@@ -124,13 +135,23 @@ internal class SmpProtocolSession(private val handler: Handler) {
     }
 }
 
-private fun SmpTransaction.send(handler: Handler, data: ByteArray) =
-    handler.post { send(data) }
+private fun SmpTransaction.send(handler: Handler?, data: ByteArray) {
+    when (handler) {
+        null -> send(data)
+        else -> handler.post { send(data) }
+    }
+}
 
-private fun SmpTransaction.onResponse(handler: Handler, data: ByteArray) =
-    handler.post { onResponse(data) }
+private fun SmpTransaction.onResponse(handler: Handler?, data: ByteArray) {
+    when (handler) {
+        null -> onResponse(data)
+        else -> handler.post { onResponse(data) }
+    }
+}
 
-private fun SmpTransaction.onFailure(handler: Handler, e: Throwable) =
-    handler.post { onFailure(e) }
-
-
+private fun SmpTransaction.onFailure(handler: Handler?, e: Throwable) {
+    when (handler) {
+        null -> onFailure(e)
+        else -> handler.post { onFailure(e) }
+    }
+}
