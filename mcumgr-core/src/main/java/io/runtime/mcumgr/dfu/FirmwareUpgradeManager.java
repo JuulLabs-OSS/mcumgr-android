@@ -361,12 +361,12 @@ public class FirmwareUpgradeManager implements FirmwareUpgradeController {
     private synchronized void upload() {
         setState(State.UPLOAD);
         if (!mPaused) {
-//            if (mWindowCapacity > 1) {
+            if (mWindowCapacity > 1) {
                 mUploadController = windowUpload(mImageManager, mImageData, mWindowCapacity,
                         mImageUploadCallback);
-//            } else {
-//                mUploadController = mImageManager.imageUpload(mImageData, mImageUploadCallback);
-//            }
+            } else {
+                mUploadController = mImageManager.imageUpload(mImageData, mImageUploadCallback);
+            }
         }
     }
 
