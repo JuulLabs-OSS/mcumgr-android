@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import java.lang.IllegalStateException
 
 private const val OP_WRITE = 2
@@ -23,9 +24,11 @@ fun ImageManager.windowUpload(
     windowCapacity: Int,
     callback: UploadCallback
 ): TransferController {
+    val log = LoggerFactory.getLogger("ImageUploader")
+
     val uploader = ImageUploader(data, this, windowCapacity)
     val job = GlobalScope.launch(CoroutineExceptionHandler { _, t ->
-        // TODO handle exceptions better than this
+        log.error("window image upload failed", t)
     }) {
         val progress = uploader.progress.onEach { progress ->
             callback.onUploadProgressChanged(

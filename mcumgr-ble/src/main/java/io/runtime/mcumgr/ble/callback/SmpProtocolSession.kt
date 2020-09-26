@@ -22,8 +22,8 @@ internal class SmpProtocolSession(
     private data class Outgoing(val data: ByteArray, val transaction: SmpTransaction)
 
     private val scope = CoroutineScope(EmptyCoroutineContext)
-    private val txChannel: Channel<Outgoing> = Channel(SMP_SEQ_NUM_MAX)
-    private val rxChannel: Channel<ByteArray> = Channel(SMP_SEQ_NUM_MAX)
+    private val txChannel: Channel<Outgoing> = Channel(SMP_SEQ_NUM_MAX + 1)
+    private val rxChannel: Channel<ByteArray> = Channel(SMP_SEQ_NUM_MAX + 1)
     private val txCounter = RotatingCounter(SMP_SEQ_NUM_MAX)
     private val rxCounter = RotatingCounter(SMP_SEQ_NUM_MAX)
     private val transactions: Array<SmpTransaction?> = arrayOfNulls(SMP_SEQ_NUM_MAX + 1)

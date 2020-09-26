@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import java.lang.IllegalStateException
 
 private const val RETRIES = 5
@@ -20,6 +21,8 @@ abstract class Uploader(
     internal var mtu: Int,
     private val protocol: McuMgrScheme
 ) {
+
+    private val log = LoggerFactory.getLogger("Uploader")
 
     private val _progress: MutableStateFlow<UploadProgress> =
         MutableStateFlow(UploadProgress(0, data.size))
@@ -43,17 +46,19 @@ abstract class Uploader(
             val chunkSize = getChunkSize(data, offset)
             window.acquire()
 
+            log.trace("uploader write: offset=$transmitOffset")
+
             // Write the chunk asynchronously and launch a coroutine which
             // suspends until the response is received on the result channel.
             val resultChannel = writeChunkAsync(data, transmitOffset, chunkSize)
             launch {
                 resultChannel.receive()
-                    .mapResponse { result ->
+                    .mapResponse { response ->
                         // An unexpected offset means that the device did not
                         // accept the chunk. We need to resend the chunk.
                         // Map the response to a failure to be handled by the
                         // onErrorOrFailure block.
-                        val responseOffset = result.body.off
+                        val responseOffset = response.body.off
                         if (responseOffset != transmitOffset + chunkSize) {
                             val e = IllegalStateException(
                                 "Unexpected offset: expected=${transmitOffset + chunkSize}, " +
@@ -61,7 +66,7 @@ abstract class Uploader(
                             )
                             UploadResult.Failure(e)
                         } else {
-                            result
+                            response
                         }
                     }
                     .onSuccess {
@@ -70,14 +75,21 @@ abstract class Uploader(
                         _progress.value = UploadProgress(current, data.size)
                     }
                     .onErrorOrFailure {
+                        log.info("uploader write failure: offset=$transmitOffset")
                         window.fail()
                         // Retry sending the request. Recover the window on success or throw
                         // on failure.
                         retryWriteChunk(data, transmitOffset, chunkSize, RETRIES)
-                            .onSuccess { window.recover() }
-                            .onErrorOrFailure { throw it }
+                            .onSuccess {
+                                log.info("uploader write recovered: offset=$transmitOffset")
+                                window.recover()
+                            }
+                            .onErrorOrFailure {
+                                log.info("uploader write failed: offset=$transmitOffset")
+                                throw it
+                            }
                     }
-
+                log.trace("uploader write complete: offset=$transmitOffset")
             }
 
             // Update the offset with the size of the last chunk
