@@ -10,35 +10,8 @@ internal class RotatingCounter(private val max: Int) {
 
     fun getAndRotate(): Int {
         val tmp = value
-        rotate()
-        return tmp
-    }
-
-    fun rotate() {
         value = value.rotate()
-    }
-
-    /**
-     * Create a list of rotation values between the new value (excluded) and
-     * the expected value (one rotation above the current [value]).
-     *
-     * E.g. given a [max] of 255, current [value] of 254, and [newValue] of 3,
-     * the returned list would be: {255, 0, 1, 2}
-     *
-     * If the new value equals the expected value, return the
-     */
-    fun rotationalDifference(newValue: Int): List<Int>? {
-        val expected = value
-        if (newValue == expected) {
-            return null
-        }
-        val difference: MutableList<Int> = mutableListOf()
-        var i = expected
-        while (i != newValue) {
-            difference.add(i)
-            i = i.rotate()
-        }
-        return difference
+        return tmp
     }
 
     private fun Int.rotate(): Int {

@@ -91,29 +91,14 @@ internal class SmpProtocolSession(
     private suspend fun reader() {
         rxChannel.consumeEach { data ->
 
-            // Parse header and validate fields
+            // Parse header to get sequence number
             val header = McuMgrHeader.fromBytes(data)
             val sequenceNumber = header.sequenceNum
-            if (header.op == 0 || header.op == 2) {
-                return
-            }
 
-            // Get the transaction, fail any skipped transactions if the
-            // sequence numbers don't match
+            // Get the transaction from the store and call the callback
             val transaction = transactionsMutex.withLock {
-                val transaction = transactions[sequenceNumber]
-                if (transaction != null) {
-                    transactions[sequenceNumber] = null
-                    rxCounter.rotationalDifference(sequenceNumber)?.forEach {
-                        rxCounter.rotate()
-                        fail(it, TransactionSkippedException(it))
-                    }
-                    rxCounter.rotate()
-                }
-                transaction
+                transactions[sequenceNumber]
             }
-
-            // Call transaction response callback
             transaction?.onResponse(handler, data)
         }
     }
