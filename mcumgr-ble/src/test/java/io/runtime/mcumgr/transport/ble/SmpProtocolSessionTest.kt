@@ -125,21 +125,6 @@ class SmpProtocolSessionTest {
     }
 
     @Test
-    fun `skipped transaction is failed`() = runBlocking {
-        val echo = "Hello!"
-        val request = newEchoRequest(echo)
-        val transaction = object : TestTransaction() {
-            override fun send(data: ByteArray) {}
-        }
-        session.send(request, transaction)
-        session.send(request, echoTransaction)
-        assertFailsWith(TransactionSkippedException::class) {
-            transaction.result.receive()
-        }
-        Unit
-    }
-
-    @Test
     fun `send overflows transmit buffer`() = runBlocking {
         val echo = "Hello!"
         val request = newEchoRequest(echo)

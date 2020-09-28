@@ -24,8 +24,7 @@ internal class SmpProtocolSession(
     private val scope = CoroutineScope(EmptyCoroutineContext)
     private val txChannel: Channel<Outgoing> = Channel(SMP_SEQ_NUM_MAX + 1)
     private val rxChannel: Channel<ByteArray> = Channel(SMP_SEQ_NUM_MAX + 1)
-    private val txCounter = RotatingCounter(SMP_SEQ_NUM_MAX)
-    private val rxCounter = RotatingCounter(SMP_SEQ_NUM_MAX)
+    private val sequenceCounter = RotatingCounter(SMP_SEQ_NUM_MAX)
     private val transactions: Array<SmpTransaction?> = arrayOfNulls(SMP_SEQ_NUM_MAX + 1)
     private val transactionsMutex = Mutex()
 
@@ -65,9 +64,8 @@ internal class SmpProtocolSession(
      */
     private suspend fun writer() {
         txChannel.consumeEach { outgoing ->
-
             // Set sequence number in outgoing data
-            val sequenceNumber = txCounter.getAndRotate()
+            val sequenceNumber = sequenceCounter.getAndRotate()
             outgoing.data.setSequenceNumber(sequenceNumber)
 
             // Add transaction to store. Fail an existing transaction on overwrite
@@ -90,7 +88,6 @@ internal class SmpProtocolSession(
      */
     private suspend fun reader() {
         rxChannel.consumeEach { data ->
-
             // Parse header to get sequence number
             val header = McuMgrHeader.fromBytes(data)
             val sequenceNumber = header.sequenceNum
