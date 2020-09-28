@@ -5,21 +5,39 @@ import io.runtime.mcumgr.McuMgrHeader
 import io.runtime.mcumgr.McuMgrScheme
 import io.runtime.mcumgr.ble.callback.SmpProtocolSession
 import io.runtime.mcumgr.ble.callback.SmpTransaction
+import io.runtime.mcumgr.ble.callback.TransactionSkippedException
+import io.runtime.mcumgr.ble.callback.TransactionTimeoutException
 import io.runtime.mcumgr.response.McuMgrResponse
 import io.runtime.mcumgr.response.dflt.McuMgrEchoResponse
 import io.runtime.mcumgr.util.CBOR
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import no.nordicsemi.android.ble.exception.DeviceDisconnectedException
 import org.junit.Test
+import java.lang.IllegalStateException
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class SmpProtocolSessionTest {
 
     private val session = SmpProtocolSession()
 
-    private val echoTransaction = object : SmpTransaction {
+    private abstract class TestTransaction : SmpTransaction {
 
         val result = Channel<ByteArray>(Channel.RENDEZVOUS)
+
+        override fun onResponse(data: ByteArray) {
+            result.offer(data)
+        }
+
+        override fun onFailure(e: Throwable) {
+            result.close(e)
+        }
+    }
+
+    private val echoTransaction = object : TestTransaction() {
 
         override fun send(data: ByteArray) {
             val header = McuMgrHeader.fromBytes(data)
@@ -31,14 +49,6 @@ class SmpProtocolSessionTest {
                 mapOf("r" to echo)
             )
             session.receive(response)
-        }
-
-        override fun onResponse(data: ByteArray) {
-            result.offer(data)
-        }
-
-        override fun onFailure(e: Throwable) {
-            result.close(e)
         }
     }
 
@@ -80,7 +90,77 @@ class SmpProtocolSessionTest {
             }
             assertEquals(expected, response.header?.sequenceNum)
         }
+    }
 
+    @Test
+    fun `send, response timeout`() = runBlocking {
+        val echo = "Hello!"
+        val request = newEchoRequest(echo)
+        val transaction = object : TestTransaction() {
+            override fun send(data: ByteArray) {}
+        }
+        session.send(request, transaction)
+        assertFailsWith(TransactionTimeoutException::class) {
+            transaction.result.receive()
+        }
+        Unit
+    }
+
+    @Test
+    fun `close fails active transactions`() = runBlocking {
+        val echo = "Hello!"
+        val request = newEchoRequest(echo)
+        val transaction = object : TestTransaction() {
+            override fun send(data: ByteArray) {}
+        }
+        session.send(request, transaction)
+        launch {
+            delay(1000)
+            session.close(DeviceDisconnectedException())
+        }
+        assertFailsWith(DeviceDisconnectedException::class) {
+            transaction.result.receive()
+        }
+        Unit
+    }
+
+    @Test
+    fun `skipped transaction is failed`() = runBlocking {
+        val echo = "Hello!"
+        val request = newEchoRequest(echo)
+        val transaction = object : TestTransaction() {
+            override fun send(data: ByteArray) {}
+        }
+        session.send(request, transaction)
+        session.send(request, echoTransaction)
+        assertFailsWith(TransactionSkippedException::class) {
+            transaction.result.receive()
+        }
+        Unit
+    }
+
+    @Test
+    fun `send overflows transmit buffer`() = runBlocking {
+        val echo = "Hello!"
+        val request = newEchoRequest(echo)
+        val transaction = object : TestTransaction() {
+            override fun send(data: ByteArray) {
+                runBlocking { delay (10000) }
+            }
+        }
+        // First request is consumed which blocks the channel, remaining 256
+        // fills the channel buffer to capacity
+        repeat(257) {
+            launch {
+                session.send(request, transaction)
+            }
+        }
+        launch {
+            assertFailsWith(IllegalStateException::class) {
+                session.send(request, transaction)
+            }
+        }
+        Unit
     }
 }
 

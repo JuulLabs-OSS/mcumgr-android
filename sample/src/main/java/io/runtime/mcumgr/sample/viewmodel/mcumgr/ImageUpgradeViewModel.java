@@ -61,7 +61,7 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 
         mManager.setEstimatedSwapTime(20000);
         mManager.setFirmwareUpgradeCallback(this);
-        mManager.setWindowUploadCapacity(50);
+        mManager.setWindowUploadCapacity(16);
         mStateLiveData.setValue(State.IDLE);
         mProgressLiveData.setValue(0);
     }
