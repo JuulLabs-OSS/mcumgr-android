@@ -11,6 +11,7 @@ import io.runtime.mcumgr.response.McuMgrResponse
 import io.runtime.mcumgr.response.dflt.McuMgrEchoResponse
 import io.runtime.mcumgr.util.CBOR
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -19,6 +20,7 @@ import org.junit.Test
 import java.lang.IllegalStateException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 class SmpProtocolSessionTest {
 
@@ -68,6 +70,25 @@ class SmpProtocolSessionTest {
             McuMgrEchoResponse::class.java
         )
         assertEquals(echo, response.r)
+    }
+
+    @Test
+    fun `send and receive, success, no timeout`() = runBlocking {
+        val echo = "Hello!"
+        val request = McuManager.buildPacket(
+            McuMgrScheme.BLE,
+            0, 0, 0, 0, 0,
+            mapOf("d" to echo)
+        )
+        session.send(request, echoTransaction)
+        val responseData = echoTransaction.result.receive()
+        val response = McuMgrResponse.buildResponse(
+            McuMgrScheme.BLE,
+            responseData,
+            McuMgrEchoResponse::class.java
+        )
+        assertEquals(echo, response.r)
+        delay(11_000) // 10 sec timeout in smp session
     }
 
     @Test

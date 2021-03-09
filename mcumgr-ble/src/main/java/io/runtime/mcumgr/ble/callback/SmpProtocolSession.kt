@@ -92,9 +92,12 @@ internal class SmpProtocolSession(
             val header = McuMgrHeader.fromBytes(data)
             val sequenceNumber = header.sequenceNum
 
-            // Get the transaction from the store and call the callback
+            // Get the transaction from the store, clear the entry, and call
+            // the callback
             val transaction = transactionsMutex.withLock {
-                transactions[sequenceNumber]
+                val t = transactions[sequenceNumber]
+                transactions[sequenceNumber] = null
+                t
             }
             transaction?.onResponse(handler, data)
         }
