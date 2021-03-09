@@ -5,13 +5,11 @@ import io.runtime.mcumgr.McuMgrHeader
 import io.runtime.mcumgr.McuMgrScheme
 import io.runtime.mcumgr.ble.callback.SmpProtocolSession
 import io.runtime.mcumgr.ble.callback.SmpTransaction
-import io.runtime.mcumgr.ble.callback.TransactionSkippedException
 import io.runtime.mcumgr.ble.callback.TransactionTimeoutException
 import io.runtime.mcumgr.response.McuMgrResponse
 import io.runtime.mcumgr.response.dflt.McuMgrEchoResponse
 import io.runtime.mcumgr.util.CBOR
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -20,7 +18,6 @@ import org.junit.Test
 import java.lang.IllegalStateException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 
 class SmpProtocolSessionTest {
 
