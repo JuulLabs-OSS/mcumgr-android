@@ -61,7 +61,7 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 
         mManager.setEstimatedSwapTime(20000);
         mManager.setFirmwareUpgradeCallback(this);
-        mManager.setWindowUploadCapacity(16);
+        mManager.setWindowUploadCapacity(32);
         mStateLiveData.setValue(State.IDLE);
         mProgressLiveData.setValue(0);
     }
@@ -88,11 +88,14 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 
     public void upgrade(@NonNull final byte[] data, @NonNull final FirmwareUpgradeManager.Mode mode) {
         try {
+            Timber.i("Request high connection priority");
             final McuMgrTransport transport = mManager.getTransporter();
             if (transport instanceof McuMgrBleTransport) {
                 ((McuMgrBleTransport) transport).requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH);
             }
+            Timber.i("Set mode");
             mManager.setMode(mode);
+            Timber.i("Start firmware upgrade");
             mManager.start(data);
         } catch (final McuMgrException e) {
             // TODO Externalize the text
