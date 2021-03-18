@@ -88,7 +88,6 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
 
     public void upgrade(@NonNull final byte[] data, @NonNull final FirmwareUpgradeManager.Mode mode) {
         try {
-            Timber.i("Request high connection priority");
             final McuMgrTransport transport = mManager.getTransporter();
             if (transport instanceof McuMgrBleTransport) {
                 ((McuMgrBleTransport) transport).requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH);
