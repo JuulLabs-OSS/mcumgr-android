@@ -93,9 +93,7 @@ public class ImageUpgradeViewModel extends McuMgrViewModel implements FirmwareUp
             if (transport instanceof McuMgrBleTransport) {
                 ((McuMgrBleTransport) transport).requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH);
             }
-            Timber.i("Set mode");
             mManager.setMode(mode);
-            Timber.i("Start firmware upgrade");
             mManager.start(data);
         } catch (final McuMgrException e) {
             // TODO Externalize the text

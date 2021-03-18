@@ -28,7 +28,7 @@ private data class Chunk(val data: ByteArray, val offset: Int) {
 }
 
 abstract class Uploader(
-    internal val data: ByteArray,
+    private val data: ByteArray,
     private val windowCapacity: Int,
     internal var mtu: Int,
     private val protocol: McuMgrScheme
@@ -177,7 +177,6 @@ abstract class Uploader(
     private fun nextChunk(chunk: Chunk): Chunk {
         return newChunk(chunk.offset + chunk.data.size)
     }
-
 
     // TODO interface this function for alternative implementations (e.g. sha for mynewt devices)
     /**
