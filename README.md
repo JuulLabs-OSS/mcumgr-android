@@ -1,3 +1,12 @@
+# DEPRECATED
+
+This repository is deprecated and no longer maintained, please use the following forks:
+
+- Android: [NordicSemiconductor/Android-nRF-Connect-Device-Manager](https://github.com/NordicSemiconductor/Android-nRF-Connect-Device-Manager)
+- iOS: [NordicSemiconductor/IOS-nRF-Connect-Device-Manager](https://github.com/NordicSemiconductor/IOS-nRF-Connect-Device-Manager)
+
+---
+
 [![codecov](https://codecov.io/gh/JuulLabs-OSS/mcumgr-android/branch/master/graph/badge.svg)](https://codecov.io/gh/JuulLabs-OSS/mcumgr-android)
 
 # McuManager Android
